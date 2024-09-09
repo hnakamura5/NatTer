@@ -39,6 +39,7 @@ function createWindow() {
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
+    win?.webContents.openDevTools()
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
 
@@ -68,4 +69,6 @@ app.on('activate', () => {
   }
 })
 
+
 app.whenReady().then(createWindow)
+
