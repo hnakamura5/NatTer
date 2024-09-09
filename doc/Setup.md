@@ -58,3 +58,8 @@ https://www.npmjs.com/package/@syncfusion/ej2-react-filemanager
 ```sh
 npm install @syncfusion/ej2-react-filemanager
 ```
+
+## Error
+
+
+https://stackoverflow.com/questions/78339678/react-app-not-rendering-after-upgrading-to-react-18
