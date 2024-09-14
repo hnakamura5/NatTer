@@ -5,13 +5,13 @@ function Session() {
   const commandList = list.map((item) => {
     return {
       commandName: `Command ${item}`,
-      commandResponce: `Responce ${item}`,
+      commandResponse: `Response ${item}`,
     };
   });
   const processAccordions = commandList.map((command) => (
     <ProcessAccordion
       commandName={command.commandName}
-      commandResponce={command.commandResponce}
+      commandResponse={command.commandResponse}
     />
   ));
 

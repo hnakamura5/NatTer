@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
+
 function ProcessAccordion(props: {
   commandName: string;
-  commandResponce: string;
+  commandResponse: string;
 }) {
   const [expanded, setExpanded] = useState<boolean>(false);
   const handleChange =
-    (event: React.SyntheticEvent, newExpanded: boolean) => {
+    (_: React.SyntheticEvent, newExpanded: boolean) => {
       setExpanded(newExpanded);
     };
 
@@ -26,7 +27,7 @@ function ProcessAccordion(props: {
         >
           {props.commandName}
         </AccordionSummary>
-        <AccordionDetails>{props.commandResponce}</AccordionDetails>
+        <AccordionDetails>{props.commandResponse}</AccordionDetails>
       </Accordion>
     </div>
   );
