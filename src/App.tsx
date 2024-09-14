@@ -1,15 +1,14 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/electron-vite.animate.svg'
-import './App.css'
-import  SessionContainer from './components/SessionContainer'
+import "./App.css";
+import SessionContainer from "./components/SessionContainer";
+import { Theme } from "@emotion/react";
+import { DarkTheme } from "./DefaultTheme";
+import { useState } from "react";
 
 function App() {
-  return (
-    <>
-      <SessionContainer />
-    </>
-  )
+  const [theme, setTheme] = useState<Theme>(DarkTheme);
+  // TODO: ThemeProvider does not work?
+
+  return <SessionContainer theme={theme} />;
 }
 
-export default App
+export default App;

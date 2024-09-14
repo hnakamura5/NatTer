@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import Session from "./Session";
 import HoverMenusBar from "./HoverMenus/HoverMenusBar";
 import InputBox from "./InputBox";
@@ -7,6 +5,7 @@ import { Box } from "@mui/material";
 
 import styled from "@emotion/styled";
 import CurrentBar from "./CurrentBar";
+import { Theme } from "@emotion/react";
 
 const VerticalBox = styled(Box)`
   display: flex;
@@ -35,17 +34,20 @@ const FullWidthBox = styled(Box)`
 `;
 
 // Main window of the session.
+interface SessionContainerProps {
+  theme: Theme;
+}
 
-function SessionContainer() {
+function SessionContainer(props: SessionContainerProps) {
   return (
     <VerticalBox>
-      <HoverMenusBar />
+      <HoverMenusBar theme={props.theme} />
       <HorizontalBox>
         <FromBottomBox>
           <FullWidthBox>
-            <Session />
-            <CurrentBar />
-            <InputBox />
+            <Session theme={props.theme}/>
+            <CurrentBar theme={props.theme} />
+            <InputBox theme={props.theme}/>
           </FullWidthBox>
         </FromBottomBox>
       </HorizontalBox>

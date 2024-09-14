@@ -1,7 +1,12 @@
 import { Box, Button, TextField } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
+import { Theme } from "@emotion/react";
 
-function InputBox() {
+interface InputBoxProps {
+  theme: Theme;
+}
+
+function InputBox(props: InputBoxProps) {
   return (
     <div>
       <Box
@@ -18,7 +23,7 @@ function InputBox() {
         variant="outlined"
         size="small"
         placeholder="Command"
-        style={{ color: "white", width: "70%", backgroundColor: "white"}}
+        style={{ color: "white", width: "90%", backgroundColor: "white"}}
       />
       <Button variant="contained" startIcon={<SendIcon />} size="large" />
     </div>

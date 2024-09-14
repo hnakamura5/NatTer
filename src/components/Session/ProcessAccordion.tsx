@@ -1,35 +1,53 @@
 import { useState } from "react";
 import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Box } from "@mui/system";
+import { Theme } from "@emotion/react";
+import { DarkTheme } from "../../DefaultTheme";
 
+import styled from "@emotion/styled";
 
-function ProcessAccordion(props: {
+interface ProcessAccordionProps {
+  theme: Theme;
   commandName: string;
   commandResponse: string;
-}) {
+}
+
+function ProcessAccordion(props: ProcessAccordionProps) {
+  const AccordionStyle = styled(Box)`
+    color: ${props.theme.terminal.colors.primary};
+    background-color: ${props.theme.terminal.colors.background};
+    font-family: ${props.theme.terminal.font};
+    font-size: ${props.theme.terminal.fontSize};
+    text-align: left;
+  `;
+
   const [expanded, setExpanded] = useState<boolean>(false);
-  const handleChange =
-    (_: React.SyntheticEvent, newExpanded: boolean) => {
-      setExpanded(newExpanded);
-    };
+  const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
+    setExpanded(newExpanded);
+  };
 
   return (
-    <div>
+    <Box>
       <Accordion
         expanded={expanded}
         onChange={handleChange}
-        sx={{ marginBottom: "2px" }}
+        sx={{ marginBottom: "2px"}}
       >
-        <AccordionSummary
-          aria-controls="panel1d-content"
-          id="panel1d-header"
-          expandIcon={<ExpandMoreIcon sx={{ fontSize: "2rem" }} />}
-        >
-          {props.commandName}
-        </AccordionSummary>
-        <AccordionDetails>{props.commandResponse}</AccordionDetails>
+        <AccordionStyle>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+          >
+            {props.commandName}
+          </AccordionSummary>
+        </AccordionStyle>
+        <AccordionStyle>
+          <AccordionDetails>
+            {props.commandResponse}
+          </AccordionDetails>
+        </AccordionStyle>
       </Accordion>
-    </div>
+    </Box>
   );
 }
 

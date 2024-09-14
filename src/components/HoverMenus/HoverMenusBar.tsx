@@ -11,6 +11,7 @@ import FolderIcon from "@mui/icons-material/Folder";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 import styled from "@emotion/styled";
+import { Theme } from "@emotion/react";
 
 const VerticalList = styled(List)`
   display: flex;
@@ -24,7 +25,11 @@ const BlockListItem = styled(ListItem)`
   width: 80px;
 `;
 
-function HoverMenusBar() {
+interface HoverMenusBarProps {
+  theme: Theme;
+}
+
+function HoverMenusBar(props: HoverMenusBarProps) {
   return (
     <div>
       <VerticalList>

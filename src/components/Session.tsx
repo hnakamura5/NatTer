@@ -1,6 +1,11 @@
 import ProcessAccordion from "./Session/ProcessAccordion";
+import { Theme } from "@emotion/react";
 
-function Session() {
+interface SessionProps {
+  theme: Theme;
+}
+
+function Session(props: SessionProps) {
   const list = Array.from({ length: 10 }, (_, index) => index + 1);
   const commandList = list.map((item) => {
     return {
@@ -10,6 +15,7 @@ function Session() {
   });
   const processAccordions = commandList.map((command) => (
     <ProcessAccordion
+      theme={props.theme}
       commandName={command.commandName}
       commandResponse={command.commandResponse}
     />
