@@ -45,9 +45,12 @@ function SessionContainer(props: SessionContainerProps) {
       <HorizontalBox>
         <FromBottomBox>
           <FullWidthBox>
-            <Session theme={props.theme}/>
-            <CurrentBar theme={props.theme} />
-            <InputBox theme={props.theme}/>
+            <Session theme={props.theme} />
+            <CurrentBar
+              theme={props.theme}
+              getCurrentDirectory={() => "Current directory"}
+            />
+            <InputBox theme={props.theme} />
           </FullWidthBox>
         </FromBottomBox>
       </HorizontalBox>

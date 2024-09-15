@@ -14,11 +14,12 @@ interface ProcessAccordionProps {
 }
 
 function ProcessAccordion(props: ProcessAccordionProps) {
+  const theme = props.theme
   const AccordionStyle = styled(Box)`
-    color: ${props.theme.terminal.colors.primary};
-    background-color: ${props.theme.terminal.colors.background};
-    font-family: ${props.theme.terminal.font};
-    font-size: ${props.theme.terminal.fontSize};
+    color: ${theme.terminal.colors.primary};
+    background-color: ${theme.terminal.colors.background};
+    font-family: ${theme.terminal.font};
+    font-size: ${theme.terminal.fontSize};
     text-align: left;
   `;
 

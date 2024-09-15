@@ -1,32 +1,53 @@
-import { Box, Button, TextField } from "@mui/material";
-import SendIcon from '@mui/icons-material/Send';
+import {
+  Box,
+  Paper as MuiPaper,
+  InputBase as MuiInputBase,
+  IconButton as MuiIconButton,
+} from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
+import MenuIcon from "@mui/icons-material/Menu";
 import { Theme } from "@emotion/react";
+import styled from "@emotion/styled";
+
 
 interface InputBoxProps {
   theme: Theme;
 }
 
 function InputBox(props: InputBoxProps) {
+  const theme = props.theme;
+  const Paper = styled(MuiPaper)`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: ${theme.terminal.colors.background};
+    color: ${theme.terminal.colors.primary};
+  `;
+  const iconWidth = 40;
+  const IconButton = styled(MuiIconButton)`
+    color: ${theme.terminal.colors.primary};
+    background-color: ${theme.terminal.colors.background};
+    width: ${iconWidth}px;
+  `;
+  const InputBase = styled(MuiInputBase)`
+    color: ${theme.terminal.colors.primary};
+    font-family: ${theme.terminal.font};
+    font-size: ${theme.terminal.fontSize};
+    width: calc(100% - ${iconWidth * 2}px);
+  `;
+
   return (
-    <div>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "row",
-        }}
-      />
-      <TextField
-        id="command-input"
-        label="Command"
-        variant="outlined"
-        size="small"
-        placeholder="Command"
-        style={{ color: "white", width: "90%", backgroundColor: "white"}}
-      />
-      <Button variant="contained" startIcon={<SendIcon />} size="large" />
-    </div>
+    <Box>
+      <Paper>
+        <IconButton>
+          <MenuIcon />
+        </IconButton>
+        <InputBase />
+        <IconButton>
+          <SendIcon />
+        </IconButton>
+      </Paper>
+    </Box>
   );
 }
 
