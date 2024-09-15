@@ -2,6 +2,8 @@ import { app, BrowserWindow } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { createIPCHandler } from 'electron-trpc/main'
+import router from '../src/api.tsx'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -43,12 +45,14 @@ function createWindow() {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
 
+  process.stdout.write(`VITE_DEV_SERVER_URL: ${VITE_DEV_SERVER_URL}\n`)
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
   } else {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
+  createIPCHandler({router, windows: [win]})
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

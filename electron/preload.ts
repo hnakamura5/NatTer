@@ -1,4 +1,10 @@
 import { ipcRenderer, contextBridge } from 'electron'
+import { exposeElectronTRPC } from 'electron-trpc/main';
+
+process.once('loaded', () => {
+  exposeElectronTRPC();
+});
+
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {

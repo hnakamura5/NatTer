@@ -16,6 +16,11 @@
     "@mui/icons-material": "^6.0.2",
     "@mui/material": "^6.0.2",
     "@syncfusion/ej2-react-filemanager": "^26.2.11",
+    "@tanstack/react-query": "^4.18.0",
+    "@trpc/client": "^10.45.2",
+    "@trpc/react-query": "^10.45.2",
+    "@trpc/server": "^10.45.2",
+    "electron-trpc": "^0.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
