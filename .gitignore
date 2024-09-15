@@ -13,6 +13,7 @@ dist-ssr
 dist-electron
 misc
 temp
+private
 *.local
 
 # Editor directories and files
