@@ -1,10 +1,10 @@
-import "./App.css";
-import SessionContainer from "./components/SessionContainer";
+import "@/App.css";
+import SessionContainer from "@/components/SessionContainer";
 import { Theme } from "@emotion/react";
-import { ThemeContext, DefaultDarkTheme } from "./datatypes/Theme";
+import { ThemeContext, DefaultDarkTheme } from "@/datatypes/Theme";
 import { useState } from "react";
 import { ipcLink } from "electron-trpc/renderer";
-import { trpc } from "./tRPC";
+import { trpc } from "@/tRPC";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -19,7 +19,7 @@ function App() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <ThemeContext.Provider value={theme}>
-          <SessionContainer />;
+          <SessionContainer />
         </ThemeContext.Provider>
       </QueryClientProvider>
     </trpc.Provider>

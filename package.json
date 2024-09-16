@@ -22,7 +22,8 @@
     "@trpc/server": "^10.45.2",
     "electron-trpc": "^0.6.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "vite-tsconfig-paths": "^5.0.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",

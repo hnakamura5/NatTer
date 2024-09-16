@@ -6,9 +6,9 @@ import {
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Theme } from "@emotion/react";
 import styled from "@emotion/styled";
-import { useTheme } from "../datatypes/Theme";
+import { useTheme } from "@/datatypes/Theme";
+import {trpc} from "@/tRPC"
 
 
 interface InputBoxProps {

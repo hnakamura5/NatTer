@@ -1,11 +1,10 @@
-import Session from "./Session";
-import HoverMenusBar from "./HoverMenus/HoverMenusBar";
-import InputBox from "./InputBox";
+import Session from "@/components/Session";
+import HoverMenusBar from "@/components/HoverMenus/HoverMenusBar";
+import InputBox from "@/components/InputBox";
 import { Box } from "@mui/material";
 
 import styled from "@emotion/styled";
-import CurrentBar from "./CurrentBar";
-import { Theme } from "@emotion/react";
+import CurrentBar from "@/components/CurrentBar";
 
 const VerticalBox = styled(Box)`
   display: flex;

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
-import { useTheme } from "../../datatypes/Theme"
+import { useTheme } from "@/datatypes/Theme"
 
 import styled from "@emotion/styled";
 

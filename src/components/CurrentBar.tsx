@@ -1,7 +1,6 @@
-import { Theme } from "@emotion/react";
 import { Box } from "@mui/material";
 import styled from "@emotion/styled";
-import { useTheme } from "../datatypes/Theme";
+import { useTheme } from "@/datatypes/Theme";
 
 interface CurrentBarProps {
   getCurrentDirectory: () => string;

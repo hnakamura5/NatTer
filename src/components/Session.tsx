@@ -1,9 +1,7 @@
-import ProcessAccordion from "./Session/ProcessAccordion";
+import ProcessAccordion from "@/components/Session/ProcessAccordion";
 import { Box } from "@mui/material";
-import { Theme } from "@emotion/react";
 
-interface SessionProps {
-}
+interface SessionProps {}
 
 function Session(props: SessionProps) {
   // TODO: Placeholder for now.
