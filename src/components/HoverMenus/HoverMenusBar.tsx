@@ -26,7 +26,6 @@ const BlockListItem = styled(ListItem)`
 `;
 
 interface HoverMenusBarProps {
-  theme: Theme;
 }
 
 function HoverMenusBar(props: HoverMenusBarProps) {

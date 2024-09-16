@@ -3,7 +3,6 @@ import { Box } from "@mui/material";
 import { Theme } from "@emotion/react";
 
 interface SessionProps {
-  theme: Theme;
 }
 
 function Session(props: SessionProps) {
@@ -17,7 +16,6 @@ function Session(props: SessionProps) {
   });
   const processAccordions = commandList.map((command) => (
     <ProcessAccordion
-      theme={props.theme}
       commandName={command.commandName}
       commandResponse={command.commandResponse}
     />

@@ -2,18 +2,17 @@ import { useState } from "react";
 import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
-import { Theme } from "@emotion/react";
+import { useTheme } from "../../datatypes/Theme"
 
 import styled from "@emotion/styled";
 
 interface ProcessAccordionProps {
-  theme: Theme;
   commandName: string;
   commandResponse: string;
 }
 
 function ProcessAccordion(props: ProcessAccordionProps) {
-  const theme = props.theme
+  const theme = useTheme();
   const AccordionStyle = styled(Box)`
     color: ${theme.terminal.colors.primary};
     background-color: ${theme.terminal.colors.background};

@@ -1,7 +1,7 @@
 import "./App.css";
 import SessionContainer from "./components/SessionContainer";
 import { Theme } from "@emotion/react";
-import { DarkTheme } from "./DefaultTheme";
+import { ThemeContext, DefaultDarkTheme } from "./datatypes/Theme";
 import { useState } from "react";
 import { ipcLink } from "electron-trpc/renderer";
 import { trpc } from "./tRPC";
@@ -14,12 +14,13 @@ const trpcClient = trpc.createClient({
 });
 
 function App() {
-  const [theme, setTheme] = useState<Theme>(DarkTheme);
-  // TODO: ThemeProvider does not work?
+  const [theme, setTheme] = useState<Theme>(DefaultDarkTheme);
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <SessionContainer theme={theme} />;
+        <ThemeContext.Provider value={theme}>
+          <SessionContainer />;
+        </ThemeContext.Provider>
       </QueryClientProvider>
     </trpc.Provider>
   );

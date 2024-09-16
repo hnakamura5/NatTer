@@ -35,22 +35,20 @@ const FullWidthBox = styled(Box)`
 
 // Main window of the session.
 interface SessionContainerProps {
-  theme: Theme;
 }
 
 function SessionContainer(props: SessionContainerProps) {
   return (
     <VerticalBox>
-      <HoverMenusBar theme={props.theme} />
+      <HoverMenusBar  />
       <HorizontalBox>
         <FromBottomBox>
           <FullWidthBox>
-            <Session theme={props.theme} />
+            <Session />
             <CurrentBar
-              theme={props.theme}
               getCurrentDirectory={() => "Current directory"}
             />
-            <InputBox theme={props.theme} />
+            <InputBox />
           </FullWidthBox>
         </FromBottomBox>
       </HorizontalBox>

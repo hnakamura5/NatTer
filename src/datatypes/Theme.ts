@@ -1,6 +1,7 @@
 import { Theme } from "@emotion/react";
+import { createContext, useContext } from "react";
 
-export const DarkTheme: Theme = {
+export const DefaultDarkTheme: Theme = {
   terminal: {
     font: "Consolas",
     fontSize: "12px",
@@ -20,7 +21,7 @@ export const DarkTheme: Theme = {
   },
 };
 
-export const LightTheme: Theme = {
+export const DefaultLightTheme: Theme = {
   terminal: {
     font: "Consolas",
     fontSize: "16px",
@@ -38,4 +39,10 @@ export const LightTheme: Theme = {
       background: "#FFFFFF",
     },
   },
+};
+
+// TODO: ThemeProvider of emotion does not work.
+export const ThemeContext = createContext(DefaultDarkTheme);
+export const useTheme = () => {
+  return useContext(ThemeContext);
 };

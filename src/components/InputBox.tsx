@@ -8,14 +8,14 @@ import SendIcon from "@mui/icons-material/Send";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Theme } from "@emotion/react";
 import styled from "@emotion/styled";
+import { useTheme } from "../datatypes/Theme";
 
 
 interface InputBoxProps {
-  theme: Theme;
 }
 
 function InputBox(props: InputBoxProps) {
-  const theme = props.theme;
+  const theme = useTheme();
   const Paper = styled(MuiPaper)`
     display: flex;
     flex-direction: row;
