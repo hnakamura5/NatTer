@@ -3,6 +3,7 @@ import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
 import { useTheme } from "@/datatypes/Theme"
+import { trpc } from "@/tRPC";
 
 import styled from "@emotion/styled";
 
@@ -21,6 +22,8 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     text-align: left;
   `;
 
+  const hello = trpc.hello.useQuery();
+
   const [expanded, setExpanded] = useState<boolean>(false);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded);
@@ -37,7 +40,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
           >
-            {props.commandName}
+            {hello.data + props.commandName}
           </AccordionSummary>
         </AccordionStyle>
         <AccordionStyle>
