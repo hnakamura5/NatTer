@@ -3,7 +3,7 @@ import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
 import { useTheme } from "@/datatypes/Theme"
-import { trpc } from "@/tRPC";
+import { api } from "@/api";
 
 import styled from "@emotion/styled";
 
@@ -22,7 +22,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     text-align: left;
   `;
 
-  const hello = trpc.hello.useQuery("vvv");
+  const hello = api.hello.get.useQuery("vvv");
 
   const [expanded, setExpanded] = useState<boolean>(false);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {

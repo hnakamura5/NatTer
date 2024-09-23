@@ -8,8 +8,7 @@ import SendIcon from "@mui/icons-material/Send";
 import MenuIcon from "@mui/icons-material/Menu";
 import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
-import {trpc} from "@/tRPC"
-
+import { api } from "@/api";
 
 interface InputBoxProps {
 }
@@ -36,7 +35,7 @@ function InputBox(props: InputBoxProps) {
     width: calc(100% - ${iconWidth * 2}px);
   `;
 
-  const setHello = trpc.setHello.useMutation();
+  const setHello = api.hello.set.useMutation();
 
   return (
     <Box>

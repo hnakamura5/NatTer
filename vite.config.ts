@@ -4,10 +4,13 @@ import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
+console.log('vite.config.ts')
+console.log(__dirname)
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    tsconfigPaths(),
+    //tsconfigPaths(),
     react(),
     electron({
       main: {

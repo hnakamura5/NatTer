@@ -3,7 +3,7 @@ import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { createIPCHandler } from 'electron-trpc/main'
-import router from '../src/api.ts'
+import { router } from '@/server/tRPCRouter'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -72,7 +72,6 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
 
 app.whenReady().then(createWindow)
 
