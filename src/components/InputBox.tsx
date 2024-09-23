@@ -10,8 +10,7 @@ import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
 import { api } from "@/api";
 
-interface InputBoxProps {
-}
+interface InputBoxProps {}
 
 function InputBox(props: InputBoxProps) {
   const theme = useTheme();
@@ -44,7 +43,11 @@ function InputBox(props: InputBoxProps) {
           <MenuIcon />
         </IconButton>
         <InputBase />
-        <IconButton onClick={()=>{setHello.mutate("Clicked")}} >
+        <IconButton
+          onClick={() => {
+            setHello.mutate("Clicked");
+          }}
+        >
           <SendIcon />
         </IconButton>
       </Paper>

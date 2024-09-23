@@ -22,7 +22,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     text-align: left;
   `;
 
-  const hello = api.hello.get.useQuery("vvv");
+  const hello = api.hello.get.useQuery("v", {refetchInterval: 100});
 
   const [expanded, setExpanded] = useState<boolean>(false);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {

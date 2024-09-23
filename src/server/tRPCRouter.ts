@@ -13,7 +13,7 @@ const helloRouter = server.router({
   set: procedure.input(z.string()).mutation(async (opts) => {
     const { input } = opts;
     console.log(input);
-    dataStr += input;
+    dataStr = dataStr.concat(input);
   }),
 });
 
