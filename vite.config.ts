@@ -10,7 +10,7 @@ console.log(__dirname)
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    //tsconfigPaths(),
+    tsconfigPaths(),
     react(),
     electron({
       main: {
