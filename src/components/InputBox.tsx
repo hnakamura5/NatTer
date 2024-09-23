@@ -36,6 +36,8 @@ function InputBox(props: InputBoxProps) {
     width: calc(100% - ${iconWidth * 2}px);
   `;
 
+  const setHello = trpc.setHello.useMutation();
+
   return (
     <Box>
       <Paper>
@@ -43,7 +45,7 @@ function InputBox(props: InputBoxProps) {
           <MenuIcon />
         </IconButton>
         <InputBase />
-        <IconButton>
+        <IconButton onClick={()=>{setHello.mutate("Clicked")}} >
           <SendIcon />
         </IconButton>
       </Paper>

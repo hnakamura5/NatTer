@@ -22,7 +22,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     text-align: left;
   `;
 
-  const hello = trpc.hello.useQuery();
+  const hello = trpc.hello.useQuery("vvv");
 
   const [expanded, setExpanded] = useState<boolean>(false);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
