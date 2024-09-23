@@ -9,6 +9,7 @@ console.log(__dirname)
 
 // https://vitejs.dev/config/
 export default defineConfig({
+
   plugins: [
     tsconfigPaths(),
     react(),
@@ -16,6 +17,14 @@ export default defineConfig({
       main: {
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
+        // To show '@' in entry file.
+        vite: {
+          resolve: {
+            alias: {
+              '@': path.resolve(__dirname, 'src'),
+            },
+          },
+        },
       },
       preload: {
         // Shortcut of `build.rollupOptions.input`.
