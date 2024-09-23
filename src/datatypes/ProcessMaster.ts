@@ -1,4 +1,4 @@
-import { OpaqueProcess } from "@/api/ProcessHandle";
+import { OpaqueProcess } from "@/server/ShellProcess";
 
 // Controls all the process information in the Session.
 
