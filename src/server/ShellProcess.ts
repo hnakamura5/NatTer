@@ -10,6 +10,10 @@ import { server } from "@/server/tRPCServer";
 
 export const CommandSchema = z.object({
   command: z.string(),
+  exactCommand: z.string(),
+  currentDirectory: z.string(),
+  startTime: z.date(),
+
   isFinished: z.boolean(),
   stdout: z.string(),
   stderr: z.string(),
@@ -26,6 +30,9 @@ export type Command = z.infer<typeof CommandSchema>;
 function emptyCommand(): Command {
   return {
     command: "",
+    exactCommand: "",
+    currentDirectory: "",
+    startTime: new Date(),
     isFinished: true,
     stdout: "",
     stderr: "",
@@ -40,6 +47,7 @@ type Process = {
   shellSpec: ShellSpecification;
   shellArgs: string[];
   currentCommand: Command;
+  currentDirectory: string;
 };
 const processHolder: Process[] = [];
 const commandsOfProcessID: Command[][] = [];
@@ -65,6 +73,7 @@ function startProcess(
     shellSpec: shellSpec,
     shellArgs: args,
     currentCommand: emptyCommand(),
+    currentDirectory: shellSpec.homeDirectory,
   });
   commandsOfProcessID.push([]);
   return pid;
@@ -76,9 +85,23 @@ function getStringFromResponseData(data: string): string {
 }
 
 function executeCommand(process: Process, command: string) {
-  const commandExtended =
-    process.shellSpec.extendCommandWithEndDetector(command);
-  process.handle.stdin.write(commandExtended + "\n");
+  // The command including the end detector.
+  const exactCommand = process.shellSpec.extendCommandWithEndDetector(command);
+  // Set new current command.
+  process.currentCommand = {
+    command: command,
+    exactCommand: exactCommand.newCommand,
+    currentDirectory: process.currentDirectory,
+    startTime: new Date(),
+    isFinished: false,
+    stdout: "",
+    stderr: "",
+    timeline: [],
+    endDetector: exactCommand.endDetector,
+  };
+  commandsOfProcessID[process.id].push(process.currentCommand);
+  // Execute the command.
+  process.handle.stdin.write(exactCommand + "\n");
   // stdout handling.
   process.handle.stdout.on("data", (data) => {
     const response = getStringFromResponseData(data.toString());
@@ -89,7 +112,7 @@ function executeCommand(process: Process, command: string) {
     });
     // Check if the command is finished.
     if (
-      process.shellSpec.detectEndOfCommandResponse({
+      process.shellSpec.detectEndOfCommandAndExitCodeResponse({
         commandResponse: process.currentCommand.stdout,
         endDetector: process.currentCommand.endDetector,
       })
@@ -110,7 +133,7 @@ function executeCommand(process: Process, command: string) {
 }
 
 function sendKey(process: Process, key: string) {
-  // TODO: handle the key code to appropriate code.
+  // TODO: handle the key code to appropriate code?
   process.handle.stdin.write(key);
 }
 
