@@ -2,12 +2,14 @@ import Session from "@/components/Session";
 import HoverMenusBar from "@/components/HoverMenus/HoverMenusBar";
 import InputBox from "@/components/InputBox";
 import { Box } from "@mui/material";
+import { useState } from "react";
 
 import styled from "@emotion/styled";
 import CurrentBar from "@/components/CurrentBar";
 
 import { api } from "@/api";
 import { ProcessID } from "@/server/ShellProcess";
+import { PowerShellSpecification } from "@/builtin/shell/Powershell";
 
 const VerticalBox = styled(Box)`
   display: flex;
@@ -36,20 +38,36 @@ const FullWidthBox = styled(Box)`
 `;
 
 // Main window of the session.
-interface SessionContainerProps {
-  pid: ProcessID;
-}
+interface SessionContainerProps {}
 
 function SessionContainer(props: SessionContainerProps) {
+  const [pid, setPid] = useState<ProcessID | undefined>(undefined);
+
+  // Start the shell process.
+  api.shell.start.useMutation().mutate(
+    {
+      shellSpec: PowerShellSpecification,
+      args: [],
+    },
+    {
+      onSuccess: (data) => {
+        setPid(data);
+      },
+    }
+  );
+
+  if (pid === undefined) {
+    return (<Box>Loading...</Box>);
+  }
   return (
     <VerticalBox>
-      <HoverMenusBar pid={props.pid} />
+      <HoverMenusBar pid={pid} />
       <HorizontalBox>
         <FromBottomBox>
           <FullWidthBox>
-            <Session pid={props.pid} />
-            <CurrentBar pid={props.pid} />
-            <InputBox pid={props.pid} />
+            <Session pid={pid} />
+            <CurrentBar pid={pid} />
+            <InputBox pid={pid} />
           </FullWidthBox>
         </FromBottomBox>
       </HorizontalBox>

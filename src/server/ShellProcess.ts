@@ -68,6 +68,7 @@ function startProcess(
 ): ProcessID {
   const process = spawn(shellSpec.path, args);
   const pid = processHolder.length;
+  console.log(`Start process call ${pid} with ${shellSpec.path}`);
   processHolder.push({
     id: pid,
     handle: process,
