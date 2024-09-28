@@ -12,7 +12,7 @@ export const CommandSchema = z.object({
   command: z.string(),
   exactCommand: z.string(),
   currentDirectory: z.string(),
-  startTime: z.date(),
+  startTime: z.string(),
 
   isFinished: z.boolean(),
   stdout: z.string(),
@@ -32,7 +32,7 @@ function emptyCommand(): Command {
     command: "",
     exactCommand: "",
     currentDirectory: "",
-    startTime: new Date(),
+    startTime: "",
     isFinished: true,
     stdout: "",
     stderr: "",
@@ -76,10 +76,11 @@ function startProcess(
     currentDirectory: shellSpec.homeDirectory,
   });
   commandsOfProcessID.push([]);
+  console.log(`Started process ${pid} with ${shellSpec.path}`);
   return pid;
 }
 
-function getStringFromResponseData(data: string): string {
+function getStringFromResponseData(process: Process, data: string): string {
   // TODO: encoding?
   return data;
 }
@@ -92,7 +93,7 @@ function executeCommand(process: Process, command: string) {
     command: command,
     exactCommand: exactCommand.newCommand,
     currentDirectory: process.currentDirectory,
-    startTime: new Date(),
+    startTime: new Date().toISOString(),
     isFinished: false,
     stdout: "",
     stderr: "",
@@ -104,7 +105,8 @@ function executeCommand(process: Process, command: string) {
   process.handle.stdin.write(exactCommand + "\n");
   // stdout handling.
   process.handle.stdout.on("data", (data) => {
-    const response = getStringFromResponseData(data.toString());
+    const response = getStringFromResponseData(process, data.toString());
+    console.log(`stdout: ${response}`);
     process.currentCommand.stdout.concat(response);
     process.currentCommand.timeline.push({
       response: response,
@@ -112,7 +114,7 @@ function executeCommand(process: Process, command: string) {
     });
     // Check if the command is finished.
     if (
-      process.shellSpec.detectEndOfCommandAndExitCodeResponse({
+      process.shellSpec.detectEndOfCommandAndExitCode({
         commandResponse: process.currentCommand.stdout,
         endDetector: process.currentCommand.endDetector,
       })
@@ -122,13 +124,15 @@ function executeCommand(process: Process, command: string) {
   });
   // stderr handling.
   process.handle.stderr.on("data", (data) => {
-    const response = getStringFromResponseData(data.toString());
+    const response = getStringFromResponseData(process, data.toString());
+    console.log(`stderr: ${response}`);
     process.currentCommand.stderr.concat(response);
     process.currentCommand.timeline.push({
       response: response,
       isError: true,
     });
   });
+  console.log(`Executed command ${command} in process ${process.id}`);
   return process.currentCommand;
 }
 
@@ -162,34 +166,34 @@ export const shellRouter = server.router({
     .input(
       z
         .object({
-          process: ProcessIDScheme,
+          pid: ProcessIDScheme,
           command: z.string(),
         })
         .refine((value) => {
           return isCommandClosed(
-            processHolder[value.process].shellSpec,
+            processHolder[value.pid].shellSpec,
             value.command
           );
         })
     )
     .output(CommandSchema)
     .mutation(async (opts) => {
-      const { process, command } = opts.input;
-      return executeCommand(processHolder[process], command);
+      const { pid, command } = opts.input;
+      return executeCommand(processHolder[pid], command);
     }),
 
   // Send a key to current command of the shell process.
   sendKey: proc
     .input(
       z.object({
-        process: ProcessIDScheme,
+        pid: ProcessIDScheme,
         key: z.string(),
       })
     )
     .output(z.void())
     .mutation(async (opts) => {
-      const { process, key } = opts.input;
-      sendKey(processHolder[process], key);
+      const { pid, key } = opts.input;
+      sendKey(processHolder[pid], key);
     }),
 
   // Poll the current command status of the shell process asynchronously.
@@ -213,22 +217,13 @@ export const shellRouter = server.router({
       };
     }),
   pollStderr: proc
-    .input(
-      z.object({
-        pid: ProcessIDScheme,
-      })
-    )
+    .input(ProcessIDScheme)
     .output(z.string())
-    .query(async (opts) => {
-      const { pid } = opts.input;
-      return processHolder[pid].currentCommand.stderr;
+    .query(async (pid) => {
+      return processHolder[pid.input].currentCommand.stderr;
     }),
   pollTimeline: proc
-    .input(
-      z.object({
-        pid: ProcessIDScheme,
-      })
-    )
+    .input(ProcessIDScheme)
     .output(
       z.object({
         timeline: z.array(
@@ -238,25 +233,39 @@ export const shellRouter = server.router({
         isFinished: z.boolean(),
       })
     )
-    .query(async (opts) => {
-      const { pid } = opts.input;
+    .query(async (pid) => {
       return {
-        timeline: processHolder[pid].currentCommand.timeline,
-        timelineCount: processHolder[pid].currentCommand.timeline.length,
-        isFinished: processHolder[pid].currentCommand.isFinished,
+        timeline: processHolder[pid.input].currentCommand.timeline,
+        timelineCount: processHolder[pid.input].currentCommand.timeline.length,
+        isFinished: processHolder[pid.input].currentCommand.isFinished,
       };
     }),
 
   // Stop the shell process.
   stop: proc
-    .input(
-      z.object({
-        process: ProcessIDScheme,
-      })
-    )
+    .input(ProcessIDScheme)
     .output(z.void())
-    .mutation(async (opts) => {
-      const { process } = opts.input;
-      stopProcess(processHolder[process]);
+    .mutation(async (pid) => {
+      stopProcess(processHolder[pid.input]);
+    }),
+
+  // Process state queries.
+  spec: proc
+    .input(ProcessIDScheme)
+    .output(ShellSpecificationSchema)
+    .query(async (pid) => {
+      return processHolder[pid.input].shellSpec;
+    }),
+  currentDir: proc
+    .input(ProcessIDScheme)
+    .output(z.string())
+    .query(async (pid) => {
+      return processHolder[pid.input].currentDirectory;
+    }),
+  commands: proc
+    .input(ProcessIDScheme)
+    .output(z.array(CommandSchema).optional())
+    .query(async (pid) => {
+      return commandsOfProcessID[pid.input];
     }),
 });

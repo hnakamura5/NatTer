@@ -22,6 +22,7 @@ export const ShellSpecificationSchema = z
     path: z.string(),
     pathKind: PathKindSchema,
     homeDirectory: z.string(),
+    defaultEncoding: z.string(),
 
     // Command syntax specification.
     escapes: z.array(z.string()),
@@ -39,15 +40,7 @@ export const ShellSpecificationSchema = z
       .optional(),
 
     // Command end detection.
-    endDetectorCharset: z.string().
-    refine((set) => {
-      // Cannot contain digits. They are used by exit code.
-      for (const c of set) {
-        if (c >= '0' && c <= '9') {
-          return false;
-        }
-      }
-    }).optional(),
+    endDetectorCharset: z.string().optional(),
     // Customize the command to enable the end detection.
     // Typically, echo some special string and exit code after the command.
     extendCommandWithEndDetector: z
@@ -61,7 +54,7 @@ export const ShellSpecificationSchema = z
       ),
     // Detect the end of the command response.
     // The endDetector is the string returned by extendCommandWithEndDetector.
-    detectEndOfCommandAndExitCodeResponse: z
+    detectEndOfCommandAndExitCode: z
       .function()
       .args(
         z.object({
@@ -69,7 +62,9 @@ export const ShellSpecificationSchema = z
           endDetector: z.string(),
         })
       )
-      .returns(z.number().int().optional()), // Exit code or undefined.
+      .returns(z.string().optional()), // Exit code or undefined.
+
+    isExitCodeOK: z.function().args(z.string()).returns(z.boolean()),
 
     // Current directory controls (optional functionality).
     // Get the current directory from the command response.

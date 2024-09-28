@@ -8,9 +8,14 @@ import SendIcon from "@mui/icons-material/Send";
 import MenuIcon from "@mui/icons-material/Menu";
 import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
-import { api } from "@/api";
 
-interface InputBoxProps {}
+import { api } from "@/api";
+import { ProcessID } from "@/server/ShellProcess";
+import { useState } from "react";
+
+interface InputBoxProps {
+  pid: ProcessID;
+}
 
 function InputBox(props: InputBoxProps) {
   const theme = useTheme();
@@ -34,7 +39,8 @@ function InputBox(props: InputBoxProps) {
     width: calc(100% - ${iconWidth * 2}px);
   `;
 
-  const setHello = api.hello.set.useMutation();
+  const [text, setText] = useState<string>("");
+  const send = api.shell.execute.useMutation();
 
   return (
     <Box>
@@ -42,10 +48,14 @@ function InputBox(props: InputBoxProps) {
         <IconButton>
           <MenuIcon />
         </IconButton>
-        <InputBase />
+        <InputBase
+          onChange={(e) => {
+            setText(e.target.value);
+          }}
+        />
         <IconButton
           onClick={() => {
-            setHello.mutate("Clicked");
+            send.mutate({ pid: props.pid, command: text });
           }}
         >
           <SendIcon />

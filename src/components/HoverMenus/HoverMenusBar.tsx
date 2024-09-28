@@ -3,15 +3,14 @@ import {
   ListItem,
   ListItemButton,
   ListItemIcon,
-  ListItemText,
-  Divider,
 } from "@mui/material";
 
 import FolderIcon from "@mui/icons-material/Folder";
 import SettingsIcon from "@mui/icons-material/Settings";
 
 import styled from "@emotion/styled";
-import { Theme } from "@emotion/react";
+import { ProcessID } from "@/server/ShellProcess";
+import { useTheme } from "@/datatypes/Theme";
 
 const VerticalList = styled(List)`
   display: flex;
@@ -26,23 +25,29 @@ const BlockListItem = styled(ListItem)`
 `;
 
 interface HoverMenusBarProps {
+  pid: ProcessID;
 }
 
 function HoverMenusBar(props: HoverMenusBarProps) {
+  const theme = useTheme();
   return (
     <div>
       <VerticalList>
         <BlockListItem>
           <ListItemButton>
             <ListItemIcon>
-              <FolderIcon sx={{ color: "white" , fontSize: 50 }} />
+              <FolderIcon
+                sx={{ color: theme.system.colors.secondary, fontSize: 50 }}
+              />
             </ListItemIcon>
           </ListItemButton>
         </BlockListItem>
         <BlockListItem>
           <ListItemButton>
             <ListItemIcon>
-              <SettingsIcon sx={{ color: "white", fontSize: 50 }} />
+              <SettingsIcon
+                sx={{ color: theme.system.colors.secondary, fontSize: 50 }}
+              />
             </ListItemIcon>
           </ListItemButton>
         </BlockListItem>

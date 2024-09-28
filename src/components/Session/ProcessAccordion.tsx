@@ -1,15 +1,20 @@
 import { useState } from "react";
-import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  colors,
+} from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
-import { useTheme } from "@/datatypes/Theme"
+import { useTheme } from "@/datatypes/Theme";
 import { api } from "@/api";
 
 import styled from "@emotion/styled";
+import { Command } from "@/server/ShellProcess";
 
 interface ProcessAccordionProps {
-  commandName: string;
-  commandResponse: string;
+  command: Command;
 }
 
 function ProcessAccordion(props: ProcessAccordionProps) {
@@ -22,8 +27,6 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     text-align: left;
   `;
 
-  const hello = api.hello.get.useQuery("v", {refetchInterval: 100});
-
   const [expanded, setExpanded] = useState<boolean>(false);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded);
@@ -34,18 +37,18 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       <Accordion
         expanded={expanded}
         onChange={handleChange}
-        sx={{ marginBottom: "2px"}}
+        sx={{ marginBottom: "2px" }}
       >
         <AccordionStyle>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-          >
-            {hello.data + props.commandName}
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            {props.command.command}
           </AccordionSummary>
         </AccordionStyle>
         <AccordionStyle>
           <AccordionDetails>
-            {props.commandResponse}
+            <Box>{props.command.startTime}</Box>
+            <Box>{props.command.stdout}</Box>
+            <Box>{props.command.stderr}</Box>
           </AccordionDetails>
         </AccordionStyle>
       </Accordion>

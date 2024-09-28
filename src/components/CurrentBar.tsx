@@ -1,9 +1,11 @@
 import { Box } from "@mui/material";
 import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
+import { ProcessID } from "@/server/ShellProcess";
+import { api } from "@/api";
 
 interface CurrentBarProps {
-  getCurrentDirectory: () => string;
+  pid: ProcessID;
 }
 
 function CurrentBar(props: CurrentBarProps) {
@@ -18,7 +20,9 @@ function CurrentBar(props: CurrentBarProps) {
 
   return (
     <CurrentBarStyle>
-      {props.getCurrentDirectory()}
+      {
+        api.shell.currentDir.useQuery(props.pid).data
+      }
     </CurrentBarStyle>
   );
 }

@@ -6,6 +6,9 @@ import { Box } from "@mui/material";
 import styled from "@emotion/styled";
 import CurrentBar from "@/components/CurrentBar";
 
+import { api } from "@/api";
+import { ProcessID } from "@/server/ShellProcess";
+
 const VerticalBox = styled(Box)`
   display: flex;
   flex-direction: row;
@@ -34,20 +37,19 @@ const FullWidthBox = styled(Box)`
 
 // Main window of the session.
 interface SessionContainerProps {
+  pid: ProcessID;
 }
 
 function SessionContainer(props: SessionContainerProps) {
   return (
     <VerticalBox>
-      <HoverMenusBar  />
+      <HoverMenusBar pid={props.pid} />
       <HorizontalBox>
         <FromBottomBox>
           <FullWidthBox>
-            <Session />
-            <CurrentBar
-              getCurrentDirectory={() => "Current directory"}
-            />
-            <InputBox />
+            <Session pid={props.pid} />
+            <CurrentBar pid={props.pid} />
+            <InputBox pid={props.pid} />
           </FullWidthBox>
         </FromBottomBox>
       </HorizontalBox>

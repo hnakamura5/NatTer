@@ -8,6 +8,8 @@ export const PowerShellSpecification: ShellSpecification = {
   path: "pwsh",
   pathKind: "win32",
   homeDirectory: "~",
+  defaultEncoding: "Shift_JIS",
+
   escapes: ["`"],
   scope: [
     { opener: "{", closer: "}" },
@@ -30,23 +32,18 @@ export const PowerShellSpecification: ShellSpecification = {
     };
   },
 
-  detectEndOfCommandAndExitCodeResponse: (opts) => {
+  detectEndOfCommandAndExitCode: (opts) => {
     const { commandResponse, endDetector } = opts;
     if (commandResponse.endsWith(endDetector)) {
       // Remove the latter detector.
       const response = commandResponse.slice(0, -endDetector.length);
       // Extract the exit status until former detector.
-      const exitStatus = response.slice(response.lastIndexOf(endDetector));
-      const result = parseInt(exitStatus);
-      if (!isNaN(result)) {
-        return result;
-      } else {
-        // TODO: error handling.
-        return -1;
-      }
+      return response.slice(response.lastIndexOf(endDetector));
     }
     return undefined;
   },
+
+  isExitCodeOK: (exitCode) => exitCode === "0",
 
   currentDirectoryCommand: () => "pwd",
   changeDirectoryCommand: (dir) => `cd "${dir}"`,

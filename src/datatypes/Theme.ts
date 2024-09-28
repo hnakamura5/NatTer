@@ -6,7 +6,7 @@ export const DefaultDarkTheme: Theme = {
     font: "Consolas",
     fontSize: "12px",
     colors: {
-      primary: "#F5F5F5",
+      primary: "#EEEEEE",
       secondary: "#9E9E9E",
       background: "#616161",
     },
@@ -14,7 +14,7 @@ export const DefaultDarkTheme: Theme = {
   system: {
     font: "Consolas",
     colors: {
-      primary: "##F5F5F5",
+      primary: "#F5F5F5",
       secondary: "#9E9E9E",
       background: "##212121",
     },
