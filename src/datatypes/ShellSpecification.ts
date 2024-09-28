@@ -22,7 +22,7 @@ export const ShellSpecificationSchema = z
     path: z.string(),
     pathKind: PathKindSchema,
     homeDirectory: z.string(),
-    defaultEncoding: z.string(),
+    encoding: z.string(),
 
     // Command syntax specification.
     escapes: z.array(z.string()),

@@ -5,6 +5,7 @@ import {
   isCommandClosed,
 } from "@/datatypes/ShellSpecification";
 import { z } from "zod";
+import * as iconv from "iconv-lite";
 
 import { server } from "@/server/tRPCServer";
 
@@ -80,14 +81,16 @@ function startProcess(
   return pid;
 }
 
-function getStringFromResponseData(process: Process, data: string): string {
-  // TODO: encoding?
-  return data;
+function getStringFromResponseData(process: Process, data: Buffer): string {
+  return iconv.decode(data, process.shellSpec.encoding);
 }
 
 function executeCommand(process: Process, command: string) {
   // The command including the end detector.
-  const exactCommand = process.shellSpec.extendCommandWithEndDetector(command);
+  const encoded = iconv.encode(command, process.shellSpec.encoding);
+  const exactCommand = process.shellSpec.extendCommandWithEndDetector(
+    encoded.toString()
+  );
   // Set new current command.
   process.currentCommand = {
     command: command,
@@ -104,8 +107,8 @@ function executeCommand(process: Process, command: string) {
   // Execute the command.
   process.handle.stdin.write(exactCommand + "\n");
   // stdout handling.
-  process.handle.stdout.on("data", (data) => {
-    const response = getStringFromResponseData(process, data.toString());
+  process.handle.stdout.on("data", (data: Buffer) => {
+    const response = getStringFromResponseData(process, data);
     console.log(`stdout: ${response}`);
     process.currentCommand.stdout.concat(response);
     process.currentCommand.timeline.push({
@@ -123,8 +126,8 @@ function executeCommand(process: Process, command: string) {
     }
   });
   // stderr handling.
-  process.handle.stderr.on("data", (data) => {
-    const response = getStringFromResponseData(process, data.toString());
+  process.handle.stderr.on("data", (data: Buffer) => {
+    const response = getStringFromResponseData(process, data);
     console.log(`stderr: ${response}`);
     process.currentCommand.stderr.concat(response);
     process.currentCommand.timeline.push({
