@@ -6,14 +6,28 @@ import {
 } from "@/datatypes/ShellSpecification";
 import { z } from "zod";
 import * as iconv from "iconv-lite";
+import { PathKind } from "@/datatypes/PathAbstraction";
+import path from "node:path";
 
 import { server } from "@/server/tRPCServer";
+import { PowerShellSpecification } from "@/builtin/shell/Powershell";
+
+function pathOf(kind: PathKind): path.PlatformPath {
+  if (kind === "win32") {
+    return path.win32;
+  }
+  return path.posix;
+}
+
+const ProcessSpecs = new Map<string, ShellSpecification>();
+ProcessSpecs.set("powershell", PowerShellSpecification);
 
 export const CommandSchema = z.object({
   command: z.string(),
   exactCommand: z.string(),
   currentDirectory: z.string(),
   startTime: z.string(),
+  clock: z.number().int().min(0),
 
   isFinished: z.boolean(),
   stdout: z.string(),
@@ -34,6 +48,7 @@ function emptyCommand(): Command {
     exactCommand: "",
     currentDirectory: "",
     startTime: "",
+    clock: 0,
     isFinished: true,
     stdout: "",
     stderr: "",
@@ -49,9 +64,15 @@ type Process = {
   shellArgs: string[];
   currentCommand: Command;
   currentDirectory: string;
+  clock: number;
 };
 const processHolder: Process[] = [];
 const commandsOfProcessID: Command[][] = [];
+function clockIncrement(process: Process) {
+  process.clock += 1;
+  process.currentCommand.clock = process.clock;
+  return process.clock;
+}
 
 export const ProcessIDScheme = z
   .number()
@@ -62,10 +83,15 @@ export const ProcessIDScheme = z
   });
 export type ProcessID = z.infer<typeof ProcessIDScheme>;
 
-function startProcess(
-  shellSpec: ShellSpecification,
-  args: string[]
-): ProcessID {
+function startProcess(shell: string, args: string[]): ProcessID {
+  const shellSpec = ProcessSpecs.get(shell);
+  if (shellSpec === undefined) {
+    // TODO: Error handling.
+    throw new Error(`Shell ${shell} is not supported.`);
+  }
+  if (processHolder.length > 3) {
+    throw new Error("Too many processes. This is for debugging.");
+  }
   const process = spawn(shellSpec.path, args);
   const pid = processHolder.length;
   console.log(`Start process call ${pid} with ${shellSpec.path}`);
@@ -76,6 +102,7 @@ function startProcess(
     shellArgs: args,
     currentCommand: emptyCommand(),
     currentDirectory: shellSpec.homeDirectory,
+    clock: 0,
   });
   commandsOfProcessID.push([]);
   console.log(`Started process ${pid} with ${shellSpec.path}`);
@@ -92,12 +119,16 @@ function executeCommand(process: Process, command: string) {
   const exactCommand = process.shellSpec.extendCommandWithEndDetector(
     encoded.toString()
   );
+  console.log(
+    `Execute command ${command} (exact: ${exactCommand.newCommand}) in process ${process.id}`
+  );
   // Set new current command.
   process.currentCommand = {
     command: command,
     exactCommand: exactCommand.newCommand,
     currentDirectory: process.currentDirectory,
     startTime: new Date().toISOString(),
+    clock: 0,
     isFinished: false,
     stdout: "",
     stderr: "",
@@ -105,17 +136,20 @@ function executeCommand(process: Process, command: string) {
     endDetector: exactCommand.endDetector,
   };
   commandsOfProcessID[process.id].push(process.currentCommand);
+  clockIncrement(process);
   // Execute the command.
-  process.handle.stdin.write(exactCommand + "\n");
+  process.handle.stdin.write(exactCommand.newCommand + "\n");
   // stdout handling.
   process.handle.stdout.on("data", (data: Buffer) => {
     const response = getStringFromResponseData(process, data);
     console.log(`stdout: ${response}`);
-    process.currentCommand.stdout.concat(response);
+    process.currentCommand.stdout =
+      process.currentCommand.stdout.concat(response);
     process.currentCommand.timeline.push({
       response: response,
       isError: false,
     });
+    clockIncrement(process);
     // Check if the command is finished.
     if (
       process.shellSpec.detectEndOfCommandAndExitCode({
@@ -130,11 +164,13 @@ function executeCommand(process: Process, command: string) {
   process.handle.stderr.on("data", (data: Buffer) => {
     const response = getStringFromResponseData(process, data);
     console.log(`stderr: ${response}`);
-    process.currentCommand.stderr.concat(response);
+    process.currentCommand.stderr =
+      process.currentCommand.stderr.concat(response);
     process.currentCommand.timeline.push({
       response: response,
       isError: true,
     });
+    clockIncrement(process);
   });
   console.log(`Executed command ${command} in process ${process.id}`);
   return process.currentCommand;
@@ -142,10 +178,14 @@ function executeCommand(process: Process, command: string) {
 
 function sendKey(process: Process, key: string) {
   // TODO: handle the key code to appropriate code?
+  console.log(`Send key ${key} to process ${process.id}`);
+  clockIncrement(process);
   process.handle.stdin.write(key);
 }
 
 function stopProcess(process: Process) {
+  console.log(`Stop process call ${process.id}`);
+  clockIncrement(process);
   process.handle.kill();
 }
 
@@ -155,14 +195,16 @@ export const shellRouter = server.router({
   start: proc
     .input(
       z.object({
-        shellSpec: ShellSpecificationSchema,
+        shell: z.string().refine((value) => {
+          return ProcessSpecs.has(value);
+        }),
         args: z.array(z.string()),
       })
     )
     .output(ProcessIDScheme)
     .mutation(async (opts) => {
-      const { shellSpec, args } = opts.input;
-      return startProcess(shellSpec, args);
+      const { shell, args } = opts.input;
+      return startProcess(shell, args);
     }),
 
   // Execute a new command in the shell process.
@@ -185,7 +227,6 @@ export const shellRouter = server.router({
       const { pid, command } = opts.input;
       return executeCommand(processHolder[pid], command);
     }),
-
   // Send a key to current command of the shell process.
   sendKey: proc
     .input(
@@ -268,8 +309,8 @@ export const shellRouter = server.router({
     }),
   commands: proc
     .input(ProcessIDScheme)
-    .output(z.array(CommandSchema).optional())
+    .output(z.array(CommandSchema))
     .query(async (pid) => {
-      return commandsOfProcessID[pid.input];
+      return commandsOfProcessID[pid.input].concat();
     }),
 });

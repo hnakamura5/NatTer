@@ -8,7 +8,8 @@ export const PowerShellSpecification: ShellSpecification = {
   path: "pwsh",
   pathKind: "win32",
   homeDirectory: "~",
-  encoding: "Shift_JIS",
+  //encoding: "Shift_JIS",
+  encoding: "UTF-8",
 
   escapes: ["`"],
   scope: [

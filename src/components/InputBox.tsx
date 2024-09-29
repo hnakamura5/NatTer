@@ -12,6 +12,7 @@ import { useTheme } from "@/datatypes/Theme";
 import { api } from "@/api";
 import { ProcessID } from "@/server/ShellProcess";
 import { useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 interface InputBoxProps {
   pid: ProcessID;
@@ -43,25 +44,40 @@ function InputBox(props: InputBoxProps) {
   const send = api.shell.execute.useMutation();
 
   return (
-    <Box>
-      <Paper>
-        <IconButton>
-          <MenuIcon />
-        </IconButton>
-        <InputBase
-          onChange={(e) => {
-            setText(e.target.value);
-          }}
-        />
-        <IconButton
-          onClick={() => {
-            send.mutate({ pid: props.pid, command: text });
-          }}
-        >
-          <SendIcon />
-        </IconButton>
-      </Paper>
-    </Box>
+    <ErrorBoundary
+      fallbackRender={() => {
+        return <Box>fallback InputBox</Box>;
+      }}
+    >
+      <Box>
+        <Paper>
+          <IconButton>
+            <MenuIcon />
+          </IconButton>
+          <InputBase
+            value={text}
+            autoFocus={true}
+            onChange={(e) => {
+              setText(e.target.value);
+            }}
+          />
+          <IconButton
+            onClick={() => {
+              send.mutate(
+                { pid: props.pid, command: text },
+                {
+                  onError: (error) => {
+                    console.error(`failed to send: ${error}`);
+                  },
+                }
+              );
+            }}
+          >
+            <SendIcon />
+          </IconButton>
+        </Paper>
+      </Box>
+    </ErrorBoundary>
   );
 }
 

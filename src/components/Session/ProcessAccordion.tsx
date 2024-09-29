@@ -15,6 +15,7 @@ import { Command } from "@/server/ShellProcess";
 
 interface ProcessAccordionProps {
   command: Command;
+  listIndex: number;
 }
 
 function ProcessAccordion(props: ProcessAccordionProps) {
