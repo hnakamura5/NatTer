@@ -28,19 +28,26 @@ export const PowerShellSpecification: ShellSpecification = {
     const endDetector = defaultRandomEndDetector(PowerShellSpecification);
     return {
       // Sandwich the exit status with the end detector.
-      newCommand: `${command}; echo ${endDetector}$?${endDetector}`,
+      newCommand: `${command}; echo "${endDetector}$?${endDetector}"`,
       endDetector: endDetector,
     };
   },
 
   detectEndOfCommandAndExitCode: (opts) => {
     const { commandResponse, endDetector } = opts;
-    if (commandResponse.endsWith(endDetector)) {
-      // Remove the latter detector.
-      const response = commandResponse.slice(0, -endDetector.length);
-      // Extract the exit status until former detector.
-      return response.slice(response.lastIndexOf(endDetector));
+    const first = commandResponse.indexOf(endDetector);
+    const last = commandResponse.lastIndexOf(endDetector);
+    if (first !== -1 && last !== -1 && first !== last) {
+      // Extract the exit status until the end detector.
+      return commandResponse.slice(first + endDetector.length, last);
     }
+
+    // if (commandResponse.endsWith(endDetector)) {
+    //   // Remove the latter detector.
+    //   const response = commandResponse.slice(0, -endDetector.length);
+    //   // Extract the exit status until former detector.
+    //   return response.slice(response.lastIndexOf(endDetector));
+    // }
     return undefined;
   },
 

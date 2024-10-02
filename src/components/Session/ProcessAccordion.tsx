@@ -9,9 +9,11 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
 import { useTheme } from "@/datatypes/Theme";
 import { api } from "@/api";
+import { Command, getOutputPartOfStdout } from "@/datatypes/Command";
 
 import styled from "@emotion/styled";
-import { Command } from "@/server/ShellProcess";
+
+import { AnsiUp } from "ansi-up";
 
 interface ProcessAccordionProps {
   command: Command;
@@ -32,6 +34,18 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded);
   };
+  const command = props.command;
+  const ansiUp = new AnsiUp();
+
+  const stdoutHTML = ansiUp
+    .ansi_to_html(getOutputPartOfStdout(command))
+    .replace(/\n/g, "<br />");
+  const stderrHTML = ansiUp
+    .ansi_to_html(command.stderr)
+    .replace(/\n/g, "<br />");
+  console.log(`command: ${command.command}, id: ${props.listIndex}`);
+  console.log(`stdout: ${command.stdout}`);
+  console.log(`stderr: ${command.stderr}`);
 
   return (
     <Box>
@@ -42,14 +56,29 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       >
         <AccordionStyle>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            {props.command.command}
+            {command.command}
           </AccordionSummary>
         </AccordionStyle>
         <AccordionStyle>
           <AccordionDetails>
-            <Box>{props.command.startTime}</Box>
-            <Box>{props.command.stdout}</Box>
-            <Box>{props.command.stderr}</Box>
+            <Box>
+              <span>{command.currentDirectory}</span>
+              <span>[{command.startTime}]</span>
+            </Box>
+            <Box>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: stdoutHTML,
+                }}
+              />
+            </Box>
+            <Box>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: stderrHTML,
+                }}
+              />
+            </Box>
           </AccordionDetails>
         </AccordionStyle>
       </Accordion>

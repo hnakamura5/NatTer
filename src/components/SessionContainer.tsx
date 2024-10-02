@@ -76,7 +76,7 @@ function SessionContainer(props: SessionContainerProps) {
   } else {
     return (
       <ErrorBoundary
-        fallbackRender={() => <Box>fallback SessionContainer</Box>}
+        fallbackRender={() => <Box>SessionContainer load error.</Box>}
       >
         <VerticalBox>
           <HoverMenusBar pid={pid} />

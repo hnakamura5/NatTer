@@ -43,10 +43,22 @@ function InputBox(props: InputBoxProps) {
   const [text, setText] = useState<string>("");
   const send = api.shell.execute.useMutation();
 
+  const submit = () => {
+    send.mutate(
+      { pid: props.pid, command: text },
+      {
+        onError: (error) => {
+          console.error(`failed to send: ${error}`);
+        },
+      }
+    );
+    setText("");
+  };
+
   return (
     <ErrorBoundary
       fallbackRender={() => {
-        return <Box>fallback InputBox</Box>;
+        return <Box>InputBox load error.</Box>;
       }}
     >
       <Box>
@@ -60,19 +72,13 @@ function InputBox(props: InputBoxProps) {
             onChange={(e) => {
               setText(e.target.value);
             }}
-          />
-          <IconButton
-            onClick={() => {
-              send.mutate(
-                { pid: props.pid, command: text },
-                {
-                  onError: (error) => {
-                    console.error(`failed to send: ${error}`);
-                  },
-                }
-              );
+            onKeyDown={(e) => {
+              if (e.ctrlKey && e.key === "Enter") {
+                submit();
+              }
             }}
-          >
+          />
+          <IconButton onClick={submit}>
             <SendIcon />
           </IconButton>
         </Paper>

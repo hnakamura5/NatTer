@@ -7,6 +7,12 @@ import {
 import { z } from "zod";
 import * as iconv from "iconv-lite";
 import { PathKind } from "@/datatypes/PathAbstraction";
+import {
+  Command,
+  CommandSchema,
+  emptyCommand,
+  getOutputPartOfStdout,
+} from "@/datatypes/Command";
 import path from "node:path";
 
 import { server } from "@/server/tRPCServer";
@@ -21,41 +27,6 @@ function pathOf(kind: PathKind): path.PlatformPath {
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set("powershell", PowerShellSpecification);
-
-export const CommandSchema = z.object({
-  command: z.string(),
-  exactCommand: z.string(),
-  currentDirectory: z.string(),
-  startTime: z.string(),
-  clock: z.number().int().min(0),
-
-  isFinished: z.boolean(),
-  stdout: z.string(),
-  stderr: z.string(),
-  timeline: z.array(
-    z.object({
-      response: z.string(),
-      isError: z.boolean(),
-    })
-  ),
-  endDetector: z.string(),
-});
-export type Command = z.infer<typeof CommandSchema>;
-
-function emptyCommand(): Command {
-  return {
-    command: "",
-    exactCommand: "",
-    currentDirectory: "",
-    startTime: "",
-    clock: 0,
-    isFinished: true,
-    stdout: "",
-    stderr: "",
-    timeline: [],
-    endDetector: "",
-  };
-}
 
 type Process = {
   id: ProcessID;
@@ -89,7 +60,7 @@ function startProcess(shell: string, args: string[]): ProcessID {
     // TODO: Error handling.
     throw new Error(`Shell ${shell} is not supported.`);
   }
-  if (processHolder.length > 3) {
+  if (processHolder.length > 10) {
     throw new Error("Too many processes. This is for debugging.");
   }
   const process = spawn(shellSpec.path, args);
@@ -137,14 +108,15 @@ function executeCommand(process: Process, command: string) {
   };
   commandsOfProcessID[process.id].push(process.currentCommand);
   clockIncrement(process);
-  // Execute the command.
-  process.handle.stdin.write(exactCommand.newCommand + "\n");
   // stdout handling.
+  process.handle.stdout.removeAllListeners("data");
   process.handle.stdout.on("data", (data: Buffer) => {
+    if (process.currentCommand.isFinished) {
+      return;
+    }
     const response = getStringFromResponseData(process, data);
     console.log(`stdout: ${response}`);
-    process.currentCommand.stdout =
-      process.currentCommand.stdout.concat(response);
+    process.currentCommand.stdout = process.currentCommand.stdout + response;
     process.currentCommand.timeline.push({
       response: response,
       isError: false,
@@ -153,17 +125,25 @@ function executeCommand(process: Process, command: string) {
     // Check if the command is finished.
     if (
       process.shellSpec.detectEndOfCommandAndExitCode({
-        commandResponse: process.currentCommand.stdout,
+        // TODO: Dirty hack. We should remove the exact command itself.
+        commandResponse: getOutputPartOfStdout(process.currentCommand),
         endDetector: process.currentCommand.endDetector,
-      })
+      }) !== undefined
     ) {
       // End of command.
+      console.log(
+        `Finished ${process.currentCommand.command} in process ${process.id}`
+      );
+      process.currentCommand.isFinished = true;
     }
   });
   // stderr handling.
   process.handle.stderr.on("data", (data: Buffer) => {
+    if (process.currentCommand.isFinished) {
+      return;
+    }
     const response = getStringFromResponseData(process, data);
-    console.log(`stderr: ${response}`);
+    //console.log(`stderr: ${response}`);
     process.currentCommand.stderr =
       process.currentCommand.stderr.concat(response);
     process.currentCommand.timeline.push({
@@ -172,6 +152,9 @@ function executeCommand(process: Process, command: string) {
     });
     clockIncrement(process);
   });
+  // Execute the command.
+  process.handle.stdin.write(exactCommand.newCommand + "\n");
+
   console.log(`Executed command ${command} in process ${process.id}`);
   return process.currentCommand;
 }

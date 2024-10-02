@@ -33,7 +33,7 @@ function Session(props: SessionProps) {
   return (
     <ErrorBoundary
       fallbackRender={() => {
-        return <Box>fallback Session</Box>;
+        return <Box>Session load error.</Box>;
       }}
     >
       <Box

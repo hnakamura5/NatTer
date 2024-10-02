@@ -22,7 +22,7 @@ function CurrentBar(props: CurrentBarProps) {
   return (
     <ErrorBoundary
       fallbackRender={() => {
-        return <Box>fallback CurrentBar</Box>;
+        return <Box>CurrentBar load error</Box>;
       }}
     >
       <CurrentBarStyle>

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PathKindSchema, pathOf } from "./PathAbstraction";
+import { PathKindSchema } from "./PathAbstraction";
 
 const ScopeSchema = z.object({
   opener: z.string(),
@@ -40,7 +40,7 @@ export const ShellSpecificationSchema = z
       .optional(),
 
     // Command end detection.
-    endDetectorCharset: z.string().optional(),
+    endDetectorCharset: z.array(z.string()).optional(),
     // Customize the command to enable the end detection.
     // Typically, echo some special string and exit code after the command.
     extendCommandWithEndDetector: z
@@ -238,12 +238,16 @@ export function isCommandClosed(
 export function defaultRandomEndDetector(
   shellSpec: ShellSpecification
 ): string {
+  const EOT = String.fromCharCode(4);
+  const ENQ = String.fromCharCode(5);
+  const ACK = String.fromCharCode(6);
+
   let set = shellSpec.endDetectorCharset;
   if (set === undefined) {
-    set = "^C^D^Z";
+    set = [EOT, ENQ, ACK];
   }
   if (set.length < 3) {
-    set = set.concat("^C^D^Z");
+    set = set.concat([EOT, ENQ, ACK]);
   }
   // TODO: randomize and make the result string length 4.
   let result = "";

@@ -19,6 +19,7 @@
     "@trpc/client": "^10.45.2",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
+    "ansi-up": "^1.0.0",
     "electron-trpc": "^0.6.1",
     "iconv-lite": "^0.6.3",
     "react": "^18.2.0",
