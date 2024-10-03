@@ -17,6 +17,7 @@ import path from "node:path";
 
 import { server } from "@/server/tRPCServer";
 import { PowerShellSpecification } from "@/builtin/shell/Powershell";
+import { i } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 function pathOf(kind: PathKind): path.PlatformPath {
   if (kind === "win32") {
@@ -54,6 +55,52 @@ export const ProcessIDScheme = z
   });
 export type ProcessID = z.infer<typeof ProcessIDScheme>;
 
+function receiveCommandResponse(process: Process) {
+  const current = process.currentCommand;
+  // stdout handling.
+  process.handle.stdout.removeAllListeners("data");
+  process.handle.stdout.on("data", (data: Buffer) => {
+    if (current.isFinished) {
+      return;
+    }
+    const response = getStringFromResponseData(process, data);
+    console.log(`stdout: ${response}`);
+    current.stdout = current.stdout + response;
+    current.timeline.push({
+      response: response,
+      isError: false,
+    });
+    clockIncrement(process);
+    // Check if the command is finished.
+    const exitStatus = process.shellSpec.detectEndOfCommandAndExitCode({
+      stdout: current.stdout,
+      endDetector: current.endDetector,
+    });
+    if (exitStatus !== undefined) {
+      // End of command.
+      current.isFinished = true;
+      current.exitStatus = exitStatus;
+      console.log(
+        `Finished ${current.command} by status ${current.exitStatus} in process ${process.id}`
+      );
+    }
+  });
+  // stderr handling.
+  process.handle.stderr.on("data", (data: Buffer) => {
+    if (current.isFinished) {
+      return;
+    }
+    const response = getStringFromResponseData(process, data);
+    //console.log(`stderr: ${response}`);
+    current.stderr = current.stderr.concat(response);
+    current.timeline.push({
+      response: response,
+      isError: true,
+    });
+    clockIncrement(process);
+  });
+}
+
 function startProcess(shell: string, args: string[]): ProcessID {
   const shellSpec = ProcessSpecs.get(shell);
   if (shellSpec === undefined) {
@@ -63,20 +110,39 @@ function startProcess(shell: string, args: string[]): ProcessID {
   if (processHolder.length > 10) {
     throw new Error("Too many processes. This is for debugging.");
   }
-  const process = spawn(shellSpec.path, args);
+  const proc = spawn(shellSpec.path, args);
   const pid = processHolder.length;
   console.log(`Start process call ${pid} with ${shellSpec.path}`);
-  processHolder.push({
+  const process = {
     id: pid,
-    handle: process,
+    handle: proc,
     shellSpec: shellSpec,
     shellArgs: args,
     currentCommand: emptyCommand(),
     currentDirectory: shellSpec.homeDirectory,
     clock: 0,
-  });
+  };
+  processHolder.push(process);
   commandsOfProcessID.push([]);
   console.log(`Started process ${pid} with ${shellSpec.path}`);
+  // First execute move to home command and wait for wake up.
+  const exactCommand = process.shellSpec.extendCommandWithEndDetector("");
+  process.currentCommand = {
+    command: shellSpec.path + args.join(" "),
+    exactCommand: exactCommand.newCommand,
+    currentDirectory: shellSpec.homeDirectory,
+    startTime: new Date().toISOString(),
+    clock: 0,
+    isFinished: false,
+    stdout: "",
+    stderr: "",
+    timeline: [],
+    endDetector: exactCommand.endDetector,
+  };
+  commandsOfProcessID[pid].push(process.currentCommand);
+  receiveCommandResponse(process);
+  process.handle.stdin.write(exactCommand.newCommand + "\n");
+  console.log(`Started process ${pid} with command ${exactCommand.newCommand}`);
   return pid;
 }
 
@@ -84,7 +150,7 @@ function getStringFromResponseData(process: Process, data: Buffer): string {
   return iconv.decode(data, process.shellSpec.encoding);
 }
 
-function executeCommand(process: Process, command: string) {
+function executeCommand(process: Process, command: string, isSilent: boolean) {
   // The command including the end detector.
   const encoded = iconv.encode(command, process.shellSpec.encoding);
   const exactCommand = process.shellSpec.extendCommandWithEndDetector(
@@ -106,55 +172,13 @@ function executeCommand(process: Process, command: string) {
     timeline: [],
     endDetector: exactCommand.endDetector,
   };
-  commandsOfProcessID[process.id].push(process.currentCommand);
+  if (!isSilent) {
+    commandsOfProcessID[process.id].push(process.currentCommand);
+  }
   clockIncrement(process);
-  // stdout handling.
-  process.handle.stdout.removeAllListeners("data");
-  process.handle.stdout.on("data", (data: Buffer) => {
-    if (process.currentCommand.isFinished) {
-      return;
-    }
-    const response = getStringFromResponseData(process, data);
-    console.log(`stdout: ${response}`);
-    process.currentCommand.stdout = process.currentCommand.stdout + response;
-    process.currentCommand.timeline.push({
-      response: response,
-      isError: false,
-    });
-    clockIncrement(process);
-    // Check if the command is finished.
-    if (
-      process.shellSpec.detectEndOfCommandAndExitCode({
-        // TODO: Dirty hack. We should remove the exact command itself.
-        commandResponse: getOutputPartOfStdout(process.currentCommand),
-        endDetector: process.currentCommand.endDetector,
-      }) !== undefined
-    ) {
-      // End of command.
-      console.log(
-        `Finished ${process.currentCommand.command} in process ${process.id}`
-      );
-      process.currentCommand.isFinished = true;
-    }
-  });
-  // stderr handling.
-  process.handle.stderr.on("data", (data: Buffer) => {
-    if (process.currentCommand.isFinished) {
-      return;
-    }
-    const response = getStringFromResponseData(process, data);
-    //console.log(`stderr: ${response}`);
-    process.currentCommand.stderr =
-      process.currentCommand.stderr.concat(response);
-    process.currentCommand.timeline.push({
-      response: response,
-      isError: true,
-    });
-    clockIncrement(process);
-  });
+  receiveCommandResponse(process);
   // Execute the command.
   process.handle.stdin.write(exactCommand.newCommand + "\n");
-
   console.log(`Executed command ${command} in process ${process.id}`);
   return process.currentCommand;
 }
@@ -197,6 +221,7 @@ export const shellRouter = server.router({
         .object({
           pid: ProcessIDScheme,
           command: z.string(),
+          isSilent: z.boolean().optional(),
         })
         .refine((value) => {
           return isCommandClosed(
@@ -207,8 +232,12 @@ export const shellRouter = server.router({
     )
     .output(CommandSchema)
     .mutation(async (opts) => {
-      const { pid, command } = opts.input;
-      return executeCommand(processHolder[pid], command);
+      const { pid, command, isSilent } = opts.input;
+      return executeCommand(
+        processHolder[pid],
+        command,
+        isSilent ? true : false
+      );
     }),
   // Send a key to current command of the shell process.
   sendKey: proc

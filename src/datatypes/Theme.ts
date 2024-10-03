@@ -3,20 +3,24 @@ import { createContext, useContext } from "react";
 
 export const DefaultDarkTheme: Theme = {
   terminal: {
-    font: "Consolas",
+    // font: "Consolas",
+    font: "PlemolJP Console NF",
     fontSize: "12px",
     colors: {
       primary: "#EEEEEE",
       secondary: "#9E9E9E",
       background: "#616161",
+      secondaryBackground: "#212121",
     },
   },
   system: {
-    font: "Consolas",
+    // font: "Consolas",
+    font: "PlemolJP Console NF",
     colors: {
       primary: "#F5F5F5",
       secondary: "#9E9E9E",
       background: "##212121",
+      secondaryBackground: "#616161",
     },
   },
 };

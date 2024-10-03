@@ -5,6 +5,7 @@ interface Colors {
   primary: string
   secondary: string
   background: string
+  secondaryBackground: string
 }
 
 declare module '@emotion/react' {

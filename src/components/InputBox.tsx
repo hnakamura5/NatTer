@@ -3,6 +3,7 @@ import {
   Paper as MuiPaper,
   InputBase as MuiInputBase,
   IconButton as MuiIconButton,
+  Tooltip,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -37,7 +38,8 @@ function InputBox(props: InputBoxProps) {
     color: ${theme.terminal.colors.primary};
     font-family: ${theme.terminal.font};
     font-size: ${theme.terminal.fontSize};
-    width: calc(100% - ${iconWidth * 2}px);
+    width: calc(100% - ${iconWidth}px);
+    padding-left: 10px;
   `;
 
   const [text, setText] = useState<string>("");
@@ -63,9 +65,6 @@ function InputBox(props: InputBoxProps) {
     >
       <Box>
         <Paper>
-          <IconButton>
-            <MenuIcon />
-          </IconButton>
           <InputBase
             value={text}
             autoFocus={true}
@@ -78,9 +77,11 @@ function InputBox(props: InputBoxProps) {
               }
             }}
           />
-          <IconButton onClick={submit}>
-            <SendIcon />
-          </IconButton>
+          <Tooltip title="Run">
+            <IconButton onClick={submit}>
+              <SendIcon />
+            </IconButton>
+          </Tooltip>
         </Paper>
       </Box>
     </ErrorBoundary>

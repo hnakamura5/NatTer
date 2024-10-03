@@ -29,8 +29,11 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     font-size: ${theme.terminal.fontSize};
     text-align: left;
   `;
+  const ResponseStyle = styled(Box)`
+    background-color: ${theme.terminal.colors.secondaryBackground};
+  `;
 
-  const [expanded, setExpanded] = useState<boolean>(false);
+  const [expanded, setExpanded] = useState<boolean>(true);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded);
   };
@@ -61,24 +64,26 @@ function ProcessAccordion(props: ProcessAccordionProps) {
         </AccordionStyle>
         <AccordionStyle>
           <AccordionDetails>
+            <ResponseStyle>
             <Box>
               <span>{command.currentDirectory}</span>
               <span>[{command.startTime}]</span>
             </Box>
-            <Box>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: stdoutHTML,
-                }}
-              />
-            </Box>
-            <Box>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: stderrHTML,
-                }}
-              />
-            </Box>
+              <Box>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: stdoutHTML,
+                  }}
+                />
+              </Box>
+              <Box>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: stderrHTML,
+                  }}
+                />
+              </Box>
+            </ResponseStyle>
           </AccordionDetails>
         </AccordionStyle>
       </Accordion>

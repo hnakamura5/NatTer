@@ -17,6 +17,7 @@ export const CommandSchema = z.object({
       isError: z.boolean(),
     })
   ),
+  exitStatus: z.string().optional(),
   endDetector: z.string(),
 });
 export type Command = z.infer<typeof CommandSchema>;
@@ -32,6 +33,7 @@ export function emptyCommand(): Command {
     stdout: "",
     stderr: "",
     timeline: [],
+    exitStatus: undefined,
     endDetector: "",
   };
 }

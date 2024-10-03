@@ -34,26 +34,31 @@ export const PowerShellSpecification: ShellSpecification = {
   },
 
   detectEndOfCommandAndExitCode: (opts) => {
-    const { commandResponse, endDetector } = opts;
-    const first = commandResponse.indexOf(endDetector);
-    const last = commandResponse.lastIndexOf(endDetector);
-    if (first !== -1 && last !== -1 && first !== last) {
-      // Extract the exit status until the end detector.
-      return commandResponse.slice(first + endDetector.length, last);
+    const { stdout, endDetector } = opts;
+    const first = stdout.indexOf(endDetector);
+    if (first === -1) {
+      return undefined;
     }
-
-    // if (commandResponse.endsWith(endDetector)) {
-    //   // Remove the latter detector.
-    //   const response = commandResponse.slice(0, -endDetector.length);
-    //   // Extract the exit status until former detector.
-    //   return response.slice(response.lastIndexOf(endDetector));
-    // }
+    const second = stdout.indexOf(endDetector, first + endDetector.length);
+    if (second === -1) {
+      return undefined;
+    }
+    // Here, first and second are by echo command.
+    const last = stdout.lastIndexOf(endDetector);
+    if (last === -1) {
+      return undefined;
+    }
+    const lastButOne = stdout.lastIndexOf(endDetector, last);
+    if (lastButOne !== -1 && lastButOne !== second && lastButOne !== first) {
+      // Extract the exit status until the end detector.
+      return stdout.slice(lastButOne + endDetector.length, last);
+    }
     return undefined;
   },
 
-  isExitCodeOK: (exitCode) => exitCode === "0",
+  isExitCodeOK: (exitCode) => exitCode === "True",
 
-  currentDirectoryCommand: () => "pwd",
+  currentPathCommand: () => "Convert-Path $(pwd)",
   changeDirectoryCommand: (dir) => `cd "${dir}"`,
   listDirectoryCommand: (dir) => `ls "${dir}"`,
 };

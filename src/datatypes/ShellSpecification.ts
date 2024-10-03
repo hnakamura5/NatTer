@@ -58,7 +58,7 @@ export const ShellSpecificationSchema = z
       .function()
       .args(
         z.object({
-          commandResponse: z.string(),
+          stdout: z.string(),
           endDetector: z.string(),
         })
       )
@@ -68,7 +68,7 @@ export const ShellSpecificationSchema = z
 
     // Current directory controls (optional functionality).
     // Get the current directory from the command response.
-    currentDirectoryCommand: z.function().args().returns(z.string()).optional(),
+    currentPathCommand: z.function().args().returns(z.string()).optional(),
     // Change the current directory command.
     changeDirectoryCommand: z
       .function()
