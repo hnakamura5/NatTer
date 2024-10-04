@@ -14,6 +14,9 @@ declare module '@emotion/react' {
       font: string
       fontSize: string
       colors: Colors
+      infoColor: string
+      stdoutColor: string
+      stderrColor: string
     }
     system: {
       font: string

@@ -12,6 +12,9 @@ export const DefaultDarkTheme: Theme = {
       background: "#616161",
       secondaryBackground: "#212121",
     },
+    infoColor: "#FF9800",
+    stdoutColor: "#4CAF50",
+    stderrColor: "#F44336",
   },
   system: {
     // font: "Consolas",
@@ -21,26 +24,6 @@ export const DefaultDarkTheme: Theme = {
       secondary: "#9E9E9E",
       background: "##212121",
       secondaryBackground: "#616161",
-    },
-  },
-};
-
-export const DefaultLightTheme: Theme = {
-  terminal: {
-    font: "Consolas",
-    fontSize: "16px",
-    colors: {
-      primary: "#00FF00",
-      secondary: "#FF0000",
-      background: "#FFFFFF",
-    },
-  },
-  system: {
-    font: "Consolas",
-    colors: {
-      primary: "#00FF00",
-      secondary: "#FF0000",
-      background: "#FFFFFF",
     },
   },
 };

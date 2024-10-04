@@ -29,8 +29,11 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     font-size: ${theme.terminal.fontSize};
     text-align: left;
   `;
-  const ResponseStyle = styled(Box)`
+  const CommandResponseStyle = styled(Box)`
+    width: 100%;
+    margin-right: 10px;
     background-color: ${theme.terminal.colors.secondaryBackground};
+    padding: 5px;
   `;
 
   const [expanded, setExpanded] = useState<boolean>(true);
@@ -52,38 +55,68 @@ function ProcessAccordion(props: ProcessAccordionProps) {
 
   return (
     <Box>
-      <Accordion
-        expanded={expanded}
-        onChange={handleChange}
-        sx={{ marginBottom: "2px" }}
-      >
+      <Accordion expanded={expanded} onChange={handleChange}>
         <AccordionStyle>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            {command.command}
+          <AccordionSummary
+            expandIcon={
+              <ExpandMoreIcon
+                sx={{
+                  color: theme.terminal.colors.primary,
+                  margin: -1,
+                }}
+              />
+            }
+            sx={{
+              paddingX: 1,
+              paddingY: 0,
+              marginY: -0.5,
+            }}
+          >
+            <CommandResponseStyle>{command.command}</CommandResponseStyle>
           </AccordionSummary>
         </AccordionStyle>
         <AccordionStyle>
-          <AccordionDetails>
-            <ResponseStyle>
-            <Box>
-              <span>{command.currentDirectory}</span>
-              <span>[{command.startTime}]</span>
-            </Box>
-              <Box>
+          <AccordionDetails
+            sx={{
+              paddingX: 1,
+              paddingY: 0,
+            }}
+          >
+            <CommandResponseStyle>
+              <Box
+                sx={{
+                  borderLeft: `3px solid ${theme.terminal.infoColor}`,
+                  paddingLeft: "5px",
+                }}
+              >
+                <span>{command.currentDirectory}</span>
+                <span>[{command.startTime}]</span>
+              </Box>
+              <Box
+                sx={{
+                  borderLeft: `3px solid ${theme.terminal.stdoutColor}`,
+                  paddingLeft: "5px",
+                }}
+              >
                 <div
                   dangerouslySetInnerHTML={{
                     __html: stdoutHTML,
                   }}
                 />
               </Box>
-              <Box>
+              <Box
+                sx={{
+                  borderLeft: `3px solid ${theme.terminal.stderrColor}`,
+                  paddingLeft: "5px",
+                }}
+              >
                 <div
                   dangerouslySetInnerHTML={{
                     __html: stderrHTML,
                   }}
                 />
               </Box>
-            </ResponseStyle>
+            </CommandResponseStyle>
           </AccordionDetails>
         </AccordionStyle>
       </Accordion>
