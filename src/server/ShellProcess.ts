@@ -138,7 +138,7 @@ function startProcess(shell: string, args: string[]): ProcessID {
     handle: proc,
     shellSpec: shellSpec,
     shellArgs: args,
-    currentCommand: emptyCommand(),
+    currentCommand: emptyCommand(pid),
     currentDirectory: "",
     clock: 0,
   };
@@ -147,7 +147,7 @@ function startProcess(shell: string, args: string[]): ProcessID {
   console.log(`Started process ${pid} with ${shellSpec.path}`);
   // First execute move to home command and wait for wake up.
   const exactCommand = process.shellSpec.extendCommandWithEndDetector("");
-  process.currentCommand = emptyCommand();
+  process.currentCommand = emptyCommand(pid);
   const current = process.currentCommand;
   current.command = shellSpec.path + args.join(" ");
   current.exactCommand = exactCommand.newCommand;
@@ -179,7 +179,7 @@ function executeCommand(
     `Execute command ${command} (exact: ${exactCommand.newCommand}) in process ${process.id}`
   );
   // Set new current command.
-  process.currentCommand = emptyCommand();
+  process.currentCommand = emptyCommand(process.id);
   const current = process.currentCommand;
   current.command = command;
   current.exactCommand = exactCommand.newCommand;

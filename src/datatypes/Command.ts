@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const CommandSchema = z.object({
+  pid: z.number().int().min(0),
   command: z.string(),
   exactCommand: z.string(),
   currentDirectory: z.string(),
@@ -23,9 +24,10 @@ export const CommandSchema = z.object({
 });
 export type Command = z.infer<typeof CommandSchema>;
 
-export function emptyCommand(): Command {
+export function emptyCommand(pid: number): Command {
   return {
     command: "",
+    pid: pid,
     exactCommand: "",
     currentDirectory: "",
     startTime: new Date().toLocaleString(),

@@ -37,6 +37,7 @@ interface ProcessAccordionProps {
 
 function ProcessAccordion(props: ProcessAccordionProps) {
   const theme = useTheme();
+
   const AccordionStyle = styled(Box)`
     color: ${theme.terminal.colors.primary};
     background-color: ${theme.terminal.colors.background};
@@ -75,6 +76,11 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       paddingLeft: 1,
     };
   };
+  const InfoSpan = styled.span`
+    background-color: ${theme.terminal.infoColor};
+    style: bold;
+    margin-right: 10px;
+  `;
 
   const [expanded, setExpanded] = useState<boolean>(true);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
@@ -121,13 +127,26 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     .ansi_to_html(command.stderr)
     .replace(/\n/g, "<br />");
 
+  const sendKey = api.shell.sendKey.useMutation();
+
   console.log(`command: ${command.command}, id: ${props.listIndex}`);
   console.log(`stdout: ${command.stdout}`);
   console.log(`stderr: ${command.stderr}`);
 
   return (
     <Box>
-      <Accordion expanded={expanded} onChange={handleChange}>
+      <Accordion
+        expanded={expanded}
+        onChange={handleChange}
+        onKeyDown={(e) => {
+          if (!command.isFinished) {
+            sendKey.mutate({
+              pid: command.pid,
+              key: e.key,
+            });
+          }
+        }}
+      >
         <AccordionStyle>
           <AccordionSummary
             expandIcon={
@@ -149,7 +168,8 @@ function ProcessAccordion(props: ProcessAccordionProps) {
             <ResponseStyle>
               <Box sx={colorLine(theme.terminal.infoColor)}>
                 <span>
-                  [{command.startTime}] {command.currentDirectory}
+                  <InfoSpan>[{command.startTime}]</InfoSpan>
+                  {command.currentDirectory}
                 </span>
               </Box>
               <Box sx={colorLine(theme.terminal.stdoutColor)}>
