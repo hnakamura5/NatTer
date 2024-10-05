@@ -13,10 +13,11 @@ function CurrentBar(props: CurrentBarProps) {
   const theme = useTheme();
   const CurrentBarStyle = styled(Box)`
     color: ${theme.terminal.colors.primary};
+    background-color: ${theme.system.colors.secondaryBackground};
     font-family: ${theme.terminal.font};
     font-size: ${theme.terminal.fontSize};
     text-align: left;
-    padding: 3px;
+    padding: 5px 0px 0px 15px ;// top right bottom left
   `;
 
   return (
@@ -27,6 +28,7 @@ function CurrentBar(props: CurrentBarProps) {
     >
       <CurrentBarStyle>
         {api.shell.currentDir.useQuery(props.pid, {
+          refetchInterval: 200,
           onError: (error) => {
             console.log(`currentDir fetch: ${error}`);
           }

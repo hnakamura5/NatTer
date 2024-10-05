@@ -7,7 +7,6 @@ export const PowerShellSpecification: ShellSpecification = {
   name: "PowerShell",
   path: "pwsh",
   pathKind: "win32",
-  homeDirectory: "~",
   //encoding: "Shift_JIS",
   encoding: "UTF-8",
 
@@ -48,7 +47,7 @@ export const PowerShellSpecification: ShellSpecification = {
     if (last === -1) {
       return undefined;
     }
-    const lastButOne = stdout.lastIndexOf(endDetector, last);
+    const lastButOne = stdout.lastIndexOf(endDetector, last - 1);
     if (lastButOne !== -1 && lastButOne !== second && lastButOne !== first) {
       // Extract the exit status until the end detector.
       return stdout.slice(lastButOne + endDetector.length, last);
@@ -56,9 +55,14 @@ export const PowerShellSpecification: ShellSpecification = {
     return undefined;
   },
 
-  isExitCodeOK: (exitCode) => exitCode === "True",
+  isExitCodeOK: (exitCode) => {
+    console.log(`exitCode: ${exitCode}`);
+    return exitCode === "True" || exitCode === "0";
+  },
 
-  currentPathCommand: () => "Convert-Path $(pwd)",
-  changeDirectoryCommand: (dir) => `cd "${dir}"`,
-  listDirectoryCommand: (dir) => `ls "${dir}"`,
+  directoryCommands: {
+    getCurrent: () => "Convert-Path $(pwd)",
+    changeCurrent: (dir) => `cd "${dir}"`,
+    list: (dir) => `ls "${dir}"`,
+  },
 };

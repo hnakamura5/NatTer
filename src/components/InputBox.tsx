@@ -6,7 +6,6 @@ import {
   Tooltip,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
-import MenuIcon from "@mui/icons-material/Menu";
 import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
 
@@ -39,7 +38,8 @@ function InputBox(props: InputBoxProps) {
     font-family: ${theme.terminal.font};
     font-size: ${theme.terminal.fontSize};
     width: calc(100% - ${iconWidth}px);
-    padding-left: 10px;
+    background-color: ${theme.terminal.colors.secondaryBackground};
+    margin-left: 10px;
   `;
 
   const [text, setText] = useState<string>("");
@@ -79,7 +79,7 @@ function InputBox(props: InputBoxProps) {
           />
           <Tooltip title="Run">
             <IconButton onClick={submit}>
-              <SendIcon />
+              <SendIcon sx={{ scale: 0.8 }} />
             </IconButton>
           </Tooltip>
         </Paper>

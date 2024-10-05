@@ -21,7 +21,6 @@ export const ShellSpecificationSchema = z
     name: z.string(),
     path: z.string(),
     pathKind: PathKindSchema,
-    homeDirectory: z.string(),
     encoding: z.string(),
 
     // Command syntax specification.
@@ -67,16 +66,18 @@ export const ShellSpecificationSchema = z
     isExitCodeOK: z.function().args(z.string()).returns(z.boolean()),
 
     // Current directory controls (optional functionality).
-    // Get the current directory from the command response.
-    currentPathCommand: z.function().args().returns(z.string()).optional(),
-    // Change the current directory command.
-    changeDirectoryCommand: z
-      .function()
-      .args(z.string())
-      .returns(z.string())
+    directoryCommands: z
+      .object({
+        // If defined, the shell starts from the directory.
+        defaultHome: z.string().optional(),
+        // Get the current directory from the command response.
+        getCurrent: z.function().args().returns(z.string()),
+        // Change the current directory command.
+        changeCurrent: z.function().args(z.string()).returns(z.string()),
+        // Get the content of the directory.
+        list: z.function().args(z.string()).returns(z.string()),
+      })
       .optional(),
-    // Get the content of the directory.
-    listDirectoryCommand: z.function().args().returns(z.string()).optional(),
   })
   .refine((spec) => {
     // TODO: refine

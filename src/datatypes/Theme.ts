@@ -9,10 +9,10 @@ export const DefaultDarkTheme: Theme = {
     colors: {
       primary: "#EEEEEE",
       secondary: "#9E9E9E",
-      background: "#616161",
-      secondaryBackground: "#212121",
+      background: "#212121",
+      secondaryBackground: "#060606",
     },
-    infoColor: "#FF9800",
+    infoColor: "#3F51B5",
     stdoutColor: "#4CAF50",
     stderrColor: "#F44336",
   },
@@ -22,8 +22,8 @@ export const DefaultDarkTheme: Theme = {
     colors: {
       primary: "#F5F5F5",
       secondary: "#9E9E9E",
-      background: "##212121",
-      secondaryBackground: "#616161",
+      background:  "#060606",
+      secondaryBackground: "#212121",
     },
   },
 };

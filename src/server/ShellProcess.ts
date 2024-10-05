@@ -17,7 +17,6 @@ import path from "node:path";
 
 import { server } from "@/server/tRPCServer";
 import { PowerShellSpecification } from "@/builtin/shell/Powershell";
-import { i } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 
 function pathOf(kind: PathKind): path.PlatformPath {
   if (kind === "win32") {
@@ -55,7 +54,10 @@ export const ProcessIDScheme = z
   });
 export type ProcessID = z.infer<typeof ProcessIDScheme>;
 
-function receiveCommandResponse(process: Process) {
+function receiveCommandResponse(
+  process: Process,
+  onEnd?: (command: Command) => void
+) {
   const current = process.currentCommand;
   // stdout handling.
   process.handle.stdout.removeAllListeners("data");
@@ -80,9 +82,16 @@ function receiveCommandResponse(process: Process) {
       // End of command.
       current.isFinished = true;
       current.exitStatus = exitStatus;
+      current.exitStatusIsOK = process.shellSpec.isExitCodeOK(exitStatus);
       console.log(
         `Finished ${current.command} by status ${current.exitStatus} in process ${process.id}`
       );
+      current.stdoutResponse = getOutputPartOfStdout(current);
+      console.log(`stdoutResponse: ${current.stdoutResponse}`);
+      if (onEnd !== undefined) {
+        console.log(`Call onEnd in process ${process.id}`);
+        onEnd(current);
+      }
     }
   });
   // stderr handling.
@@ -99,6 +108,17 @@ function receiveCommandResponse(process: Process) {
     });
     clockIncrement(process);
   });
+}
+
+function currentSetter(process: Process) {
+  return () => {
+    if (process.shellSpec.directoryCommands !== undefined) {
+      const currentDir = process.shellSpec.directoryCommands.getCurrent();
+      executeCommand(process, currentDir, true, (command) => {
+        process.currentDirectory = command.stdoutResponse;
+      });
+    }
+  };
 }
 
 function startProcess(shell: string, args: string[]): ProcessID {
@@ -119,7 +139,7 @@ function startProcess(shell: string, args: string[]): ProcessID {
     shellSpec: shellSpec,
     shellArgs: args,
     currentCommand: emptyCommand(),
-    currentDirectory: shellSpec.homeDirectory,
+    currentDirectory: "",
     clock: 0,
   };
   processHolder.push(process);
@@ -127,20 +147,14 @@ function startProcess(shell: string, args: string[]): ProcessID {
   console.log(`Started process ${pid} with ${shellSpec.path}`);
   // First execute move to home command and wait for wake up.
   const exactCommand = process.shellSpec.extendCommandWithEndDetector("");
-  process.currentCommand = {
-    command: shellSpec.path + args.join(" "),
-    exactCommand: exactCommand.newCommand,
-    currentDirectory: shellSpec.homeDirectory,
-    startTime: new Date().toISOString(),
-    clock: 0,
-    isFinished: false,
-    stdout: "",
-    stderr: "",
-    timeline: [],
-    endDetector: exactCommand.endDetector,
-  };
-  commandsOfProcessID[pid].push(process.currentCommand);
-  receiveCommandResponse(process);
+  process.currentCommand = emptyCommand();
+  const current = process.currentCommand;
+  current.command = shellSpec.path + args.join(" ");
+  current.exactCommand = exactCommand.newCommand;
+  current.endDetector = exactCommand.endDetector;
+  // Memorize as a command.
+  commandsOfProcessID[pid].push(current);
+  receiveCommandResponse(process, currentSetter(process));
   process.handle.stdin.write(exactCommand.newCommand + "\n");
   console.log(`Started process ${pid} with command ${exactCommand.newCommand}`);
   return pid;
@@ -150,7 +164,12 @@ function getStringFromResponseData(process: Process, data: Buffer): string {
   return iconv.decode(data, process.shellSpec.encoding);
 }
 
-function executeCommand(process: Process, command: string, isSilent: boolean) {
+function executeCommand(
+  process: Process,
+  command: string,
+  isSilent: boolean,
+  onEnd?: (command: Command) => void
+): Command {
   // The command including the end detector.
   const encoded = iconv.encode(command, process.shellSpec.encoding);
   const exactCommand = process.shellSpec.extendCommandWithEndDetector(
@@ -160,23 +179,17 @@ function executeCommand(process: Process, command: string, isSilent: boolean) {
     `Execute command ${command} (exact: ${exactCommand.newCommand}) in process ${process.id}`
   );
   // Set new current command.
-  process.currentCommand = {
-    command: command,
-    exactCommand: exactCommand.newCommand,
-    currentDirectory: process.currentDirectory,
-    startTime: new Date().toISOString(),
-    clock: 0,
-    isFinished: false,
-    stdout: "",
-    stderr: "",
-    timeline: [],
-    endDetector: exactCommand.endDetector,
-  };
+  process.currentCommand = emptyCommand();
+  const current = process.currentCommand;
+  current.command = command;
+  current.exactCommand = exactCommand.newCommand;
+  current.currentDirectory = process.currentDirectory;
+  current.endDetector = exactCommand.endDetector;
   if (!isSilent) {
     commandsOfProcessID[process.id].push(process.currentCommand);
   }
   clockIncrement(process);
-  receiveCommandResponse(process);
+  receiveCommandResponse(process, onEnd);
   // Execute the command.
   process.handle.stdin.write(exactCommand.newCommand + "\n");
   console.log(`Executed command ${command} in process ${process.id}`);
@@ -233,10 +246,12 @@ export const shellRouter = server.router({
     .output(CommandSchema)
     .mutation(async (opts) => {
       const { pid, command, isSilent } = opts.input;
+      const process = processHolder[pid];
       return executeCommand(
-        processHolder[pid],
+        process,
         command,
-        isSilent ? true : false
+        isSilent ? true : false,
+        currentSetter(process)
       );
     }),
   // Send a key to current command of the shell process.

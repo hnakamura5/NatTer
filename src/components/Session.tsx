@@ -14,7 +14,7 @@ function Session(props: SessionProps) {
     onError: (error) => {
       console.log(`commands fetch: ${error}`);
     },
-    refetchInterval: 100,
+    refetchInterval: 200,
   });
   if (!commands.data) {
     return <Box>Loading...</Box>;

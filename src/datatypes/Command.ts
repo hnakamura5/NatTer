@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export const CommandSchema = z.object({
@@ -18,6 +17,8 @@ export const CommandSchema = z.object({
     })
   ),
   exitStatus: z.string().optional(),
+  exitStatusIsOK: z.boolean().optional(),
+  stdoutResponse: z.string(),
   endDetector: z.string(),
 });
 export type Command = z.infer<typeof CommandSchema>;
@@ -27,19 +28,25 @@ export function emptyCommand(): Command {
     command: "",
     exactCommand: "",
     currentDirectory: "",
-    startTime: "",
+    startTime: new Date().toLocaleString(),
     clock: 0,
-    isFinished: true,
+    isFinished: false,
     stdout: "",
     stderr: "",
     timeline: [],
     exitStatus: undefined,
+    exitStatusIsOK: undefined,
+    stdoutResponse: "",
     endDetector: "",
   };
 }
 
 export function getOutputPartOfStdout(command: Command): string {
-  const result = command.stdout.slice(command.exactCommand.length);
+  const result = command.stdout.slice(
+    command.stdout.indexOf(command.exactCommand) +
+      command.exactCommand.length +
+      1
+  );
   if (command.isFinished) {
     return result.slice(0, result.indexOf(command.endDetector));
   }

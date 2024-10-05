@@ -5,6 +5,7 @@ import { ThemeContext, DefaultDarkTheme } from "@/datatypes/Theme";
 import { useState } from "react";
 import { ipcLink } from "electron-trpc/renderer";
 import { api } from "@/api";
+import { Box } from "@mui/system";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -19,7 +20,13 @@ function App() {
     <api.Provider client={trpcAPIClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <ThemeContext.Provider value={theme}>
-          <SessionContainer />
+          <Box
+            sx={{
+              backgroundColor: theme.system.colors.background,
+            }}
+          >
+            <SessionContainer />
+          </Box>
         </ThemeContext.Provider>
       </QueryClientProvider>
     </api.Provider>
