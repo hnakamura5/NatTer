@@ -10,9 +10,9 @@ interface SessionProps {
 }
 
 function Session(props: SessionProps) {
-  // TODO: Placeholder for now.
-  // Mechanism to scroll to the bottom of the session.
+  // Length is used as the trigger of the event of submitting new command.
   const [length, setLength] = useState<number>(0);
+  // Mechanism to scroll to the bottom of the session.
   const bottom = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (bottom.current) {
@@ -55,7 +55,7 @@ function Session(props: SessionProps) {
     >
       <Box
         sx={{
-          maxHeight: "calc(100vh - 100px)",
+          maxHeight: "calc(100vh - 70px)", // TODO: calculate using actual height.
           overflow: "auto",
         }}
       >

@@ -21,6 +21,7 @@ declare module '@emotion/react' {
     system: {
       font: string
       colors: Colors
+      focusedFrameColor: string
     }
   }
 }

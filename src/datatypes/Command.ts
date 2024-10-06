@@ -1,9 +1,12 @@
+import { styled } from "@mui/material";
 import { z } from "zod";
 
 export const CommandSchema = z.object({
-  pid: z.number().int().min(0),
+  pid: z.number().int().min(0), // Process ID
+  cid: z.number().int().min(-1), // Command ID (-1 is silent command)
   command: z.string(),
   exactCommand: z.string(),
+  styledCommand: z.string().optional(),
   currentDirectory: z.string(),
   startTime: z.string(),
   clock: z.number().int().min(0),
@@ -24,11 +27,13 @@ export const CommandSchema = z.object({
 });
 export type Command = z.infer<typeof CommandSchema>;
 
-export function emptyCommand(pid: number): Command {
+export function emptyCommand(pid: number, cid:number): Command {
   return {
     command: "",
     pid: pid,
+    cid: cid,
     exactCommand: "",
+    styledCommand: undefined,
     currentDirectory: "",
     startTime: new Date().toLocaleString(),
     clock: 0,
@@ -53,4 +58,12 @@ export function getOutputPartOfStdout(command: Command): string {
     return result.slice(0, result.indexOf(command.endDetector));
   }
   return result;
+}
+
+export function summarizeCommand(command: Command): string {
+  let result = command.command;
+  if (result.length > 20) {
+    result = result.slice(0, 20) + "...";
+  }
+  return result.replace(/\n/g, " ");
 }

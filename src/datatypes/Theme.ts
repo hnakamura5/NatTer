@@ -25,6 +25,7 @@ export const DefaultDarkTheme: Theme = {
       background:  "#060606",
       secondaryBackground: "#212121",
     },
+    focusedFrameColor: "#2196F3"
   },
 };
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -12,7 +12,13 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { Box } from "@mui/system";
 import { useTheme } from "@/datatypes/Theme";
 import { api } from "@/api";
-import { Command, getOutputPartOfStdout } from "@/datatypes/Command";
+import {
+  Command,
+  getOutputPartOfStdout,
+  summarizeCommand,
+} from "@/datatypes/Command";
+import { ErrorBoundary } from "react-error-boundary";
+import FocusBoundary from "../FocusBoundary";
 
 import styled from "@emotion/styled";
 
@@ -86,6 +92,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded);
   };
+  const Response = useRef<HTMLDivElement>(null);
 
   const statusIcon = (command: Command) => {
     if (command.exitStatusIsOK === undefined) {
@@ -134,11 +141,10 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   console.log(`stderr: ${command.stderr}`);
 
   return (
-    <Box>
-      <Accordion
-        expanded={expanded}
-        onChange={handleChange}
+    <ErrorBoundary fallbackRender={() => <Box>ProcessAccordion error.</Box>}>
+      <FocusBoundary
         onKeyDown={(e) => {
+          console.log(`key: ${e.key}`);
           if (!command.isFinished) {
             sendKey.mutate({
               pid: command.pid,
@@ -147,50 +153,60 @@ function ProcessAccordion(props: ProcessAccordionProps) {
           }
         }}
       >
-        <AccordionStyle>
-          <AccordionSummary
-            expandIcon={
-              <ExpandMoreIcon
-                sx={{
-                  color: theme.terminal.colors.primary,
-                  margin: -1,
-                }}
-              />
-            }
-            sx={CommandInternalPadding}
-          >
-            {statusIcon(command)}
-            <CommandStyle>{command.command}</CommandStyle>
-          </AccordionSummary>
-        </AccordionStyle>
-        <AccordionStyle>
-          <AccordionDetails sx={ResponseInternalPadding}>
-            <ResponseStyle>
-              <Box sx={colorLine(theme.terminal.infoColor)}>
-                <span>
-                  <InfoSpan>[{command.startTime}]</InfoSpan>
-                  {command.currentDirectory}
-                </span>
-              </Box>
-              <Box sx={colorLine(theme.terminal.stdoutColor)}>
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: stdoutHTML,
+        <Accordion expanded={expanded} onChange={handleChange}>
+          <AccordionStyle>
+            <AccordionSummary
+              expandIcon={
+                <ExpandMoreIcon
+                  sx={{
+                    color: theme.terminal.colors.primary,
+                    margin: -1,
                   }}
                 />
-              </Box>
-              <Box sx={colorLine(theme.terminal.stderrColor)}>
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: stderrHTML,
-                  }}
-                />
-              </Box>
-            </ResponseStyle>
-          </AccordionDetails>
-        </AccordionStyle>
-      </Accordion>
-    </Box>
+              }
+              sx={CommandInternalPadding}
+            >
+              {statusIcon(command)}
+              <CommandStyle>
+                <span>{summarizeCommand(command)}</span>
+              </CommandStyle>
+            </AccordionSummary>
+          </AccordionStyle>
+          <AccordionStyle>
+            <AccordionDetails sx={ResponseInternalPadding}>
+              <ResponseStyle>
+                <Box sx={colorLine(theme.terminal.infoColor)} ref={Response}>
+                  <span>
+                    <InfoSpan>[{command.startTime}]</InfoSpan>
+                    {command.currentDirectory}
+                    <br />
+                    <span>
+                      {command.styledCommand
+                        ? command.styledCommand
+                        : command.command}
+                    </span>
+                  </span>
+                </Box>
+                <Box sx={colorLine(theme.terminal.stdoutColor)}>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: stdoutHTML,
+                    }}
+                  />
+                </Box>
+                <Box sx={colorLine(theme.terminal.stderrColor)}>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: stderrHTML,
+                    }}
+                  />
+                </Box>
+              </ResponseStyle>
+            </AccordionDetails>
+          </AccordionStyle>
+        </Accordion>
+      </FocusBoundary>
+    </ErrorBoundary>
   );
 }
 

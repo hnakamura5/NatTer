@@ -114,7 +114,7 @@ function currentSetter(process: Process) {
   return () => {
     if (process.shellSpec.directoryCommands !== undefined) {
       const currentDir = process.shellSpec.directoryCommands.getCurrent();
-      executeCommand(process, currentDir, true, (command) => {
+      executeCommand(process, currentDir, true, undefined, (command) => {
         process.currentDirectory = command.stdoutResponse;
       });
     }
@@ -138,7 +138,7 @@ function startProcess(shell: string, args: string[]): ProcessID {
     handle: proc,
     shellSpec: shellSpec,
     shellArgs: args,
-    currentCommand: emptyCommand(pid),
+    currentCommand: emptyCommand(pid, -1),
     currentDirectory: "",
     clock: 0,
   };
@@ -147,7 +147,10 @@ function startProcess(shell: string, args: string[]): ProcessID {
   console.log(`Started process ${pid} with ${shellSpec.path}`);
   // First execute move to home command and wait for wake up.
   const exactCommand = process.shellSpec.extendCommandWithEndDetector("");
-  process.currentCommand = emptyCommand(pid);
+  process.currentCommand = emptyCommand(
+    pid,
+    commandsOfProcessID[process.id].length
+  );
   const current = process.currentCommand;
   current.command = shellSpec.path + args.join(" ");
   current.exactCommand = exactCommand.newCommand;
@@ -168,6 +171,7 @@ function executeCommand(
   process: Process,
   command: string,
   isSilent: boolean,
+  styledCommand?: string,
   onEnd?: (command: Command) => void
 ): Command {
   // The command including the end detector.
@@ -179,12 +183,16 @@ function executeCommand(
     `Execute command ${command} (exact: ${exactCommand.newCommand}) in process ${process.id}`
   );
   // Set new current command.
-  process.currentCommand = emptyCommand(process.id);
+  process.currentCommand = emptyCommand(
+    process.id,
+    isSilent ? -1 : commandsOfProcessID[process.id].length
+  );
   const current = process.currentCommand;
   current.command = command;
   current.exactCommand = exactCommand.newCommand;
   current.currentDirectory = process.currentDirectory;
   current.endDetector = exactCommand.endDetector;
+  current.styledCommand = styledCommand;
   if (!isSilent) {
     commandsOfProcessID[process.id].push(process.currentCommand);
   }
@@ -235,6 +243,7 @@ export const shellRouter = server.router({
           pid: ProcessIDScheme,
           command: z.string(),
           isSilent: z.boolean().optional(),
+          styledCommand: z.string().optional(),
         })
         .refine((value) => {
           return isCommandClosed(
@@ -245,12 +254,13 @@ export const shellRouter = server.router({
     )
     .output(CommandSchema)
     .mutation(async (opts) => {
-      const { pid, command, isSilent } = opts.input;
+      const { pid, command, isSilent, styledCommand } = opts.input;
       const process = processHolder[pid];
       return executeCommand(
         process,
         command,
         isSilent ? true : false,
+        styledCommand,
         currentSetter(process)
       );
     }),

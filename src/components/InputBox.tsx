@@ -13,6 +13,8 @@ import { api } from "@/api";
 import { ProcessID } from "@/server/ShellProcess";
 import { useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
+import FocusBoundary from "./FocusBoundary";
+import React from "react";
 
 interface InputBoxProps {
   pid: ProcessID;
@@ -44,6 +46,7 @@ function InputBox(props: InputBoxProps) {
 
   const [text, setText] = useState<string>("");
   const send = api.shell.execute.useMutation();
+  const inputBox = React.createRef<HTMLInputElement>();
 
   const submit = () => {
     send.mutate(
@@ -63,9 +66,10 @@ function InputBox(props: InputBoxProps) {
         return <Box>InputBox load error.</Box>;
       }}
     >
-      <Box>
+      <FocusBoundary>
         <Paper>
           <InputBase
+            ref={inputBox}
             value={text}
             autoFocus={true}
             onChange={(e) => {
@@ -83,7 +87,7 @@ function InputBox(props: InputBoxProps) {
             </IconButton>
           </Tooltip>
         </Paper>
-      </Box>
+      </FocusBoundary>
     </ErrorBoundary>
   );
 }
