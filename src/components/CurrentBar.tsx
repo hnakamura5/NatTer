@@ -17,25 +17,24 @@ function CurrentBar(props: CurrentBarProps) {
     font-family: ${theme.terminal.font};
     font-size: ${theme.terminal.fontSize};
     text-align: left;
-    padding: 5px 0px 0px 15px ;// top right bottom left
+    padding: 5px 0px 0px 15px; // top right bottom left
   `;
+  const currentDir = api.shell.currentDir.useQuery(props.pid, {
+    refetchInterval: 200,
+    onError: (error) => {
+      console.log(`currentDir fetch: ${error}`);
+    },
+  });
 
   return (
-    <ErrorBoundary
-      fallbackRender={() => {
-        return <Box>CurrentBar load error</Box>;
-      }}
-    >
-      <CurrentBarStyle>
-        {api.shell.currentDir.useQuery(props.pid, {
-          refetchInterval: 200,
-          onError: (error) => {
-            console.log(`currentDir fetch: ${error}`);
-          }
-        }).data}
-      </CurrentBarStyle>
+    <ErrorBoundary fallbackRender={CurrentBarError}>
+      <CurrentBarStyle>{currentDir.data}</CurrentBarStyle>
     </ErrorBoundary>
   );
+}
+
+function CurrentBarError() {
+  return <Box>CurrentBar load error</Box>;
 }
 
 export default CurrentBar;

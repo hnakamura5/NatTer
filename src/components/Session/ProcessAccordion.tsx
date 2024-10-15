@@ -1,10 +1,5 @@
-import { useRef, useState } from "react";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Icon,
-} from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import LoopICon from "@mui/icons-material/Loop";
@@ -19,10 +14,13 @@ import {
 } from "@/datatypes/Command";
 import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "../FocusBoundary";
+import { EasyFocus } from "@/components/EasyFocus";
 
 import styled from "@emotion/styled";
 
 import { AnsiUp } from "ansi-up";
+import { GlobalFocusMap } from "../GlobalFocusMap";
+import { Theme } from "@emotion/react";
 
 // The original implementation of ansi_up.js does not escape the space.
 // We fix this by force overriding the doEscape method.
@@ -36,9 +34,38 @@ import { AnsiUp } from "ansi-up";
   });
 };
 
+function statusIcon(command: Command, theme: Theme) {
+  if (command.exitStatusIsOK === undefined) {
+    return <LoopICon sx={{ scale: 0.7, marginTop: -0.2, marginLeft: -0.8 }} />;
+  }
+  if (command.exitStatusIsOK) {
+    return (
+      <CheckCircleOutlineIcon
+        sx={{
+          color: theme.terminal.stdoutColor,
+          scale: 0.7,
+          marginTop: -0.2,
+          marginLeft: -0.8,
+        }}
+      />
+    );
+  }
+  return (
+    <ErrorOutlineIcon
+      sx={{
+        color: theme.terminal.stderrColor,
+        scale: 0.7,
+        marginTop: -0.2,
+        marginLeft: -0.8,
+      }}
+    />
+  );
+}
+
 interface ProcessAccordionProps {
   command: Command;
   listIndex: number;
+  isLast?: boolean;
 }
 
 function ProcessAccordion(props: ProcessAccordionProps) {
@@ -92,40 +119,25 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded);
   };
-  const Response = useRef<HTMLDivElement>(null);
 
-  const statusIcon = (command: Command) => {
-    if (command.exitStatusIsOK === undefined) {
-      return (
-        <LoopICon sx={{ scale: 0.7, marginTop: -0.2, marginLeft: -0.8 }} />
-      );
+  const command = props.command;
+  // Focus control.
+  const handleGFM = GlobalFocusMap.useHandle();
+  useEffect(() => {
+    if (
+      props.isLast &&
+      command.isFinished &&
+      handleGFM.isFocused(GlobalFocusMap.Key.LastCommand)
+    ) {
+      // If this is the last command and focused,
+      // focus back to the input box on finish.
+      handleGFM.focus(GlobalFocusMap.Key.InputBox);
     }
-    if (command.exitStatusIsOK) {
-      return (
-        <CheckCircleOutlineIcon
-          sx={{
-            color: theme.terminal.stdoutColor,
-            scale: 0.7,
-            marginTop: -0.2,
-            marginLeft: -0.8,
-          }}
-        />
-      );
-    }
-    return (
-      <ErrorOutlineIcon
-        sx={{
-          color: theme.terminal.stderrColor,
-          scale: 0.7,
-          marginTop: -0.2,
-          marginLeft: -0.8,
-        }}
-      />
-    );
-  };
+  }, [command, props.isLast]);
+
+  const focalPoint = useRef<HTMLDivElement>(null);
 
   // Convert stdout and stderr to HTML.
-  const command = props.command;
   const ansiUp = new AnsiUp();
   const stdoutHTML = ansiUp
     .ansi_to_html(getOutputPartOfStdout(command))
@@ -136,12 +148,12 @@ function ProcessAccordion(props: ProcessAccordionProps) {
 
   const sendKey = api.shell.sendKey.useMutation();
 
-  console.log(`command: ${command.command}, id: ${props.listIndex}`);
-  console.log(`stdout: ${command.stdout}`);
-  console.log(`stderr: ${command.stderr}`);
+  //TODO: console.log(`command: ${command.command}, id: ${props.listIndex}`);
+  //TODO: console.log(`stdout: ${command.stdout}`);
+  //TODO: console.log(`stderr: ${command.stderr}`);
 
   return (
-    <ErrorBoundary fallbackRender={() => <Box>ProcessAccordion error.</Box>}>
+    <ErrorBoundary fallbackRender={ProcessAccordionError}>
       <FocusBoundary
         onKeyDown={(e) => {
           console.log(`key: ${e.key}`);
@@ -153,61 +165,80 @@ function ProcessAccordion(props: ProcessAccordionProps) {
           }
         }}
       >
-        <Accordion expanded={expanded} onChange={handleChange}>
-          <AccordionStyle>
-            <AccordionSummary
-              expandIcon={
-                <ExpandMoreIcon
-                  sx={{
-                    color: theme.terminal.colors.primary,
-                    margin: -1,
-                  }}
-                />
-              }
-              sx={CommandInternalPadding}
+        <EasyFocus.Land focusTarget={focalPoint}>
+          <GlobalFocusMap.Target
+            focusKey={GlobalFocusMap.Key.LastCommand}
+            target={props.isLast ? focalPoint : undefined}
+          >
+            <Accordion
+              expanded={expanded}
+              onChange={handleChange}
+              sx={{
+                margin: "0px !important", //TODO: better way?
+              }}
             >
-              {statusIcon(command)}
-              <CommandStyle>
-                <span>{summarizeCommand(command)}</span>
-              </CommandStyle>
-            </AccordionSummary>
-          </AccordionStyle>
-          <AccordionStyle>
-            <AccordionDetails sx={ResponseInternalPadding}>
-              <ResponseStyle>
-                <Box sx={colorLine(theme.terminal.infoColor)} ref={Response}>
-                  <span>
-                    <InfoSpan>[{command.startTime}]</InfoSpan>
-                    {command.currentDirectory}
-                    <br />
-                    <span>
-                      {command.styledCommand
-                        ? command.styledCommand
-                        : command.command}
-                    </span>
-                  </span>
-                </Box>
-                <Box sx={colorLine(theme.terminal.stdoutColor)}>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: stdoutHTML,
-                    }}
-                  />
-                </Box>
-                <Box sx={colorLine(theme.terminal.stderrColor)}>
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: stderrHTML,
-                    }}
-                  />
-                </Box>
-              </ResponseStyle>
-            </AccordionDetails>
-          </AccordionStyle>
-        </Accordion>
+              <AccordionStyle>
+                <AccordionSummary
+                  expandIcon={
+                    <ExpandMoreIcon
+                      sx={{
+                        color: theme.terminal.colors.primary,
+                        margin: -1,
+                      }}
+                    />
+                  }
+                  sx={CommandInternalPadding}
+                >
+                  {statusIcon(command, theme)}
+                  <CommandStyle>
+                    <span>{summarizeCommand(command)}</span>
+                  </CommandStyle>
+                </AccordionSummary>
+              </AccordionStyle>
+              <AccordionStyle>
+                <AccordionDetails sx={ResponseInternalPadding}>
+                  <ResponseStyle>
+                    <div ref={focalPoint} tabIndex={0}>
+                      <Box sx={colorLine(theme.terminal.infoColor)}>
+                        <span>
+                          <InfoSpan>[{command.startTime}]</InfoSpan>
+                          {command.currentDirectory}
+                          <br />
+                          <span>
+                            {command.styledCommand
+                              ? command.styledCommand
+                              : command.command}
+                          </span>
+                        </span>
+                      </Box>
+                      <Box sx={colorLine(theme.terminal.stdoutColor)}>
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: stdoutHTML,
+                          }}
+                        />
+                      </Box>
+                      <Box sx={colorLine(theme.terminal.stderrColor)}>
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: stderrHTML,
+                          }}
+                        />
+                      </Box>
+                    </div>
+                  </ResponseStyle>
+                </AccordionDetails>
+              </AccordionStyle>
+            </Accordion>
+          </GlobalFocusMap.Target>
+        </EasyFocus.Land>
       </FocusBoundary>
     </ErrorBoundary>
   );
+}
+
+function ProcessAccordionError() {
+  return <Box>ProcessAccordion load error.</Box>;
 }
 
 export default ProcessAccordion;

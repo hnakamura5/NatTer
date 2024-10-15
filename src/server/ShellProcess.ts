@@ -66,7 +66,7 @@ function receiveCommandResponse(
       return;
     }
     const response = getStringFromResponseData(process, data);
-    console.log(`stdout: ${response}`);
+    // TODO: console.log(`stdout: ${response}`);
     current.stdout = current.stdout + response;
     current.timeline.push({
       response: response,
@@ -87,7 +87,7 @@ function receiveCommandResponse(
         `Finished ${current.command} by status ${current.exitStatus} in process ${process.id}`
       );
       current.stdoutResponse = getOutputPartOfStdout(current);
-      console.log(`stdoutResponse: ${current.stdoutResponse}`);
+      // TODO: console.log(`stdoutResponse: ${current.stdoutResponse}`);
       if (onEnd !== undefined) {
         console.log(`Call onEnd in process ${process.id}`);
         onEnd(current);
@@ -127,7 +127,7 @@ function startProcess(shell: string, args: string[]): ProcessID {
     // TODO: Error handling.
     throw new Error(`Shell ${shell} is not supported.`);
   }
-  if (processHolder.length > 10) {
+  if (processHolder.length > 100) {
     throw new Error("Too many processes. This is for debugging.");
   }
   const proc = spawn(shellSpec.path, args);

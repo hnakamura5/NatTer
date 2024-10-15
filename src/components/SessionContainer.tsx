@@ -10,6 +10,9 @@ import CurrentBar from "@/components/CurrentBar";
 import { api } from "@/api";
 import { ProcessID } from "@/server/ShellProcess";
 import { ErrorBoundary } from "react-error-boundary";
+import { EasyFocus } from "@/components/EasyFocus";
+import { useTheme } from "@/datatypes/Theme";
+import { GlobalFocusMap } from "./GlobalFocusMap";
 
 const VerticalBox = styled(Box)`
   display: flex;
@@ -41,6 +44,7 @@ const FullWidthBox = styled(Box)`
 interface SessionContainerProps {}
 
 function SessionContainer(props: SessionContainerProps) {
+  const theme = useTheme();
   const [pid, setPid] = useState<ProcessID | undefined>(undefined);
   const starter = api.shell.start.useMutation();
   const stopper = api.shell.stop.useMutation();
@@ -75,24 +79,42 @@ function SessionContainer(props: SessionContainerProps) {
     return <Box>Loading...</Box>;
   } else {
     return (
-      <ErrorBoundary
-        fallbackRender={() => <Box>SessionContainer load error.</Box>}
-      >
-        <VerticalBox>
-          <HoverMenusBar pid={pid} />
-          <HorizontalBox>
-            <FromBottomBox>
-              <FullWidthBox>
-                <Session pid={pid} />
-                <CurrentBar pid={pid} />
-                <InputBox pid={pid} />
-              </FullWidthBox>
-            </FromBottomBox>
-          </HorizontalBox>
-        </VerticalBox>
+      <ErrorBoundary fallbackRender={SessionContainerError}>
+        <EasyFocus.Provider
+          jumpKey={(e) => {
+            return e.ctrlKey && e.key === "j";
+          }}
+          exitKey={(e) => {
+            return e.key === "Escape";
+          }}
+          badgeStyle={{
+            inputtedTagTextColor: "#FF5722",
+            backgroundColor: "#1A237E",
+            boundaryColor: theme.system.focusedFrameColor,
+          }}
+        >
+          <GlobalFocusMap.Provider>
+            <VerticalBox>
+              <HoverMenusBar pid={pid} />
+              <HorizontalBox>
+                <FromBottomBox>
+                  <FullWidthBox>
+                    <Session pid={pid} />
+                    <CurrentBar pid={pid} />
+                    <InputBox pid={pid} />
+                  </FullWidthBox>
+                </FromBottomBox>
+              </HorizontalBox>
+            </VerticalBox>
+          </GlobalFocusMap.Provider>
+        </EasyFocus.Provider>
       </ErrorBoundary>
     );
   }
+}
+
+function SessionContainerError() {
+  return <Box>SessionContainer load error.</Box>;
 }
 
 export default SessionContainer;

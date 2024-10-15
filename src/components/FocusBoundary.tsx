@@ -1,4 +1,5 @@
 import { useTheme } from "@/datatypes/Theme";
+import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import React from "react";
 
@@ -20,6 +21,12 @@ export default function FocusBoundary(
       border: 2px solid ${theme.system.focusedFrameColor};
     }
   `;
+  const FocusCSS = css`
+    :focus-within {
+      outline: none;
+      border: 2px solid ${theme.system.focusedFrameColor};
+    }
+    `
   return (
     <FocusBoundaryStyle tabIndex={0} {...others}>
       {children}

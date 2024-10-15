@@ -4,6 +4,7 @@ import { ProcessID } from "@/server/ShellProcess";
 import { Box } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
 import { useEffect, useRef, useState } from "react";
+import { GlobalFocusMap } from "./GlobalFocusMap";
 
 interface SessionProps {
   pid: ProcessID;
@@ -14,10 +15,12 @@ function Session(props: SessionProps) {
   const [length, setLength] = useState<number>(0);
   // Mechanism to scroll to the bottom of the session.
   const bottom = useRef<HTMLDivElement>(null);
+  const handleGFM = GlobalFocusMap.useHandle();
+  // Effect on the length change.
   useEffect(() => {
-    if (bottom.current) {
-      bottom.current.scrollIntoView({ behavior: "smooth" });
-    }
+    handleGFM.focus(GlobalFocusMap.Key.LastCommand);
+    // Scroll to the bottom.
+    bottom.current?.scrollIntoView({ behavior: "smooth" });
   }, [length]);
 
   // Fetching commands.
@@ -43,16 +46,13 @@ function Session(props: SessionProps) {
         command={command}
         key={command.clock}
         listIndex={index}
+        isLast={index === commands.data.length - 1}
       />
     );
   });
 
   return (
-    <ErrorBoundary
-      fallbackRender={() => {
-        return <Box>Session load error.</Box>;
-      }}
-    >
+    <ErrorBoundary fallbackRender={SessionError}>
       <Box
         sx={{
           maxHeight: "calc(100vh - 70px)", // TODO: calculate using actual height.
@@ -64,6 +64,10 @@ function Session(props: SessionProps) {
       </Box>
     </ErrorBoundary>
   );
+}
+
+function SessionError() {
+  return <Box>Session load error.</Box>;
 }
 
 export default Session;
