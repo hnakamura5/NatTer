@@ -5,6 +5,9 @@ import { ProcessID } from "@/server/ShellProcess";
 import { api } from "@/api";
 import { ErrorBoundary } from "react-error-boundary";
 
+import { FaFolderOpen as FolderIcon } from "react-icons/fa";
+import { FaUserEdit } from "react-icons/fa";
+
 interface CurrentBarProps {
   pid: ProcessID;
 }
@@ -17,9 +20,18 @@ function CurrentBar(props: CurrentBarProps) {
     font-family: ${theme.terminal.font};
     font-size: ${theme.terminal.fontSize};
     text-align: left;
-    padding: 5px 0px 0px 5px; // top right bottom left
+    padding: 5px 0px 1px 5px; // top right bottom left
   `;
-  const currentDir = api.shell.currentDir.useQuery(props.pid, {
+  const CurrentDirStyle = styled.span`
+    color: ${theme.terminal.currentDirColor};
+  `;
+  const UserStyle = styled.span`
+    color: ${theme.terminal.userColor};
+    float: right;
+    margin-right: 15px;
+  `;
+
+  const current = api.shell.current.useQuery(props.pid, {
     refetchInterval: 200,
     onError: (error) => {
       console.log(`currentDir fetch: ${error}`);
@@ -28,7 +40,16 @@ function CurrentBar(props: CurrentBarProps) {
 
   return (
     <ErrorBoundary fallbackRender={CurrentBarError}>
-      <CurrentBarStyle>{currentDir.data}</CurrentBarStyle>
+      <CurrentBarStyle>
+        <span>
+          <CurrentDirStyle>
+            <FolderIcon /> {current.data?.directory}
+          </CurrentDirStyle>
+          <UserStyle>
+            <FaUserEdit /> {current.data?.user}
+          </UserStyle>
+        </span>
+      </CurrentBarStyle>
     </ErrorBoundary>
   );
 }

@@ -93,8 +93,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     padding-left: 0px;
   `;
   const ResponseStyle = styled(Box)`
-    width: 100%;
-    margin-right: 10px;
+    width: calc(100% + 15px);
     margin-left: -10px;
     background-color: ${theme.terminal.colors.secondaryBackground};
     padding-bottom: 5px;
@@ -116,6 +115,14 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       paddingLeft: 1,
     };
   };
+  const CurrentDirStyle = styled.span`
+    color: ${theme.terminal.currentDirColor};
+  `;
+  const UserStyle = styled.span`
+    color: ${theme.terminal.userColor};
+    float: right;
+    margin-right: 10px;
+  `;
   const InfoSpan = styled.span`
     background-color: ${theme.terminal.infoColor};
     style: bold;
@@ -209,7 +216,10 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                       <Box sx={colorLine(theme.terminal.infoColor)}>
                         <span>
                           <InfoSpan>[{command.startTime}]</InfoSpan>
-                          {command.currentDirectory}
+                          <CurrentDirStyle>
+                            {command.currentDirectory}
+                          </CurrentDirStyle>
+                          <UserStyle>{command.user}</UserStyle>
                           <br />
                           <span>
                             {command.styledCommand

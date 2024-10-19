@@ -18,6 +18,7 @@ export default function FocusBoundary(
   const FocusBoundaryStyle = styled.div`
     :focus-within {
       outline: none;
+      box-sizing: border-box;
       border: 2px solid ${theme.system.focusedFrameColor};
     }
   `;

@@ -64,5 +64,6 @@ export const PowerShellSpecification: ShellSpecification = {
     getCurrent: () => "Convert-Path $(pwd)",
     changeCurrent: (dir) => `cd "${dir}"`,
     list: (dir) => `ls "${dir}"`,
+    getUser: () => "whoami",
   },
 };

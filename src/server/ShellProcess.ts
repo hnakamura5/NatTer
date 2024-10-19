@@ -35,6 +35,7 @@ type Process = {
   shellArgs: string[];
   currentCommand: Command;
   currentDirectory: string;
+  user: string;
   clock: number;
 };
 const processHolder: Process[] = [];
@@ -110,12 +111,17 @@ function receiveCommandResponse(
   });
 }
 
+// Re-set the current directory after the command.
 function currentSetter(process: Process) {
   return () => {
     if (process.shellSpec.directoryCommands !== undefined) {
       const currentDir = process.shellSpec.directoryCommands.getCurrent();
+      const getUser = process.shellSpec.directoryCommands.getUser();
       executeCommand(process, currentDir, true, undefined, (command) => {
         process.currentDirectory = command.stdoutResponse;
+        executeCommand(process, getUser, true, undefined, (command) => {
+          process.user = command.stdoutResponse;
+        });
       });
     }
   };
@@ -140,6 +146,7 @@ function startProcess(shell: string, args: string[]): ProcessID {
     shellArgs: args,
     currentCommand: emptyCommand(pid, -1),
     currentDirectory: "",
+    user: "",
     clock: 0,
   };
   processHolder.push(process);
@@ -191,6 +198,7 @@ function executeCommand(
   current.command = command;
   current.exactCommand = exactCommand.newCommand;
   current.currentDirectory = process.currentDirectory;
+  current.user = process.user;
   current.endDetector = exactCommand.endDetector;
   current.styledCommand = styledCommand;
   if (!isSilent) {
@@ -338,11 +346,14 @@ export const shellRouter = server.router({
     .query(async (pid) => {
       return processHolder[pid.input].shellSpec;
     }),
-  currentDir: proc
+  current: proc
     .input(ProcessIDScheme)
-    .output(z.string())
+    .output(z.object({ directory: z.string(), user: z.string() }))
     .query(async (pid) => {
-      return processHolder[pid.input].currentDirectory;
+      return {
+        directory: processHolder[pid.input].currentDirectory,
+        user: processHolder[pid.input].user,
+      };
     }),
   commands: proc
     .input(ProcessIDScheme)

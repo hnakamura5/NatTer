@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { set } from "zod";
-import { useVisibility } from "./Visibility";
 
 type FocusTagType = { input: string; rest: string } | undefined;
 
@@ -207,7 +206,7 @@ function JumpProvider(props: {
   useEffect(() => {
     if (jumpTo) {
       console.log(
-        `jumpTo: focus current=${jumpTo?.current || "none"} provider=${
+        `JumpProvider jumpTo: focus current=${jumpTo?.current || "none"} provider=${
           props.providerRef.current || "none"
         }`
       );
@@ -219,11 +218,11 @@ function JumpProvider(props: {
         // - input the typed key into input elements on focusing.
         // FIXME: Known issue: still the key input is spilled into the input
         //        when it has global autofocus attribute.
-        console.log(`useEffect: focus timeout target=${target || "none"}`);
+        console.log(`JumpProvider useEffect: focus timeout target=${target || "none"}`);
         target?.focus();
       }, 100);
     } else if (jumping) {
-      console.log(`useEffect: retrieve focus to provider`);
+      console.log(`JumpProvider useEffect: retrieve focus to provider`);
       // Retrieve the focus to the provider on starting the jump action.
       props.providerRef.current?.focus();
     }
@@ -235,13 +234,6 @@ function JumpProvider(props: {
       ref={props.providerRef}
       onBlur={(e) => {
         // When the focus is out of the provider, exit the jump action.
-        console.log(
-          `onBlur: current=${e.currentTarget || "none"} provider=${
-            props.providerRef.current || "none"
-          } target=${e.target || "none"} relatedTarget=${
-            e.relatedTarget || "none"
-          }`
-        );
         if (e.target === props.providerRef.current) {
           manager.exitJump();
         }

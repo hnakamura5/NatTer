@@ -15,6 +15,8 @@ export const DefaultDarkTheme: Theme = {
     infoColor: "#3F51B5",
     stdoutColor: "#4CAF50",
     stderrColor: "#F44336",
+    currentDirColor: "#FF9800",
+    userColor: "#8BC34A",
   },
   system: {
     // font: "Consolas",

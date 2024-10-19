@@ -76,6 +76,8 @@ export const ShellSpecificationSchema = z
         changeCurrent: z.function().args(z.string()).returns(z.string()),
         // Get the content of the directory.
         list: z.function().args(z.string()).returns(z.string()),
+        // Get current user.
+        getUser: z.function().args().returns(z.string()),
       })
       .optional(),
   })

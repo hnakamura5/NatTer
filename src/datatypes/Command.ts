@@ -8,6 +8,7 @@ export const CommandSchema = z.object({
   exactCommand: z.string(),
   styledCommand: z.string().optional(),
   currentDirectory: z.string(),
+  user: z.string(),
   startTime: z.string(),
   clock: z.number().int().min(0),
 
@@ -35,6 +36,7 @@ export function emptyCommand(pid: number, cid:number): Command {
     exactCommand: "",
     styledCommand: undefined,
     currentDirectory: "",
+    user: "",
     startTime: new Date().toLocaleString(),
     clock: 0,
     isFinished: false,
