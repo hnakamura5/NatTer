@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { set } from "zod";
+import { useVisibility } from "./Visibility";
 
 type FocusTagType = { input: string; rest: string } | undefined;
 
@@ -270,8 +271,7 @@ export module EasyFocus {
   export type BadgeStyle = FocusBadgeStyle;
 
   export function useHandle() {
-    const manager = useManager();
-    return new EasyFocusHandle(manager);
+    return useHandle();
   }
 
   // Provides the context for EasyFocus.
@@ -310,24 +310,41 @@ export module EasyFocus {
     badgeStyle?: BadgeStyle;
   }) {
     const [jumpTag, setJumpTag] = React.useState<FocusTagType>(undefined);
+    const [isVisible, setVisibility] = React.useState(true);
     const manager = useManager();
     const theme = useManagerTheme();
     const ref = React.createRef<HTMLDivElement>();
 
-    let badgeStyle = props.badgeStyle;
-    if (!badgeStyle) {
-      badgeStyle = theme;
-    }
-
+    // Visibility control.
     useEffect(() => {
-      manager.addLand(props.focusTarget, setJumpTag);
-      return () => manager.removeLand(props.focusTarget);
+      if (!props.focusTarget.current) {
+        return;
+      }
+      const observer = new IntersectionObserver(([entry]) => {
+        setVisibility(entry.isIntersecting);
+      });
+      observer.observe(props.focusTarget.current);
+      return () => observer.disconnect();
     }, [ref]);
 
+    // Register the land to the manager.
+    useEffect(() => {
+      if (!isVisible) {
+        return;
+      }
+      manager.addLand(props.focusTarget, setJumpTag);
+      return () => manager.removeLand(props.focusTarget);
+    }, [ref, isVisible]);
+
+    // Rendering.
     if (!jumpTag) {
       return <>{props.children}</>;
     }
     // Jump action is in progress.
+    let badgeStyle = props.badgeStyle;
+    if (!badgeStyle) {
+      badgeStyle = theme;
+    }
     return (
       <FocusBadge
         inputtedTag={jumpTag.input}

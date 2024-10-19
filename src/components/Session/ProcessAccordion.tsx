@@ -95,7 +95,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const ResponseStyle = styled(Box)`
     width: 100%;
     margin-right: 10px;
-    margin-left: -5px;
+    margin-left: -10px;
     background-color: ${theme.terminal.colors.secondaryBackground};
     padding-bottom: 5px;
   `;

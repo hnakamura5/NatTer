@@ -17,7 +17,7 @@ function CurrentBar(props: CurrentBarProps) {
     font-family: ${theme.terminal.font};
     font-size: ${theme.terminal.fontSize};
     text-align: left;
-    padding: 5px 0px 0px 15px; // top right bottom left
+    padding: 5px 0px 0px 5px; // top right bottom left
   `;
   const currentDir = api.shell.currentDir.useQuery(props.pid, {
     refetchInterval: 200,

@@ -41,7 +41,6 @@ function Input(props: {
     width: ${iconWidth}px;
   `;
 
-  console.log(`InputBase re-render: ${text}`);
 
   // TODO: Input must be on top level of the component to avoid the focus problem.
   // That is, we lose the focus when the component re-rendered (e.g.on input change).
@@ -57,16 +56,15 @@ function Input(props: {
           color: theme.terminal.colors.primary,
           fontFamily: theme.terminal.font,
           fontSize: theme.terminal.fontSize,
-          marginLeft: "5px",
+          marginLeft: "0px",
+          paddingLeft: "10px",
         }}
         defaultValue={text}
         // autoFocus={true} // TODO: problem
         onChange={(e) => {
-          console.log(`InputBase change: ${e.target.value}`);
           setText(e.target.value);
         }}
         onKeyDown={(e) => {
-          console.log(`InputBase key: ${e.key}`);
           if (e.ctrlKey && e.key === "Enter") {
             props.submit(text);
             setText("");
