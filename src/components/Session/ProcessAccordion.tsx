@@ -35,8 +35,14 @@ import { Theme } from "@emotion/react";
 };
 
 function statusIcon(command: Command, theme: Theme) {
+  const marginTop = -0.2;
+  const marginLeft = -1.0;
   if (command.exitStatusIsOK === undefined) {
-    return <LoopICon sx={{ scale: 0.7, marginTop: -0.2, marginLeft: -0.8 }} />;
+    return (
+      <LoopICon
+        sx={{ scale: 0.7, marginTop: marginTop, marginLeft: marginLeft }}
+      />
+    );
   }
   if (command.exitStatusIsOK) {
     return (
@@ -44,8 +50,8 @@ function statusIcon(command: Command, theme: Theme) {
         sx={{
           color: theme.terminal.stdoutColor,
           scale: 0.7,
-          marginTop: -0.2,
-          marginLeft: -0.8,
+          marginTop: marginTop,
+          marginLeft: marginLeft,
         }}
       />
     );
@@ -55,8 +61,8 @@ function statusIcon(command: Command, theme: Theme) {
       sx={{
         color: theme.terminal.stderrColor,
         scale: 0.7,
-        marginTop: -0.2,
-        marginLeft: -0.8,
+        marginTop: marginTop,
+        marginLeft: marginLeft,
       }}
     />
   );
@@ -84,11 +90,12 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     width: 100%;
     margin-right: 5px;
     background-color: ${theme.terminal.colors.background};
-    padding-left: 5px;
+    padding-left: 0px;
   `;
   const ResponseStyle = styled(Box)`
     width: 100%;
     margin-right: 10px;
+    margin-left: -5px;
     background-color: ${theme.terminal.colors.secondaryBackground};
     padding-bottom: 5px;
   `;
@@ -105,7 +112,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   };
   const colorLine = (color: string) => {
     return {
-      borderLeft: `3px solid ${color}`,
+      borderLeft: `4px solid ${color}`,
       paddingLeft: 1,
     };
   };

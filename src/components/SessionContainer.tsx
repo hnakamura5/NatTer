@@ -1,5 +1,5 @@
 import Session from "@/components/Session";
-import HoverMenusBar from "@/components/HoverMenus/HoverMenusBar";
+import HoverMenusBar from "@/components/HoverMenusBar";
 import InputBox from "@/components/InputBox";
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
@@ -12,7 +12,7 @@ import { ProcessID } from "@/server/ShellProcess";
 import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
 import { useTheme } from "@/datatypes/Theme";
-import { GlobalFocusMap } from "./GlobalFocusMap";
+import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 
 const VerticalBox = styled(Box)`
   display: flex;
@@ -23,7 +23,7 @@ const VerticalBox = styled(Box)`
 const HorizontalBox = styled(Box)`
   display: flex;
   flex-direction: column;
-  border: 1px solid grey;
+  // border: 1px solid grey;
 `;
 
 const FromBottomBox = styled(Box)`
@@ -34,9 +34,9 @@ const FromBottomBox = styled(Box)`
 
 const FullWidthBox = styled(Box)`
   display: block;
-  width: calc(100vw - 100px);
+  width: calc(100vw - 50px);
   margin: 0;
-  margin-left: 10px;
+  margin-left: 0px;
   padding: 0;
 `;
 

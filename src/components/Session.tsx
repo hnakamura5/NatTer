@@ -55,7 +55,7 @@ function Session(props: SessionProps) {
     <ErrorBoundary fallbackRender={SessionError}>
       <Box
         sx={{
-          maxHeight: "calc(100vh - 70px)", // TODO: calculate using actual height.
+          maxHeight: "calc(100vh - 50px)", // TODO: calculate using actual height.
           overflow: "auto",
         }}
       >

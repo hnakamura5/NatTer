@@ -309,23 +309,23 @@ export module EasyFocus {
     focusTarget: React.RefObject<HTMLElement>;
     badgeStyle?: BadgeStyle;
   }) {
-    let { children, focusTarget, badgeStyle } = props;
     const [jumpTag, setJumpTag] = React.useState<FocusTagType>(undefined);
     const manager = useManager();
     const theme = useManagerTheme();
     const ref = React.createRef<HTMLDivElement>();
 
+    let badgeStyle = props.badgeStyle;
     if (!badgeStyle) {
       badgeStyle = theme;
     }
 
     useEffect(() => {
-      manager.addLand(focusTarget, setJumpTag);
-      return () => manager.removeLand(focusTarget);
+      manager.addLand(props.focusTarget, setJumpTag);
+      return () => manager.removeLand(props.focusTarget);
     }, [ref]);
 
     if (!jumpTag) {
-      return <>{children}</>;
+      return <>{props.children}</>;
     }
     // Jump action is in progress.
     return (
@@ -334,7 +334,7 @@ export module EasyFocus {
         tagText={jumpTag.rest}
         badgeStyle={badgeStyle}
       >
-        <>{children}</>
+        <>{props.children}</>
       </FocusBadge>
     );
   }

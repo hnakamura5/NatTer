@@ -57,7 +57,7 @@ function Input(props: {
           color: theme.terminal.colors.primary,
           fontFamily: theme.terminal.font,
           fontSize: theme.terminal.fontSize,
-          marginLeft: "10px",
+          marginLeft: "5px",
         }}
         defaultValue={text}
         // autoFocus={true} // TODO: problem
