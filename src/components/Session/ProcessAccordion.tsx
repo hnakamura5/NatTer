@@ -21,6 +21,7 @@ import styled from "@emotion/styled";
 import { AnsiUp } from "ansi-up";
 import { GlobalFocusMap } from "../GlobalFocusMap";
 import { Theme } from "@emotion/react";
+import { logger } from "@/datatypes/Logger";
 
 // The original implementation of ansi_up.js does not escape the space.
 // We fix this by force overriding the doEscape method.
@@ -172,10 +173,17 @@ function ProcessAccordion(props: ProcessAccordionProps) {
         onKeyDown={(e) => {
           console.log(`key: ${e.key}`);
           if (!command.isFinished) {
-            sendKey.mutate({
-              pid: command.pid,
-              key: e.key,
-            });
+            sendKey.mutate(
+              {
+                pid: command.pid,
+                key: e.key,
+              },
+              {
+                onError: (error) => {
+                  logger.logTrace(`failed to send key: ${error}`);
+                },
+              }
+            );
           }
         }}
       >

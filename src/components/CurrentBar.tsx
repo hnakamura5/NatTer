@@ -7,6 +7,7 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { FaFolderOpen as FolderIcon } from "react-icons/fa";
 import { FaUserEdit } from "react-icons/fa";
+import { logger } from "@/datatypes/Logger";
 
 interface CurrentBarProps {
   pid: ProcessID;
@@ -34,7 +35,7 @@ function CurrentBar(props: CurrentBarProps) {
   const current = api.shell.current.useQuery(props.pid, {
     refetchInterval: 200,
     onError: (error) => {
-      console.log(`currentDir fetch: ${error}`);
+      logger.logTrace(`currentDir fetch: ${error}`);
     },
   });
 

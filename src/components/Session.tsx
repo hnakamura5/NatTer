@@ -5,6 +5,7 @@ import { Box } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
 import { useEffect, useRef, useState } from "react";
 import { GlobalFocusMap } from "./GlobalFocusMap";
+import { logger } from "@/datatypes/Logger";
 
 interface SessionProps {
   pid: ProcessID;
@@ -26,7 +27,7 @@ function Session(props: SessionProps) {
   // Fetching commands.
   const commands = api.shell.commands.useQuery(props.pid, {
     onError: (error) => {
-      console.log(`commands fetch: ${error}`);
+      logger.logTrace(`commands fetch: ${error}`);
     },
     refetchInterval: 200,
   });

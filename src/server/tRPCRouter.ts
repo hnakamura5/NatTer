@@ -1,6 +1,7 @@
 import { server } from "@/server/tRPCServer";
 import { z } from "zod";
 import { shellRouter } from "@/server/ShellProcess";
+import { fileSystemRouter } from "./FileSystem";
 
 const procedure = server.procedure;
 
@@ -23,5 +24,6 @@ const helloRouter = server.router({
 export const router = server.router({
   hello: helloRouter,
   shell: shellRouter,
+  fs: fileSystemRouter,
 });
 export type AppRouter = typeof router;

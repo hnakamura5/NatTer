@@ -20,6 +20,7 @@ import React from "react";
 import { EasyFocus } from "./EasyFocus";
 import { Theme } from "@emotion/react";
 import { GlobalFocusMap } from "./GlobalFocusMap";
+import { logger } from "@/datatypes/Logger";
 
 interface InputBoxProps {
   pid: ProcessID;
@@ -103,7 +104,7 @@ function InputBox(props: InputBoxProps) {
       { pid: props.pid, command: text },
       {
         onError: (error) => {
-          console.error(`failed to send: ${error}`);
+          logger.logTrace(`failed to send: ${error}`);
         },
       }
     );

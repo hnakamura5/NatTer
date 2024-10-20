@@ -13,6 +13,9 @@ import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
 import { useTheme } from "@/datatypes/Theme";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
+import { FileTree } from "@/components/HoverMenus/FileTree";
+
+import { logger } from "@/datatypes/Logger";
 
 const VerticalBox = styled(Box)`
   display: flex;
@@ -40,6 +43,24 @@ const FullWidthBox = styled(Box)`
   padding: 0;
 `;
 
+function FileTreeTest(props: { pid: ProcessID }) {
+  const current = api.shell.current.useQuery(props.pid, {
+    onError: (error) => {
+      logger.logTrace(`current fetch: ${error}`);
+    },
+  });
+  if (!current.data) {
+    return <Box>Loading...</Box>;
+  }
+  console.log(`FileTreeTest: ${current.data.directory}`);
+  return (
+    <div>
+      {"FileTreeTest"}
+      <FileTree home={current.data.directory} />
+    </div>
+  );
+}
+
 // Main window of the session.
 interface SessionContainerProps {}
 
@@ -60,12 +81,12 @@ function SessionContainer(props: SessionContainerProps) {
         },
         {
           onError: (error) => {
-            console.log(`start fetch error: ${error}`);
+            logger.logTrace(`start fetch error: ${error}`);
           },
         }
       )
       .then((result) => {
-        console.log(`start fetch set pid: ${result}`);
+        logger.logTrace(`start fetch set pid: ${result}`);
         setPid(result);
       });
     return () => {
@@ -99,6 +120,7 @@ function SessionContainer(props: SessionContainerProps) {
               <HorizontalBox>
                 <FromBottomBox>
                   <FullWidthBox>
+                    <FileTreeTest pid={pid} />
                     <Session pid={pid} />
                     <CurrentBar pid={pid} />
                     <InputBox pid={pid} />

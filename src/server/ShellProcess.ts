@@ -17,13 +17,7 @@ import path from "node:path";
 
 import { server } from "@/server/tRPCServer";
 import { PowerShellSpecification } from "@/builtin/shell/Powershell";
-
-function pathOf(kind: PathKind): path.PlatformPath {
-  if (kind === "win32") {
-    return path.win32;
-  }
-  return path.posix;
-}
+import { pathOf } from "@/server/pathAbstractionUtil";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set("powershell", PowerShellSpecification);
@@ -118,9 +112,9 @@ function currentSetter(process: Process) {
       const currentDir = process.shellSpec.directoryCommands.getCurrent();
       const getUser = process.shellSpec.directoryCommands.getUser();
       executeCommand(process, currentDir, true, undefined, (command) => {
-        process.currentDirectory = command.stdoutResponse;
+        process.currentDirectory = command.stdoutResponse.trimEnd();
         executeCommand(process, getUser, true, undefined, (command) => {
-          process.user = command.stdoutResponse;
+          process.user = command.stdoutResponse.trimEnd();
         });
       });
     }
