@@ -23,14 +23,14 @@ export const fileSystemRouter = server.router({
     .output(z.array(z.string()))
     .query(async (opts) => {
       const filePath = opts.input;
-      return fs.readdir(path.normalize(filePath));
+      return fs.readdir(path.normalize(filePath)).catch((err) => {
+        return [] as string[];
+      });
     }),
 
-  sep :proc
-    .output(z.string())
-    .query(async () => {
-      return path.sep;
-    }),
+  sep: proc.output(z.string()).query(async () => {
+    return path.sep;
+  }),
 
   stat: proc
     .input(z.string())
@@ -132,7 +132,7 @@ export const fileSystemRouter = server.router({
     .output(
       z.object({
         dir: z.string(),
-        dirList: z.array(z.string()),
+        dirHier: z.array(z.string()),
         base: z.string(),
         ext: z.string(),
         stem: z.string(),
@@ -141,10 +141,10 @@ export const fileSystemRouter = server.router({
     .query(async (opts) => {
       const filePath = opts.input;
       const parsed = path.parse(path.normalize(filePath));
-      const dirList = parsed.dir.split(path.sep);
+      const dirHier = parsed.dir.split(path.sep);
       return {
         dir: parsed.dir,
-        dirList,
+        dirHier,
         base: parsed.base,
         ext: parsed.ext,
         stem: parsed.name,

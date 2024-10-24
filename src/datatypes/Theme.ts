@@ -21,6 +21,7 @@ export const DefaultDarkTheme: Theme = {
   system: {
     // font: "Consolas",
     font: "PlemolJP Console NF",
+    fontSize: "12px",
     colors: {
       primary: "#F5F5F5",
       secondary: "#9E9E9E",

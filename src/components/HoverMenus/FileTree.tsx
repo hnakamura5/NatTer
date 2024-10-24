@@ -9,52 +9,83 @@ import { useState } from "react";
 import { FileStat } from "@/datatypes/PathAbstraction";
 import { api } from "@/api";
 import { useTheme } from "@/datatypes/Theme";
-import { Theme } from "@emotion/react";
 
 import { logger } from "@/datatypes/Logger";
+import { FaFolder as FolderIcon, FaFile as FileIcon } from "react-icons/fa";
+
+function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <span style={{ verticalAlign: "-2px", ...props.style }}>{props.icon} </span>
+  );
+}
+
+function Label(props: { children: React.ReactNode }) {
+  const theme = useTheme();
+  const labelStyle = {
+    color: theme.system.colors.primary,
+    fontFamily: theme.system.font,
+    fontSize: theme.system.fontSize,
+  };
+  return <span style={labelStyle}>{props.children}</span>;
+}
 
 function FileLabel(props: { stat: FileStat }) {
   const theme = useTheme();
+
   const parsed = api.fs.parsePath.useQuery(props.stat.fullPath, {
     onError: () => {
       logger.logTrace(`Failed to parse ${props.stat.fullPath}`);
     },
   });
   if (!parsed.data) {
-    return (
-      <span style={{ color: theme.system.colors.primary }}>Loading...</span>
-    );
+    return <Label>Loading...</Label>;
   }
   return (
-    <span style={{ color: theme.system.colors.primary }}>
-      {parsed.data.base}
-    </span>
+    <>
+      <Icon icon={<FileIcon />} />
+      <Label>{parsed.data.base}</Label>
+    </>
   );
 }
 
 function DirectoryLabel(props: { stat: FileStat }) {
   const theme = useTheme();
+
   const parsed = api.fs.parsePath.useQuery(props.stat.fullPath, {
     onError: () => {
       logger.logTrace(`Failed to parse ${props.stat.fullPath}`);
     },
   });
   if (!parsed.data) {
-    return (
-      <span style={{ color: theme.system.colors.primary }}>Loading...</span>
-    );
+    return <Label>Loading...</Label>;
   }
   return (
-    <span style={{ color: theme.system.colors.primary }}>
-      {parsed.data.base}
-    </span>
+    <>
+      <Icon
+        icon={<FolderIcon />}
+        style={{ color: theme.terminal.currentDirColor }}
+      />
+      <Label>{parsed.data.base}</Label>
+    </>
   );
 }
 
-function FileTreeItem(props: { path: string }) {
+function TreeView(props: { children: React.ReactNode }) {
+  const theme = useTheme();
+  const TreeView = styled(MuiTreeView)({
+    color: theme.system.colors.primary,
+  });
+  return <TreeView>{props.children}</TreeView>;
+}
+
+function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
   const theme = useTheme();
   const TreeItem = styled(MuiTreeItem)({
     color: theme.system.colors.primary,
+    backgroundColor: theme.system.colors.secondaryBackground,
+    textAlign: "left",
+    margin: 0,
+    padding: "0px 0px 0px 5px", // top right bottom left
   });
   //logger.logTrace(`FileTreeItem: ${props.path}`);
   const stat = api.fs.stat.useQuery(props.path, {
@@ -80,13 +111,24 @@ function FileTreeItem(props: { path: string }) {
   if (stat.data.isDir) {
     // Directory
     const children = list.data?.map((child) => (
-      <FileTreeItem path={props.path + sep.data + child} />
+      <FileTreeItem
+        path={props.path + sep.data + child}
+        key={child}
+        showTop={true}
+      />
     ));
-    return (
-      <TreeItem itemId={props.path} label={<DirectoryLabel stat={stat.data} />}>
-        {children}
-      </TreeItem>
-    );
+    if (props.showTop) {
+      return (
+        <TreeItem
+          itemId={props.path}
+          label={<DirectoryLabel stat={stat.data} />}
+        >
+          <TreeView>{children}</TreeView>
+        </TreeItem>
+      );
+    } else {
+      return <TreeView>{children}</TreeView>;
+    }
   } else {
     // File
     return (
@@ -101,9 +143,6 @@ export type FileTreeProps = {
 
 export function FileTree(props: FileTreeProps) {
   const theme = useTheme();
-  const FileTree = styled(MuiTreeView)({
-    color: theme.system.colors.primary,
-  });
 
   const [current, setCurrent] = useState<string>(props.home);
   if (current !== props.home) {
@@ -112,8 +151,8 @@ export function FileTree(props: FileTreeProps) {
   // logger.logTrace(`FileTree: current=${current}`);
 
   return (
-    <FileTree>
-      <FileTreeItem path={current} />
-    </FileTree>
+    <TreeView>
+      <FileTreeItem path={current} key={current} showTop={false} />
+    </TreeView>
   );
 }

@@ -22,6 +22,7 @@ declare module "@emotion/react" {
     };
     system: {
       font: string;
+      fontSize: string;
       colors: Colors;
       focusedFrameColor: string;
     };
