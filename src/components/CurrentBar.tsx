@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Icon } from "@mui/material";
 import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
 import { api } from "@/api";
@@ -8,6 +8,14 @@ import { FaFolderOpen as FolderIcon } from "react-icons/fa";
 import { FaUserEdit } from "react-icons/fa";
 import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
+
+function IconText(props: { icon: React.ReactNode; text?: string }) {
+  return (
+    <span>
+      <span style={{ verticalAlign: "-2px" }}>{props.icon}</span> {props.text}
+    </span>
+  );
+}
 
 interface CurrentBarProps {}
 
@@ -20,7 +28,7 @@ function CurrentBar(props: CurrentBarProps) {
     fontFamily: theme.terminal.font,
     fontSize: theme.terminal.fontSize,
     textAlign: "left",
-    padding: "5px 0px 1px 5px", // top right bottom left
+    padding: "3px 0px 0px 5px", // top right bottom left
   });
   const CurrentDirStyle = styled.span({
     color: theme.terminal.currentDirColor,
@@ -28,7 +36,7 @@ function CurrentBar(props: CurrentBarProps) {
   const UserStyle = styled.span({
     color: theme.terminal.userColor,
     float: "right",
-    marginRight: "15px",
+    marginRight: "5px",
   });
 
   const current = api.shell.current.useQuery(pid, {
@@ -43,10 +51,10 @@ function CurrentBar(props: CurrentBarProps) {
       <CurrentBarStyle>
         <span>
           <CurrentDirStyle>
-            <FolderIcon /> {current.data?.directory}
+            <IconText icon={<FolderIcon />} text={current.data?.directory} />
           </CurrentDirStyle>
           <UserStyle>
-            <FaUserEdit /> {current.data?.user}
+            <IconText icon={<FaUserEdit />} text={current.data?.user} />
           </UserStyle>
         </span>
       </CurrentBarStyle>

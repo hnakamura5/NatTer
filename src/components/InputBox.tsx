@@ -43,7 +43,7 @@ function Input(props: {
     <MuiInputBase
       inputRef={props.inputBoxRef}
       style={{
-        width: `calc(100% - ${theme.system.hoverMenuWidth} - 7px)`,
+        width: `calc(100% - ${theme.system.hoverMenuWidth})`,
         backgroundColor: theme.terminal.colors.secondaryBackground,
         color: theme.terminal.colors.primary,
         fontFamily: theme.terminal.font,
@@ -85,6 +85,7 @@ function Button(props: {
     color: theme.terminal.colors.primary,
     backgroundColor: theme.terminal.colors.background,
     width: iconWidth,
+    padding: "0px",
     scale: 0.7,
   });
   return (
@@ -143,6 +144,8 @@ function InputBox(props: InputBoxProps) {
     alignItems: "center",
     backgroundColor: theme.terminal.colors.background,
     color: theme.terminal.colors.primary,
+    paddingTop: "1px",
+    paddingBottom: "3px",
   });
 
   const OverToLeft = styled(Box)({

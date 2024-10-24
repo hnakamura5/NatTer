@@ -20,7 +20,7 @@ import styled from "@emotion/styled";
 
 import { AnsiUp } from "ansi-up";
 import { GlobalFocusMap } from "../GlobalFocusMap";
-import { Theme } from "@emotion/react";
+import { Theme, css } from "@emotion/react";
 import { logger } from "@/datatypes/Logger";
 
 // The original implementation of ansi_up.js does not escape the space.
@@ -36,7 +36,7 @@ import { logger } from "@/datatypes/Logger";
 };
 
 function statusIcon(command: Command, theme: Theme) {
-  const marginTop = -0.2;
+  const marginTop = -0.4;
   const marginLeft = -1.0;
   if (command.exitStatusIsOK === undefined) {
     return (
@@ -89,7 +89,6 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   });
   const CommandStyle = styled(Box)({
     width: "100%",
-    marginRight: "5px",
     backgroundColor: theme.terminal.colors.background,
     paddingLeft: "0px",
   });
@@ -100,13 +99,15 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     paddingBottom: "5px",
   });
 
-  const CommandInternalPadding = {
-    paddingX: 1,
-    paddingY: 1,
-    marginY: -2,
+  const CommandSummaryPadding = {
+    paddingX: "5px",
+    paddingTop: "5px",
+    paddingBottom: "4px",
+    marginY: "-15px",
   };
   const ResponseInternalPadding = {
-    paddingX: 1.5,
+    paddingLeft: 1.5,
+    paddingRight: 0,
     paddingY: 1,
     marginY: -1,
   };
@@ -123,7 +124,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       borderBottom: `2px solid ${color}`,
       paddingBottom: `2px`,
     };
-  }
+  };
   const CurrentDirStyle = styled.span({
     color: theme.terminal.currentDirColor,
   });
@@ -137,7 +138,6 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     style: "bold underline",
     marginRight: "10px",
   });
-
 
   const [expanded, setExpanded] = useState<boolean>(true);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
@@ -196,7 +196,10 @@ function ProcessAccordion(props: ProcessAccordionProps) {
           }
         }}
       >
-        <EasyFocus.Land focusTarget={focalPoint}>
+        <EasyFocus.Land
+          focusTarget={focalPoint}
+          onBeforeFocus={() => setExpanded(true)}
+        >
           <GlobalFocusMap.Target
             focusKey={GlobalFocusMap.Key.LastCommand}
             target={props.isLast ? focalPoint : undefined}
@@ -218,7 +221,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                       }}
                     />
                   }
-                  sx={CommandInternalPadding}
+                  sx={CommandSummaryPadding}
                 >
                   {statusIcon(command, theme)}
                   <CommandStyle>

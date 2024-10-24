@@ -66,3 +66,13 @@ button:hover {
     background-color: #f9f9f9;
   }
 }
+
+/* TODO: ad-hoc overriding because theming does not work */
+/* Maybe bug of Mui https://github.com/mui/material-ui/issues/33192 */
+& .Mui-expanded {
+  margin: 0px !important;
+  min-height: 0px !important;
+}
+.MuiTreeItem-content {
+  padding: 0px !important;
+}

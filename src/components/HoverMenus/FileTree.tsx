@@ -123,11 +123,11 @@ function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
           itemId={props.path}
           label={<DirectoryLabel stat={stat.data} />}
         >
-          <TreeView>{children}</TreeView>
+          {children}
         </TreeItem>
       );
     } else {
-      return <TreeView>{children}</TreeView>;
+      return <>{children}</>;
     }
   } else {
     // File

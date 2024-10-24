@@ -5,10 +5,16 @@ type FocusTagType = { input: string; rest: string } | undefined;
 
 class Manager {
   private jumping = false;
-  private lands: [React.RefObject<HTMLElement>, (tag: FocusTagType) => void][] =
-    [];
+  private lands: [
+    React.RefObject<HTMLElement>,
+    (tag: FocusTagType) => void,
+    (() => void) | undefined
+  ][] = [];
   private landToTag: Map<React.RefObject<HTMLElement>, string> = new Map();
-  private tagToLand: Map<string, React.RefObject<HTMLElement>> = new Map();
+  private tagToLand: Map<
+    string,
+    [React.RefObject<HTMLElement>, (() => void) | undefined]
+  > = new Map();
   private input: string = "";
   private invokeFocus: (
     target: React.RefObject<HTMLElement> | undefined
@@ -19,9 +25,10 @@ class Manager {
 
   addLand(
     ref: React.RefObject<HTMLElement>,
-    setJumpTag: (tag: FocusTagType) => void
+    setJumpTag: (tag: FocusTagType) => void,
+    onBeforeFocus?: () => void
   ) {
-    this.lands.push([ref, setJumpTag]);
+    this.lands.push([ref, setJumpTag, onBeforeFocus]);
   }
   removeLand(ref: React.RefObject<HTMLElement>) {
     this.lands = this.lands.filter(([land, _]) => land !== ref);
@@ -57,7 +64,7 @@ class Manager {
     this.setJumping(true);
     this.input = "";
     const sortedLands = this.lands
-      .filter(([land, _]) => land.current !== null)
+      .filter((x) => x[0].current !== null)
       .sort((a, b) => {
         return (a[0].current?.tabIndex || 0) - (b[0].current?.tabIndex || 0);
       });
@@ -75,7 +82,7 @@ class Manager {
         num = Math.floor(num / base);
       }
       this.landToTag.set(sortedLands[i][0], tag);
-      this.tagToLand.set(tag, sortedLands[i][0]);
+      this.tagToLand.set(tag, [sortedLands[i][0], sortedLands[i][2]]);
     }
     this.updateTag();
   }
@@ -103,10 +110,13 @@ class Manager {
     if (target) {
       console.log(`finished jump to ${this.input}`);
       this.finishJump();
-      for (const [ref, setJumpTag] of this.lands) {
+      for (const [ref, setJumpTag, _] of this.lands) {
         setJumpTag(undefined);
       }
-      this.invokeFocus(target);
+      if (target[1]) {
+        target[1]();
+      }
+      this.invokeFocus(target[0]);
       return;
     }
     for (const [ref, setJumpTag] of this.lands) {
@@ -206,9 +216,9 @@ function JumpProvider(props: {
   useEffect(() => {
     if (jumpTo) {
       console.log(
-        `JumpProvider jumpTo: focus current=${jumpTo?.current || "none"} provider=${
-          props.providerRef.current || "none"
-        }`
+        `JumpProvider jumpTo: focus current=${
+          jumpTo?.current || "none"
+        } provider=${props.providerRef.current || "none"}`
       );
       const target = jumpTo.current;
       setJumpTo(undefined);
@@ -218,7 +228,9 @@ function JumpProvider(props: {
         // - input the typed key into input elements on focusing.
         // FIXME: Known issue: still the key input is spilled into the input
         //        when it has global autofocus attribute.
-        console.log(`JumpProvider useEffect: focus timeout target=${target || "none"}`);
+        console.log(
+          `JumpProvider useEffect: focus timeout target=${target || "none"}`
+        );
         target?.focus();
       }, 100);
     } else if (jumping) {
@@ -300,6 +312,7 @@ export module EasyFocus {
     children: React.ReactNode;
     focusTarget: React.RefObject<HTMLElement>;
     badgeStyle?: BadgeStyle;
+    onBeforeFocus?: () => void;
   }) {
     const [jumpTag, setJumpTag] = React.useState<FocusTagType>(undefined);
     const [isVisible, setVisibility] = React.useState(true);
@@ -324,7 +337,7 @@ export module EasyFocus {
       if (!isVisible) {
         return;
       }
-      manager.addLand(props.focusTarget, setJumpTag);
+      manager.addLand(props.focusTarget, setJumpTag, props.onBeforeFocus);
       return () => manager.removeLand(props.focusTarget);
     }, [ref, isVisible]);
 
