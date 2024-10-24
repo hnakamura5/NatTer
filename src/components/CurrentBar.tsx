@@ -1,20 +1,20 @@
 import { Box } from "@mui/material";
 import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
-import { ProcessID } from "@/server/ShellProcess";
 import { api } from "@/api";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { FaFolderOpen as FolderIcon } from "react-icons/fa";
 import { FaUserEdit } from "react-icons/fa";
 import { logger } from "@/datatypes/Logger";
+import { usePid } from "@/SessionStates";
 
 interface CurrentBarProps {
-  pid: ProcessID;
 }
 
 function CurrentBar(props: CurrentBarProps) {
   const theme = useTheme();
+  const pid = usePid();
   const CurrentBarStyle = styled(Box)`
     color: ${theme.terminal.colors.primary};
     background-color: ${theme.system.colors.secondaryBackground};
@@ -32,7 +32,7 @@ function CurrentBar(props: CurrentBarProps) {
     margin-right: 15px;
   `;
 
-  const current = api.shell.current.useQuery(props.pid, {
+  const current = api.shell.current.useQuery(pid, {
     refetchInterval: 200,
     onError: (error) => {
       logger.logTrace(`currentDir fetch: ${error}`);

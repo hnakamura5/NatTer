@@ -12,7 +12,6 @@ import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
 
 import { api } from "@/api";
-import { ProcessID } from "@/server/ShellProcess";
 import { useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "./FocusBoundary";
@@ -21,19 +20,19 @@ import { EasyFocus } from "./EasyFocus";
 import { Theme } from "@emotion/react";
 import { GlobalFocusMap } from "./GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
+import { InputText, usePid } from "@/SessionStates";
+import { useAtom } from "jotai";
 
-interface InputBoxProps {
-  pid: ProcessID;
-}
+interface InputBoxProps {}
 
 function Input(props: {
   theme: Theme;
   submit: (text: string) => void;
-  pid: number;
   inputBoxRef: React.RefObject<HTMLInputElement>;
 }) {
   const theme = props.theme;
-  const [text, setText] = useState<string>("");
+ // const [text, setText] = useState<string>("");
+ const [text, setText] = useAtom(InputText);
 
   const iconWidth = 40;
   const IconButton = styled(MuiIconButton)`
@@ -41,7 +40,6 @@ function Input(props: {
     background-color: ${theme.terminal.colors.background};
     width: ${iconWidth}px;
   `;
-
 
   // TODO: Input must be on top level of the component to avoid the focus problem.
   // That is, we lose the focus when the component re-rendered (e.g.on input change).
@@ -89,6 +87,7 @@ function Input(props: {
 
 function InputBox(props: InputBoxProps) {
   const theme = useTheme();
+  const pid = usePid();
   const inputBoxRef = React.createRef<HTMLInputElement>();
 
   const Paper = styled(MuiPaper)`
@@ -101,7 +100,7 @@ function InputBox(props: InputBoxProps) {
   const send = api.shell.execute.useMutation();
   const submit = (text: string) => {
     send.mutate(
-      { pid: props.pid, command: text },
+      { pid: pid, command: text },
       {
         onError: (error) => {
           logger.logTrace(`failed to send: ${error}`);
@@ -119,12 +118,7 @@ function InputBox(props: InputBoxProps) {
             target={inputBoxRef}
           >
             <Paper>
-              <Input
-                theme={theme}
-                pid={props.pid}
-                inputBoxRef={inputBoxRef}
-                submit={submit}
-              />
+              <Input theme={theme} inputBoxRef={inputBoxRef} submit={submit} />
             </Paper>
           </GlobalFocusMap.Target>
         </EasyFocus.Land>

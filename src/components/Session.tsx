@@ -1,31 +1,31 @@
 import { api } from "@/api";
 import ProcessAccordion from "@/components/Session/ProcessAccordion";
-import { ProcessID } from "@/server/ShellProcess";
 import { Box } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
 import { useEffect, useRef, useState } from "react";
-import { GlobalFocusMap } from "./GlobalFocusMap";
+import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
+import { usePid } from "@/SessionStates";
 
 interface SessionProps {
-  pid: ProcessID;
 }
 
 function Session(props: SessionProps) {
+  const pid = usePid();
   // Length is used as the trigger of the event of submitting new command.
   const [length, setLength] = useState<number>(0);
   // Mechanism to scroll to the bottom of the session.
   const bottom = useRef<HTMLDivElement>(null);
-  const handleGFM = GlobalFocusMap.useHandle();
+  const handleGFM = GFM.useHandle();
   // Effect on the length change.
   useEffect(() => {
-    handleGFM.focus(GlobalFocusMap.Key.LastCommand);
+    handleGFM.focus(GFM.Key.LastCommand);
     // Scroll to the bottom.
     bottom.current?.scrollIntoView({ behavior: "smooth" });
   }, [length]);
 
   // Fetching commands.
-  const commands = api.shell.commands.useQuery(props.pid, {
+  const commands = api.shell.commands.useQuery(pid, {
     onError: (error) => {
       logger.logTrace(`commands fetch: ${error}`);
     },

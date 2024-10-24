@@ -8,7 +8,6 @@ import BookmarksIcon from "@mui/icons-material/Bookmarks";
 import InfoIcon from "@mui/icons-material/Info";
 
 import styled from "@emotion/styled";
-import { ProcessID } from "@/server/ShellProcess";
 import { useTheme } from "@/datatypes/Theme";
 
 const BlockListItem = styled(ListItem)`
@@ -19,7 +18,6 @@ const BlockListItem = styled(ListItem)`
 `;
 
 interface HoverMenusBarProps {
-  pid: ProcessID;
 }
 
 function Item(props: { children: React.ReactNode }) {

@@ -116,6 +116,14 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       paddingLeft: 1,
     };
   };
+  const colorSection = (color: string) => {
+    return {
+      borderLeft: `4px solid ${color}`,
+      paddingLeft: 1,
+      borderBottom: `2px solid ${color}`,
+      paddingBottom: `2px`,
+    };
+  }
   const CurrentDirStyle = styled.span`
     color: ${theme.terminal.currentDirColor};
   `;
@@ -221,7 +229,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                 <AccordionDetails sx={ResponseInternalPadding}>
                   <ResponseStyle>
                     <div ref={focalPoint} tabIndex={0}>
-                      <Box sx={colorLine(theme.terminal.infoColor)}>
+                      <Box sx={colorSection(theme.terminal.infoColor)}>
                         <span>
                           <InfoSpan>[{command.startTime}]</InfoSpan>
                           <CurrentDirStyle>

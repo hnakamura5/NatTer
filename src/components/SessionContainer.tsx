@@ -2,13 +2,14 @@ import Session from "@/components/Session";
 import HoverMenusBar from "@/components/HoverMenusBar";
 import InputBox from "@/components/InputBox";
 import { Box } from "@mui/material";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Provider as JotaiProvider } from "jotai";
 
 import styled from "@emotion/styled";
 import CurrentBar from "@/components/CurrentBar";
 
-import { api } from "@/api";
-import { ProcessID } from "@/server/ShellProcess";
+import { api, ProcessID } from "@/api";
+import { pidContext, usePid } from "@/SessionStates";
 import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
 import { useTheme } from "@/datatypes/Theme";
@@ -43,8 +44,9 @@ const FullWidthBox = styled(Box)`
   padding: 0;
 `;
 
-function FileTreeTest(props: { pid: ProcessID }) {
-  const current = api.shell.current.useQuery(props.pid, {
+function FileTreeTest() {
+  const pid = usePid();
+  const current = api.shell.current.useQuery(pid, {
     onError: (error) => {
       logger.logTrace(`current fetch: ${error}`);
     },
@@ -115,19 +117,23 @@ function SessionContainer(props: SessionContainerProps) {
           }}
         >
           <GlobalFocusMap.Provider>
-            <VerticalBox>
-              <HoverMenusBar pid={pid} />
-              <HorizontalBox>
-                <FromBottomBox>
-                  <FullWidthBox>
-                    <FileTreeTest pid={pid} />
-                    <Session pid={pid} />
-                    <CurrentBar pid={pid} />
-                    <InputBox pid={pid} />
-                  </FullWidthBox>
-                </FromBottomBox>
-              </HorizontalBox>
-            </VerticalBox>
+            <JotaiProvider>
+              <pidContext.Provider value={pid}>
+                <VerticalBox>
+                  <HoverMenusBar />
+                  <HorizontalBox>
+                    <FromBottomBox>
+                      <FullWidthBox>
+                        <FileTreeTest />
+                        <Session />
+                        <CurrentBar />
+                        <InputBox />
+                      </FullWidthBox>
+                    </FromBottomBox>
+                  </HorizontalBox>
+                </VerticalBox>
+              </pidContext.Provider>
+            </JotaiProvider>
           </GlobalFocusMap.Provider>
         </EasyFocus.Provider>
       </ErrorBoundary>
