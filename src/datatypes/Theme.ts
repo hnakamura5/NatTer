@@ -17,6 +17,12 @@ export const DefaultDarkTheme: Theme = {
     stderrColor: "#F44336",
     currentDirColor: "#FF9800",
     userColor: "#8BC34A",
+    timeColor: "#7E57C2",
+    runButtonColor: "#81C784",
+    runBackgroundButtonColor: "#4DB6AC",
+    stopButtonColor: "#E57373",
+    pauseButtonColor: "#64B5F6",
+    resumeButtonColor: "#64B5F6",
   },
   system: {
     // font: "Consolas",
@@ -25,10 +31,12 @@ export const DefaultDarkTheme: Theme = {
     colors: {
       primary: "#F5F5F5",
       secondary: "#9E9E9E",
-      background:  "#060606",
+      background: "#060606",
       secondaryBackground: "#212121",
     },
-    focusedFrameColor: "#2196F3"
+    focusedFrameColor: "#2196F3",
+    hoverMenuWidth: "50px",
+    hoverMenuIconSize: "25px",
   },
 };
 

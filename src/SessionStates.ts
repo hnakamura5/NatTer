@@ -14,7 +14,6 @@ export const usePid = () => {
   return pid;
 }
 
-
 // InputText is the text in the command input box.
 export const InputText = atom("");
 

@@ -1,4 +1,3 @@
-
 import { List, ListItem, ListItemButton, ListItemIcon } from "@mui/material";
 
 import FolderIcon from "@mui/icons-material/Folder";
@@ -10,17 +9,18 @@ import InfoIcon from "@mui/icons-material/Info";
 import styled from "@emotion/styled";
 import { useTheme } from "@/datatypes/Theme";
 
-const BlockListItem = styled(ListItem)`
-  display: block;
-  padding: 0;
-  margin: 0;
-  width: 50px;
-`;
-
-interface HoverMenusBarProps {
-}
+interface HoverMenusBarProps {}
 
 function Item(props: { children: React.ReactNode }) {
+  const theme = useTheme();
+
+  const BlockListItem = styled(ListItem)({
+    display: "block",
+    padding: 0,
+    margin: 0,
+    width: theme.system.hoverMenuWidth,
+  });
+
   return (
     <BlockListItem>
       <ListItemButton>
@@ -32,14 +32,17 @@ function Item(props: { children: React.ReactNode }) {
 
 function HoverMenusBar(props: HoverMenusBarProps) {
   const theme = useTheme();
-  const iconStyle = { color: theme.system.colors.secondary, fontSize: 25 };
+  const iconStyle = {
+    color: theme.system.colors.secondary,
+    fontSize: theme.system.hoverMenuIconSize,
+  };
 
-  const VerticalList = styled(List)`
-    display: flex;
-    flex-direction: column;
-    margin-left: -5px;
-    background-color: ${theme.system.colors.secondaryBackground};
-  `;
+  const VerticalList = styled(List)({
+    display: "flex",
+    flexDirection: "column",
+    marginLeft: "-5px",
+    backgroundColor: theme.system.colors.secondaryBackground,
+  });
 
   return (
     <VerticalList>

@@ -15,19 +15,13 @@ export default function FocusBoundary(
 ) {
   const { children, ...others } = props;
   const theme = useTheme();
-  const FocusBoundaryStyle = styled.div`
-    :focus-within {
-      outline: none;
-      box-sizing: border-box;
-      border: 2px solid ${theme.system.focusedFrameColor};
-    }
-  `;
-  const FocusCSS = css`
-    :focus-within {
-      outline: none;
-      border: 2px solid ${theme.system.focusedFrameColor};
-    }
-    `
+  const FocusBoundaryStyle = styled.div({
+    ":focus-within": {
+      outline: "none",
+      boxSizing: "border-box",
+      border: `2px solid ${theme.system.focusedFrameColor}`,
+    },
+  });
   return (
     <FocusBoundaryStyle tabIndex={0} {...others}>
       {children}

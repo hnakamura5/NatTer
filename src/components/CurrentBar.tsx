@@ -9,28 +9,27 @@ import { FaUserEdit } from "react-icons/fa";
 import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
 
-interface CurrentBarProps {
-}
+interface CurrentBarProps {}
 
 function CurrentBar(props: CurrentBarProps) {
   const theme = useTheme();
   const pid = usePid();
-  const CurrentBarStyle = styled(Box)`
-    color: ${theme.terminal.colors.primary};
-    background-color: ${theme.system.colors.secondaryBackground};
-    font-family: ${theme.terminal.font};
-    font-size: ${theme.terminal.fontSize};
-    text-align: left;
-    padding: 5px 0px 1px 5px; // top right bottom left
-  `;
-  const CurrentDirStyle = styled.span`
-    color: ${theme.terminal.currentDirColor};
-  `;
-  const UserStyle = styled.span`
-    color: ${theme.terminal.userColor};
-    float: right;
-    margin-right: 15px;
-  `;
+  const CurrentBarStyle = styled(Box)({
+    color: theme.terminal.colors.primary,
+    backgroundColor: theme.system.colors.secondaryBackground,
+    fontFamily: theme.terminal.font,
+    fontSize: theme.terminal.fontSize,
+    textAlign: "left",
+    padding: "5px 0px 1px 5px", // top right bottom left
+  });
+  const CurrentDirStyle = styled.span({
+    color: theme.terminal.currentDirColor,
+  });
+  const UserStyle = styled.span({
+    color: theme.terminal.userColor,
+    float: "right",
+    marginRight: "15px",
+  });
 
   const current = api.shell.current.useQuery(pid, {
     refetchInterval: 200,

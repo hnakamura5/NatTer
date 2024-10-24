@@ -78,27 +78,27 @@ interface ProcessAccordionProps {
 function ProcessAccordion(props: ProcessAccordionProps) {
   const theme = useTheme();
 
-  const AccordionStyle = styled(Box)`
-    color: ${theme.terminal.colors.primary};
-    background-color: ${theme.terminal.colors.background};
-    font-family: ${theme.terminal.font};
-    font-size: ${theme.terminal.fontSize};
-    text-align: left;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-  `;
-  const CommandStyle = styled(Box)`
-    width: 100%;
-    margin-right: 5px;
-    background-color: ${theme.terminal.colors.background};
-    padding-left: 0px;
-  `;
-  const ResponseStyle = styled(Box)`
-    width: calc(100% + 15px);
-    margin-left: -10px;
-    background-color: ${theme.terminal.colors.secondaryBackground};
-    padding-bottom: 5px;
-  `;
+  const AccordionStyle = styled(Box)({
+    color: theme.terminal.colors.primary,
+    backgroundColor: theme.terminal.colors.background,
+    fontFamily: theme.terminal.font,
+    fontSize: theme.terminal.fontSize,
+    textAlign: "left",
+    overflow: "hidden",
+    overflowWrap: "anywhere",
+  });
+  const CommandStyle = styled(Box)({
+    width: "100%",
+    marginRight: "5px",
+    backgroundColor: theme.terminal.colors.background,
+    paddingLeft: "0px",
+  });
+  const ResponseStyle = styled(Box)({
+    width: "calc(100% + 15px)",
+    marginLeft: "-10px",
+    backgroundColor: theme.terminal.colors.secondaryBackground,
+    paddingBottom: "5px",
+  });
 
   const CommandInternalPadding = {
     paddingX: 1,
@@ -124,19 +124,20 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       paddingBottom: `2px`,
     };
   }
-  const CurrentDirStyle = styled.span`
-    color: ${theme.terminal.currentDirColor};
-  `;
-  const UserStyle = styled.span`
-    color: ${theme.terminal.userColor};
-    float: right;
-    margin-right: 10px;
-  `;
-  const InfoSpan = styled.span`
-    background-color: ${theme.terminal.infoColor};
-    style: bold;
-    margin-right: 10px;
-  `;
+  const CurrentDirStyle = styled.span({
+    color: theme.terminal.currentDirColor,
+  });
+  const UserStyle = styled.span({
+    color: theme.terminal.userColor,
+    float: "right",
+    marginRight: "10px",
+  });
+  const TimeStyle = styled.span({
+    color: theme.terminal.timeColor,
+    style: "bold underline",
+    marginRight: "10px",
+  });
+
 
   const [expanded, setExpanded] = useState<boolean>(true);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
@@ -231,7 +232,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                     <div ref={focalPoint} tabIndex={0}>
                       <Box sx={colorSection(theme.terminal.infoColor)}>
                         <span>
-                          <InfoSpan>[{command.startTime}]</InfoSpan>
+                          <TimeStyle>{command.startTime}</TimeStyle>
                           <CurrentDirStyle>
                             {command.currentDirectory}
                           </CurrentDirStyle>
