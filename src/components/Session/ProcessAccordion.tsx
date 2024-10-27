@@ -5,6 +5,8 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import LoopICon from "@mui/icons-material/Loop";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { Box } from "@mui/system";
+import DomPurify from "dompurify";
+
 import { useTheme } from "@/datatypes/Theme";
 import { api } from "@/api";
 import {
@@ -12,6 +14,7 @@ import {
   getOutputPartOfStdout,
   summarizeCommand,
 } from "@/datatypes/Command";
+
 import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "../FocusBoundary";
 import { EasyFocus } from "@/components/EasyFocus";
@@ -22,6 +25,7 @@ import { AnsiUp } from "ansi-up";
 import { GlobalFocusMap } from "../GlobalFocusMap";
 import { Theme, css } from "@emotion/react";
 import { logger } from "@/datatypes/Logger";
+import DOMPurify from "dompurify";
 
 // The original implementation of ansi_up.js does not escape the space.
 // We fix this by force overriding the doEscape method.
@@ -163,12 +167,13 @@ function ProcessAccordion(props: ProcessAccordionProps) {
 
   // Convert stdout and stderr to HTML.
   const ansiUp = new AnsiUp();
-  const stdoutHTML = ansiUp
-    .ansi_to_html(getOutputPartOfStdout(command))
-    .replace(/\n/g, "<br />");
-  const stderrHTML = ansiUp
-    .ansi_to_html(command.stderr)
-    .replace(/\n/g, "<br />");
+  const purifier = DOMPurify();
+  const stdoutHTML = purifier.sanitize(
+    ansiUp.ansi_to_html(getOutputPartOfStdout(command)).replace(/\n/g, "<br />")
+  );
+  const stderrHTML = purifier.sanitize(
+    ansiUp.ansi_to_html(command.stderr).replace(/\n/g, "<br />")
+  );
 
   const sendKey = api.shell.sendKey.useMutation();
 
