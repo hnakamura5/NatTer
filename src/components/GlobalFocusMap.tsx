@@ -68,7 +68,7 @@ export module GlobalFocusMap {
       return () => {
         handle.delete(props.focusKey);
       };
-    });
+    }, [props.target]);
     return <>{props.children}</>;
   }
 }

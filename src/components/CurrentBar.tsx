@@ -31,7 +31,7 @@ function CurrentBar(props: CurrentBarProps) {
     padding: "3px 0px 0px 5px", // top right bottom left
   });
   const CurrentDirStyle = styled.span({
-    color: theme.terminal.currentDirColor,
+    color: theme.terminal.directoryColor,
   });
   const UserStyle = styled.span({
     color: theme.terminal.userColor,

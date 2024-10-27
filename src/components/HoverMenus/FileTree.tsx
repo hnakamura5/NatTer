@@ -15,7 +15,9 @@ import { FaFolder as FolderIcon, FaFile as FileIcon } from "react-icons/fa";
 
 function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <span style={{ verticalAlign: "-2px", ...props.style }}>{props.icon} </span>
+    <span style={{ verticalAlign: "-2px", fontSize: "0.8em", ...props.style }}>
+      {props.icon}{" "}
+    </span>
   );
 }
 
@@ -25,6 +27,7 @@ function Label(props: { children: React.ReactNode }) {
     color: theme.system.colors.primary,
     fontFamily: theme.system.font,
     fontSize: theme.system.fontSize,
+    paddingRight: "10px",
   };
   return <span style={labelStyle}>{props.children}</span>;
 }
@@ -63,17 +66,20 @@ function DirectoryLabel(props: { stat: FileStat }) {
     <>
       <Icon
         icon={<FolderIcon />}
-        style={{ color: theme.terminal.currentDirColor }}
+        style={{ color: theme.terminal.directoryColor }}
       />
       <Label>{parsed.data.base}</Label>
     </>
   );
 }
 
+const ListMargin = "4px"
+
 function TreeView(props: { children: React.ReactNode }) {
   const theme = useTheme();
   const TreeView = styled(MuiTreeView)({
     color: theme.system.colors.primary,
+    margin: `${ListMargin} 0px ${ListMargin} 0px`,
   });
   return <TreeView>{props.children}</TreeView>;
 }
@@ -84,7 +90,7 @@ function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
     color: theme.system.colors.primary,
     backgroundColor: theme.system.colors.secondaryBackground,
     textAlign: "left",
-    margin: 0,
+    margin: `-${ListMargin} 0px -${ListMargin} 0px`,
     padding: "0px 0px 0px 5px", // top right bottom left
   });
   //logger.logTrace(`FileTreeItem: ${props.path}`);

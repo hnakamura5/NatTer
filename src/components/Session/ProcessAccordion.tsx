@@ -126,7 +126,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     };
   };
   const CurrentDirStyle = styled.span({
-    color: theme.terminal.currentDirColor,
+    color: theme.terminal.directoryColor,
   });
   const UserStyle = styled.span({
     color: theme.terminal.userColor,
@@ -233,7 +233,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                 <AccordionDetails sx={ResponseInternalPadding}>
                   <ResponseStyle>
                     <div ref={focalPoint} tabIndex={0}>
-                      <Box sx={colorSection(theme.terminal.infoColor)}>
+                      <Box sx={colorSection(theme.terminal.useCommandColor)}>
                         <span>
                           <TimeStyle>{command.startTime}</TimeStyle>
                           <CurrentDirStyle>

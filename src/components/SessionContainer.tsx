@@ -124,7 +124,6 @@ function SessionContainer(props: SessionContainerProps) {
                   <HorizontalBox>
                     <FromBottomBox>
                       <FullWidthBox>
-                        <FileTreeTest />
                         <Session />
                         <CurrentBar />
                         <InputBox />

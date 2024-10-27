@@ -14,10 +14,10 @@ declare module "@emotion/react" {
       font: string;
       fontSize: string;
       colors: Colors;
-      infoColor: string;
+      useCommandColor: string;
       stdoutColor: string;
       stderrColor: string;
-      currentDirColor: string;
+      directoryColor: string;
       userColor: string;
       timeColor: string;
       runButtonColor: string;
@@ -33,6 +33,10 @@ declare module "@emotion/react" {
       focusedFrameColor: string;
       hoverMenuWidth: string;
       hoverMenuIconSize: string;
+      bookmarkColor: string;
+      tagColor: string;
+      infoColor: string;
+      settingsColor: string;
     };
   }
 }
