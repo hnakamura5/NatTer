@@ -1,6 +1,6 @@
 import { Box, Icon } from "@mui/material";
 import styled from "@emotion/styled";
-import { useTheme } from "@/datatypes/Theme";
+import { useTheme } from "@/AppState";
 import { api } from "@/api";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -23,8 +23,8 @@ function CurrentBar(props: CurrentBarProps) {
   const theme = useTheme();
   const pid = usePid();
   const CurrentBarStyle = styled(Box)({
-    color: theme.terminal.colors.primary,
-    backgroundColor: theme.system.colors.secondaryBackground,
+    color: theme.terminal.textColor,
+    backgroundColor: theme.system.secondaryBackgroundColor,
     fontFamily: theme.terminal.font,
     fontSize: theme.terminal.fontSize,
     textAlign: "left",

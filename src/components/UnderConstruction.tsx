@@ -1,4 +1,4 @@
-import { useTheme } from "@/datatypes/Theme";
+import { useTheme } from "@/AppState";
 import React from 'react';
 import styled from '@emotion/styled';
 
@@ -10,8 +10,8 @@ interface UnderConstructionProps {
 export function UnderConstruction(props: UnderConstructionProps) {
   const theme = useTheme();
   const StyledDiv = styled.div({
-    backgroundColor: theme.terminal.colors.background,
-    color: theme.terminal.colors.primary,
+    backgroundColor: theme.terminal.backgroundColor,
+    color: theme.terminal.textColor,
     fontFamily: theme.system.font,
     fontSize: theme.system.fontSize,
     padding: "10px",

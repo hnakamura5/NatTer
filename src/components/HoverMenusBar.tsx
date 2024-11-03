@@ -15,7 +15,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import { ClickAwayListener } from "@mui/material";
 
 import styled from "@emotion/styled";
-import { useTheme } from "@/datatypes/Theme";
+import { useTheme } from "@/AppState";
 
 import { Popper, PopperPlacementType } from "@mui/material";
 import React, { useCallback } from "react";
@@ -116,7 +116,7 @@ function HoverMenusBar(props: HoverMenusBarProps) {
     display: "flex",
     flexDirection: "column",
     marginLeft: "-5px",
-    backgroundColor: theme.system.colors.secondaryBackground,
+    backgroundColor: theme.system.secondaryBackgroundColor,
   });
   return (
     <VerticalList>

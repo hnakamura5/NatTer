@@ -12,7 +12,7 @@ import { api, ProcessID } from "@/api";
 import { pidContext, usePid } from "@/SessionStates";
 import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
-import { useTheme } from "@/datatypes/Theme";
+import { useTheme } from "@/AppState";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { FileTree } from "@/components/HoverMenus/FileTree";
 
@@ -119,18 +119,24 @@ function SessionContainer(props: SessionContainerProps) {
           <GlobalFocusMap.Provider>
             <JotaiProvider>
               <pidContext.Provider value={pid}>
-                <VerticalBox>
-                  <HoverMenusBar />
-                  <HorizontalBox>
-                    <FromBottomBox>
-                      <FullWidthBox>
-                        <Session />
-                        <CurrentBar />
-                        <InputBox />
-                      </FullWidthBox>
-                    </FromBottomBox>
-                  </HorizontalBox>
-                </VerticalBox>
+                <Box
+                  sx={{
+                    backgroundColor: theme.system.backgroundColor,
+                  }}
+                >
+                  <VerticalBox>
+                    <HoverMenusBar />
+                    <HorizontalBox>
+                      <FromBottomBox>
+                        <FullWidthBox>
+                          <Session />
+                          <CurrentBar />
+                          <InputBox />
+                        </FullWidthBox>
+                      </FromBottomBox>
+                    </HorizontalBox>
+                  </VerticalBox>
+                </Box>
               </pidContext.Provider>
             </JotaiProvider>
           </GlobalFocusMap.Provider>

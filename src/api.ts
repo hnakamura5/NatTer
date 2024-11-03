@@ -4,6 +4,6 @@
 import { createTRPCReact } from "@trpc/react-query";
 import { AppRouter } from "@/server/tRPCRouter";
 // Re-export types.
-export type { ProcessID } from "@/server/ShellProcess";
+export type { ProcessID } from "@/server/shellProcess";
 
 export const api = createTRPCReact<AppRouter>();

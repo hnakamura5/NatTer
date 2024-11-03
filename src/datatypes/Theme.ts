@@ -1,17 +1,51 @@
-import { Theme } from "@emotion/react";
+import { z } from "zod";
 import { createContext, useContext } from "react";
+
+const ThemeSchema = z.object({
+  terminal: z.object({
+    font: z.string(),
+    fontSize: z.string(),
+    textColor: z.string(),
+    backgroundColor: z.string(),
+    secondaryBackgroundColor: z.string(),
+    useCommandColor: z.string(),
+    stdoutColor: z.string(),
+    stderrColor: z.string(),
+    directoryColor: z.string(),
+    userColor: z.string(),
+    timeColor: z.string(),
+    runButtonColor: z.string(),
+    runBackgroundButtonColor: z.string(),
+    stopButtonColor: z.string(),
+    pauseButtonColor: z.string(),
+    resumeButtonColor: z.string(),
+  }),
+  system: z.object({
+    font: z.string(),
+    fontSize: z.string(),
+    textColor: z.string(),
+    backgroundColor: z.string(),
+    secondaryBackgroundColor: z.string(),
+    focusedFrameColor: z.string(),
+    hoverMenuWidth: z.string(),
+    hoverMenuIconSize: z.string(),
+    bookmarkColor: z.string(),
+    tagColor: z.string(),
+    infoColor: z.string(),
+    settingsColor: z.string(),
+  }),
+});
+
+export type Theme = z.infer<typeof ThemeSchema>;
 
 export const DefaultDarkTheme: Theme = {
   terminal: {
     // font: "Consolas",
     font: "PlemolJP Console NF",
     fontSize: "12px",
-    colors: {
-      primary: "#EEEEEE",
-      secondary: "#9E9E9E",
-      background: "#212121",
-      secondaryBackground: "#060606",
-    },
+    textColor: "#EEEEEE",
+    backgroundColor: "#212121",
+    secondaryBackgroundColor: "#060606",
     useCommandColor: "#3F51B5",
     stdoutColor: "#4CAF50",
     stderrColor: "#F44336",
@@ -28,12 +62,9 @@ export const DefaultDarkTheme: Theme = {
     // font: "Consolas",
     font: "PlemolJP Console NF",
     fontSize: "12px",
-    colors: {
-      primary: "#F5F5F5",
-      secondary: "#9E9E9E",
-      background: "#060606",
-      secondaryBackground: "#212121",
-    },
+    textColor: "#F5F5F5",
+    backgroundColor: "#060606",
+    secondaryBackgroundColor: "#212121",
     focusedFrameColor: "#2196F3",
     hoverMenuWidth: "50px",
     hoverMenuIconSize: "25px",
@@ -42,10 +73,4 @@ export const DefaultDarkTheme: Theme = {
     infoColor: "#64B5F6",
     settingsColor: "#A1887F",
   },
-};
-
-// TODO: ThemeProvider of emotion does not work.
-export const ThemeContext = createContext(DefaultDarkTheme);
-export const useTheme = () => {
-  return useContext(ThemeContext);
 };

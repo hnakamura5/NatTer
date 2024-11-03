@@ -10,16 +10,16 @@ import {
 } from "@mui/material";
 import { PlayArrow, PlayCircle, Stop, Pause } from "@mui/icons-material";
 import styled from "@emotion/styled";
-import { useTheme } from "@/datatypes/Theme";
+import { useTheme } from "@/AppState";
 
 import { api } from "@/api";
 import { useCallback, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import FocusBoundary from "./FocusBoundary";
+import FocusBoundary from "@/components/FocusBoundary";
 import React from "react";
-import { EasyFocus } from "./EasyFocus";
-import { Theme } from "@emotion/react";
-import { GlobalFocusMap } from "./GlobalFocusMap";
+import { EasyFocus } from "@/components/EasyFocus";
+import { Theme } from "@/datatypes/Theme";
+import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
 import { InputText, usePid } from "@/SessionStates";
 import { useAtom } from "jotai";
@@ -44,8 +44,8 @@ function Input(props: {
       inputRef={props.inputBoxRef}
       style={{
         width: `calc(100% - ${theme.system.hoverMenuWidth})`,
-        backgroundColor: theme.terminal.colors.secondaryBackground,
-        color: theme.terminal.colors.primary,
+        backgroundColor: theme.terminal.secondaryBackgroundColor,
+        color: theme.terminal.textColor,
         fontFamily: theme.terminal.font,
         fontSize: theme.terminal.fontSize,
         marginLeft: "0px",
@@ -82,8 +82,8 @@ function Button(props: {
   const theme = useTheme();
   const iconWidth = "20px";
   const IconButton = styled(MuiIconButton)({
-    color: theme.terminal.colors.primary,
-    backgroundColor: theme.terminal.colors.background,
+    color: theme.terminal.textColor,
+    backgroundColor: theme.terminal.backgroundColor,
     width: iconWidth,
     padding: "0px",
     scale: 0.7,
@@ -142,8 +142,8 @@ function InputBox(props: InputBoxProps) {
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: theme.terminal.colors.background,
-    color: theme.terminal.colors.primary,
+    backgroundColor: theme.terminal.backgroundColor,
+    color: theme.terminal.textColor,
     paddingTop: "1px",
     paddingBottom: "3px",
   });

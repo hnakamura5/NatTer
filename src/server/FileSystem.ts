@@ -17,6 +17,7 @@ function pathCanonicalize(filePath: string): string {
   return path.normalize(filePath);
 }
 
+// TODO: add remote support.
 export const fileSystemRouter = server.router({
   list: proc
     .input(z.string())

@@ -1,4 +1,4 @@
-import { useTheme } from "@/datatypes/Theme";
+import { useTheme } from "@/AppState";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import React from "react";

@@ -7,7 +7,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { Box } from "@mui/system";
 import DomPurify from "dompurify";
 
-import { useTheme } from "@/datatypes/Theme";
+import { useTheme } from "@/AppState";
 import { api } from "@/api";
 import {
   Command,
@@ -23,7 +23,8 @@ import styled from "@emotion/styled";
 
 import { AnsiUp } from "ansi-up";
 import { GlobalFocusMap } from "../GlobalFocusMap";
-import { Theme, css } from "@emotion/react";
+import { css } from "@emotion/react";
+import { Theme } from "@/datatypes/Theme";
 import { logger } from "@/datatypes/Logger";
 import DOMPurify from "dompurify";
 
@@ -83,8 +84,8 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const theme = useTheme();
 
   const AccordionStyle = styled(Box)({
-    color: theme.terminal.colors.primary,
-    backgroundColor: theme.terminal.colors.background,
+    color: theme.terminal.textColor,
+    backgroundColor: theme.terminal.backgroundColor,
     fontFamily: theme.terminal.font,
     fontSize: theme.terminal.fontSize,
     textAlign: "left",
@@ -93,13 +94,13 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   });
   const CommandStyle = styled(Box)({
     width: "100%",
-    backgroundColor: theme.terminal.colors.background,
+    backgroundColor: theme.terminal.backgroundColor,
     paddingLeft: "0px",
   });
   const ResponseStyle = styled(Box)({
     width: "calc(100% + 15px)",
-    marginLeft: "-10px",
-    backgroundColor: theme.terminal.colors.secondaryBackground,
+    marginLeft: "-8px",
+    backgroundColor: theme.terminal.secondaryBackgroundColor,
     paddingBottom: "5px",
   });
 
@@ -221,7 +222,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                   expandIcon={
                     <ExpandMoreIcon
                       sx={{
-                        color: theme.terminal.colors.primary,
+                        color: theme.terminal.textColor,
                         margin: -1,
                       }}
                     />

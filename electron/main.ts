@@ -53,6 +53,7 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
   createIPCHandler({router, windows: [win]})
+  console.log(`home: ${app.getPath('home')}`);
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
