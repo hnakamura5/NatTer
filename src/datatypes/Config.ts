@@ -1,7 +1,4 @@
 import { z } from "zod";
-import React from "react";
-import { api } from "@/api";
-
 
 export const ShellConfigSchema = z.object({
   name: z.string(),

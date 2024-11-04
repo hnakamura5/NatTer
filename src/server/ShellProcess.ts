@@ -18,6 +18,7 @@ import path from "node:path";
 import { server } from "@/server/tRPCServer";
 import { PowerShellSpecification } from "@/builtin/shell/Powershell";
 import { pathOf } from "@/server/pathAbstractionUtil";
+import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set("powershell", PowerShellSpecification);
@@ -26,7 +27,7 @@ type Process = {
   id: ProcessID;
   handle: ChildProcessWithoutNullStreams;
   shellSpec: ShellSpecification;
-  shellArgs: string[];
+  config: ShellConfig;
   currentCommand: Command;
   currentDirectory: string;
   user: string;
@@ -60,7 +61,7 @@ function receiveCommandResponse(
     if (current.isFinished) {
       return;
     }
-    const response = getStringFromResponseData(process, data);
+    const response = decodeFromShellEncoding(process, data);
     // TODO: console.log(`stdout: ${response}`);
     current.stdout = current.stdout + response;
     current.timeline.push({
@@ -94,7 +95,7 @@ function receiveCommandResponse(
     if (current.isFinished) {
       return;
     }
-    const response = getStringFromResponseData(process, data);
+    const response = decodeFromShellEncoding(process, data);
     //console.log(`stderr: ${response}`);
     current.stderr = current.stderr.concat(response);
     current.timeline.push({
@@ -121,23 +122,24 @@ function currentSetter(process: Process) {
   };
 }
 
-function startProcess(shell: string, args: string[]): ProcessID {
-  const shellSpec = ProcessSpecs.get(shell);
+function startProcess(config: ShellConfig): ProcessID {
+  const { name, executable, args, kind, encoding } = config;
+  const shellSpec = ProcessSpecs.get(kind);
   if (shellSpec === undefined) {
     // TODO: Error handling.
-    throw new Error(`Shell ${shell} is not supported.`);
+    throw new Error(`Shell kind ${kind} for ${name} is not supported.`);
   }
   if (processHolder.length > 100) {
     throw new Error("Too many processes. This is for debugging.");
   }
-  const proc = spawn(shellSpec.path, args);
+  const proc = spawn(executable, args);
   const pid = processHolder.length;
   console.log(`Start process call ${pid} with ${shellSpec.path}`);
   const process = {
     id: pid,
     handle: proc,
+    config: config,
     shellSpec: shellSpec,
-    shellArgs: args,
     currentCommand: emptyCommand(pid, -1),
     currentDirectory: "",
     user: "",
@@ -164,8 +166,18 @@ function startProcess(shell: string, args: string[]): ProcessID {
   return pid;
 }
 
-function getStringFromResponseData(process: Process, data: Buffer): string {
-  return iconv.decode(data, process.shellSpec.encoding);
+function decodeFromShellEncoding(process: Process, data: Buffer): string {
+  if (process.config.encoding === undefined) {
+    return data.toString();
+  }
+  return iconv.decode(data, process.config.encoding);
+}
+
+function encodeToShellEncoding(process: Process, command: string): Buffer {
+  if (process.config.encoding === undefined) {
+    return Buffer.from(command);
+  }
+  return iconv.encode(command, process.config.encoding);
 }
 
 function executeCommand(
@@ -176,7 +188,7 @@ function executeCommand(
   onEnd?: (command: Command) => void
 ): Command {
   // The command including the end detector.
-  const encoded = iconv.encode(command, process.shellSpec.encoding);
+  const encoded = encodeToShellEncoding(process, command);
   const exactCommand = process.shellSpec.extendCommandWithEndDetector(
     encoded.toString()
   );
@@ -223,18 +235,10 @@ const proc = server.procedure;
 export const shellRouter = server.router({
   // Start a new process of shell.
   start: proc
-    .input(
-      z.object({
-        shell: z.string().refine((value) => {
-          return ProcessSpecs.has(value);
-        }),
-        args: z.array(z.string()),
-      })
-    )
+    .input(ShellConfigSchema)
     .output(ProcessIDScheme)
     .mutation(async (opts) => {
-      const { shell, args } = opts.input;
-      return startProcess(shell, args);
+      return startProcess(opts.input);
     }),
 
   // Execute a new command in the shell process.

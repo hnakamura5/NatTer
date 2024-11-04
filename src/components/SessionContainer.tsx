@@ -12,11 +12,12 @@ import { api, ProcessID } from "@/api";
 import { pidContext, usePid } from "@/SessionStates";
 import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
-import { useTheme } from "@/AppState";
+import { useConfig, useTheme } from "@/AppState";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { FileTree } from "@/components/HoverMenus/FileTree";
 
 import { logger } from "@/datatypes/Logger";
+import { Config, ShellConfig } from "@/datatypes/Config";
 
 const VerticalBox = styled(Box)({
   display: "flex",
@@ -44,49 +45,45 @@ const FullWidthBox = styled(Box)({
   padding: 0,
 });
 
-function FileTreeTest() {
-  const pid = usePid();
-  const current = api.shell.current.useQuery(pid, {
-    onError: (error) => {
-      logger.logTrace(`current fetch: ${error}`);
-    },
-  });
-  if (!current.data) {
-    return <Box>Loading...</Box>;
+function getDefaultShell(config: Config): ShellConfig {
+  if (config.defaultShell) {
+    const defaultShell = config.shells.find(
+      (shell) => shell.name === config.defaultShell
+    );
+    if (defaultShell) {
+      return defaultShell;
+    }
   }
-  console.log(`FileTreeTest: ${current.data.directory}`);
-  return (
-    <div>
-      {"FileTreeTest"}
-      <FileTree home={current.data.directory} />
-    </div>
-  );
+  if (!config.shells.length) {
+    throw new Error("No shell is defined in the config.json");
+  }
+  return config.shells[0];
 }
 
 // Main window of the session.
 interface SessionContainerProps {}
 
 function SessionContainer(props: SessionContainerProps) {
+  const config = useConfig();
   const theme = useTheme();
   const [pid, setPid] = useState<ProcessID | undefined>(undefined);
   const starter = api.shell.start.useMutation();
   const stopper = api.shell.stop.useMutation();
 
+  const defaultShell = getDefaultShell(config);
+  console.log(
+    `defaultShell: ${defaultShell.name} ${defaultShell.executable} ${defaultShell.args} ${defaultShell.kind} ${defaultShell.encoding}`
+  );
+
   // Start the shell process.
   // TODO: This is a temporary solution. We should start out of this component.
   useEffect(() => {
     starter
-      .mutateAsync(
-        {
-          shell: "powershell",
-          args: [],
+      .mutateAsync(defaultShell, {
+        onError: (error) => {
+          logger.logTrace(`start fetch error: ${error}`);
         },
-        {
-          onError: (error) => {
-            logger.logTrace(`start fetch error: ${error}`);
-          },
-        }
-      )
+      })
       .then((result) => {
         logger.logTrace(`start fetch set pid: ${result}`);
         setPid(result);
@@ -100,50 +97,49 @@ function SessionContainer(props: SessionContainerProps) {
 
   if (pid === undefined) {
     return <Box>Loading...</Box>;
-  } else {
-    return (
-      <ErrorBoundary fallbackRender={SessionContainerError}>
-        <EasyFocus.Provider
-          jumpKey={(e) => {
-            return e.ctrlKey && e.key === "j";
-          }}
-          exitKey={(e) => {
-            return e.key === "Escape";
-          }}
-          badgeStyle={{
-            inputtedTagTextColor: "#FF5722",
-            backgroundColor: "#1A237E",
-            boundaryColor: theme.system.focusedFrameColor,
-          }}
-        >
-          <GlobalFocusMap.Provider>
-            <JotaiProvider>
-              <pidContext.Provider value={pid}>
-                <Box
-                  sx={{
-                    backgroundColor: theme.system.backgroundColor,
-                  }}
-                >
-                  <VerticalBox>
-                    <HoverMenusBar />
-                    <HorizontalBox>
-                      <FromBottomBox>
-                        <FullWidthBox>
-                          <Session />
-                          <CurrentBar />
-                          <InputBox />
-                        </FullWidthBox>
-                      </FromBottomBox>
-                    </HorizontalBox>
-                  </VerticalBox>
-                </Box>
-              </pidContext.Provider>
-            </JotaiProvider>
-          </GlobalFocusMap.Provider>
-        </EasyFocus.Provider>
-      </ErrorBoundary>
-    );
   }
+  return (
+    <ErrorBoundary fallbackRender={SessionContainerError}>
+      <EasyFocus.Provider
+        jumpKey={(e) => {
+          return e.ctrlKey && e.key === "j";
+        }}
+        exitKey={(e) => {
+          return e.key === "Escape";
+        }}
+        badgeStyle={{
+          inputtedTagTextColor: "#FF5722",
+          backgroundColor: "#1A237E",
+          boundaryColor: theme.system.focusedFrameColor,
+        }}
+      >
+        <GlobalFocusMap.Provider>
+          <JotaiProvider>
+            <pidContext.Provider value={pid}>
+              <Box
+                sx={{
+                  backgroundColor: theme.system.backgroundColor,
+                }}
+              >
+                <VerticalBox>
+                  <HoverMenusBar />
+                  <HorizontalBox>
+                    <FromBottomBox>
+                      <FullWidthBox>
+                        <Session />
+                        <CurrentBar />
+                        <InputBox />
+                      </FullWidthBox>
+                    </FromBottomBox>
+                  </HorizontalBox>
+                </VerticalBox>
+              </Box>
+            </pidContext.Provider>
+          </JotaiProvider>
+        </GlobalFocusMap.Provider>
+      </EasyFocus.Provider>
+    </ErrorBoundary>
+  );
 }
 
 function SessionContainerError() {

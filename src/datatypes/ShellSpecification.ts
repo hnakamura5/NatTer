@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PathKindSchema } from "./PathAbstraction";
+import { shell } from "electron";
 
 const ScopeSchema = z.object({
   opener: z.string(),
@@ -19,9 +20,7 @@ export const ShellSpecificationSchema = z
   .object({
     // Shell specification.
     name: z.string(),
-    path: z.string(),
     pathKind: PathKindSchema,
-    encoding: z.string(),
 
     // Command syntax specification.
     escapes: z.array(z.string()),
@@ -63,6 +62,7 @@ export const ShellSpecificationSchema = z
       )
       .returns(z.string().optional()), // Exit code or undefined.
 
+    // Check if the exit code is OK.
     isExitCodeOK: z.function().args(z.string()).returns(z.boolean()),
 
     // Current directory controls (optional functionality).
@@ -238,7 +238,7 @@ export function isCommandClosed(
   return scopeStack.length === 0;
 }
 
-export function defaultRandomEndDetector(
+function defaultRandomEndDetector(
   shellSpec: ShellSpecification
 ): string {
   const EOT = String.fromCharCode(4);
@@ -259,4 +259,41 @@ export function defaultRandomEndDetector(
     result = result.concat(set[Math.floor(rand * set.length)]);
   }
   return result;
+}
+
+export function extendCommandWithEndDetectorByEcho(
+  shellSpec: ShellSpecification,
+  command: string
+) {
+  const endDetector = defaultRandomEndDetector(shellSpec);
+  return {
+    // Sandwich the exit status with the end detector.
+    newCommand: `${command}; echo "${endDetector}$?${endDetector}"`,
+    endDetector: endDetector,
+  };
+}
+
+export function detectEndOfCommandAndExitCodeByEcho(
+  stdout: string,
+  endDetector: string
+) {
+  const first = stdout.indexOf(endDetector);
+  if (first === -1) {
+    return undefined;
+  }
+  const second = stdout.indexOf(endDetector, first + endDetector.length);
+  if (second === -1) {
+    return undefined;
+  }
+  // Here, first and second are by echo command.
+  const last = stdout.lastIndexOf(endDetector);
+  if (last === -1) {
+    return undefined;
+  }
+  const lastButOne = stdout.lastIndexOf(endDetector, last - 1);
+  if (lastButOne !== -1 && lastButOne !== second && lastButOne !== first) {
+    // Extract the exit status until the end detector.
+    return stdout.slice(lastButOne + endDetector.length, last);
+  }
+  return undefined;
 }
