@@ -28,6 +28,8 @@ export const ShellSpecificationSchema = z
     stringScope: z.array(StringScopeSchema),
     lineComments: z.array(z.string()),
     lineContinuations: z.array(z.string()),
+    delimiter: z.string(),
+    exitCodeVariable: z.string(),
 
     // If defined, overrides the default command closed detection.
     // In that case, syntax specification is ignored.
@@ -238,9 +240,7 @@ export function isCommandClosed(
   return scopeStack.length === 0;
 }
 
-function defaultRandomEndDetector(
-  shellSpec: ShellSpecification
-): string {
+function defaultRandomEndDetector(shellSpec: ShellSpecification): string {
   const EOT = String.fromCharCode(4);
   const ENQ = String.fromCharCode(5);
   const ACK = String.fromCharCode(6);
@@ -268,7 +268,7 @@ export function extendCommandWithEndDetectorByEcho(
   const endDetector = defaultRandomEndDetector(shellSpec);
   return {
     // Sandwich the exit status with the end detector.
-    newCommand: `${command}; echo "${endDetector}$?${endDetector}"`,
+    newCommand: `${command}${shellSpec.delimiter} echo "${endDetector}${shellSpec.exitCodeVariable}${endDetector}"`,
     endDetector: endDetector,
   };
 }

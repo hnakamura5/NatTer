@@ -4,27 +4,27 @@ import {
   extendCommandWithEndDetectorByEcho,
 } from "@/datatypes/ShellSpecification";
 
-export const PowerShellSpecification: ShellSpecification = {
-  name: "PowerShell",
+export const CmdSpecification: ShellSpecification = {
+  name: "Cmd",
   pathKind: "win32",
 
-  escapes: ["`"],
+  escapes: ["^"],
   scope: [
     { opener: "{", closer: "}" },
     { opener: "(", closer: ")" },
     { opener: "[", closer: "]" },
   ],
   stringScope: [
-    { quote: "'", containsEscape: true },
+    { quote: "'", containsEscape: false },
     { quote: '"', containsEscape: false },
   ],
-  lineComments: ["#"],
-  lineContinuations: ["`"],
-  delimiter: ";",
-  exitCodeVariable: "$?",
+  lineComments: ["REM"],
+  lineContinuations: ["^"],
+  delimiter: "&",
+  exitCodeVariable: "%ERRORLEVEL%",
 
   extendCommandWithEndDetector: (command: string) => {
-    return extendCommandWithEndDetectorByEcho(PowerShellSpecification, command);
+    return extendCommandWithEndDetectorByEcho(CmdSpecification, command);
   },
 
   detectEndOfCommandAndExitCode: (opts) => {
@@ -33,14 +33,13 @@ export const PowerShellSpecification: ShellSpecification = {
   },
 
   isExitCodeOK: (exitCode) => {
-    console.log(`exitCode: ${exitCode}`);
-    return exitCode === "True" || exitCode === "0";
+    return exitCode === "0";
   },
 
   directoryCommands: {
-    getCurrent: () => "Convert-Path $(pwd)",
+    getCurrent: () => "cd",
     changeCurrent: (dir) => `cd "${dir}"`,
-    list: (dir) => `ls "${dir}"`,
+    list: (dir) => `dir "${dir}"`,
     getUser: () => "whoami",
   },
 };

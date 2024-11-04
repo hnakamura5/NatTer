@@ -20,6 +20,9 @@ export const BashSpecification: ShellSpecification = {
   ],
   lineComments: ["#"],
   lineContinuations: ["\\"],
+  delimiter: ";",
+  exitCodeVariable: "$?",
+
 
   extendCommandWithEndDetector: (command: string) => {
     return extendCommandWithEndDetectorByEcho(BashSpecification, command);
