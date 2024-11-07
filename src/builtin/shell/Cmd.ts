@@ -5,7 +5,7 @@ import {
 } from "@/datatypes/ShellSpecification";
 
 export const CmdSpecification: ShellSpecification = {
-  name: "Cmd",
+  name: "cmd",
   pathKind: "win32",
 
   escapes: ["^"],
@@ -22,6 +22,7 @@ export const CmdSpecification: ShellSpecification = {
   lineContinuations: ["^"],
   delimiter: "&",
   exitCodeVariable: "%ERRORLEVEL%",
+  quoteLivesInString: true,
 
   extendCommandWithEndDetector: (command: string) => {
     return extendCommandWithEndDetectorByEcho(CmdSpecification, command);
@@ -29,7 +30,11 @@ export const CmdSpecification: ShellSpecification = {
 
   detectEndOfCommandAndExitCode: (opts) => {
     const { stdout, endDetector } = opts;
-    return detectEndOfCommandAndExitCodeByEcho(stdout, endDetector);
+    return detectEndOfCommandAndExitCodeByEcho(
+      CmdSpecification,
+      stdout,
+      endDetector
+    );
   },
 
   isExitCodeOK: (exitCode) => {

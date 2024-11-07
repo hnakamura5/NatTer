@@ -30,6 +30,8 @@ export const ShellSpecificationSchema = z
     lineContinuations: z.array(z.string()),
     delimiter: z.string(),
     exitCodeVariable: z.string(),
+    // For some shell, quotation itself lives in string. e.g. cmd.
+    quoteLivesInString: z.boolean().optional(),
 
     // If defined, overrides the default command closed detection.
     // In that case, syntax specification is ignored.
@@ -261,39 +263,59 @@ function defaultRandomEndDetector(shellSpec: ShellSpecification): string {
   return result;
 }
 
+function echoCommand(shellSpec: ShellSpecification, endDetector: string) {
+  const quote = shellSpec.quoteLivesInString ? "" : '"';
+  return `echo ${quote}${endDetector}${shellSpec.exitCodeVariable}${endDetector}${quote}`;
+}
+
 export function extendCommandWithEndDetectorByEcho(
   shellSpec: ShellSpecification,
   command: string
 ) {
   const endDetector = defaultRandomEndDetector(shellSpec);
+  console.log(`endDetector: ${endDetector} len: ${endDetector.length}`);
+  const needDelimiter =
+    command.length > 0 && !command.trim().endsWith(shellSpec.delimiter);
+  const commandAndDelimiter = needDelimiter
+    ? `${command}${shellSpec.delimiter}`
+    : command;
   return {
     // Sandwich the exit status with the end detector.
-    newCommand: `${command}${shellSpec.delimiter} echo "${endDetector}${shellSpec.exitCodeVariable}${endDetector}"`,
+    newCommand: `${commandAndDelimiter} ${echoCommand(shellSpec, endDetector)}`,
     endDetector: endDetector,
   };
 }
 
 export function detectEndOfCommandAndExitCodeByEcho(
+  shellSpec: ShellSpecification,
   stdout: string,
   endDetector: string
 ) {
-  const first = stdout.indexOf(endDetector);
+  // TODO: the echo command itself may be contained in stdout and may not contained.
+  // TODO: we have to prepare two modes: echo command is contained and not contained.
+  console.log(`detectEndOfCommandAndExitCodeByEcho stdout: ${stdout}`);
+  const echo = echoCommand(shellSpec, endDetector);
+  const findEcho = stdout.indexOf(echo);
+  console.log(`findEcho: ${findEcho}`);
+  let target = stdout;
+  if (findEcho !== -1) {
+    // Extract the exit status until the end detector.
+    target = stdout.slice(findEcho + echo.length);
+  }
+  const first = target.indexOf(endDetector);
+  console.log(`first: ${first}`);
   if (first === -1) {
     return undefined;
   }
-  const second = stdout.indexOf(endDetector, first + endDetector.length);
+  const second = target.indexOf(endDetector, first + endDetector.length);
+  console.log(`second: ${second}`);
   if (second === -1) {
     return undefined;
   }
-  // Here, first and second are by echo command.
-  const last = stdout.lastIndexOf(endDetector);
-  if (last === -1) {
+  // Only found one.
+  if (first === second) {
     return undefined;
   }
-  const lastButOne = stdout.lastIndexOf(endDetector, last - 1);
-  if (lastButOne !== -1 && lastButOne !== second && lastButOne !== first) {
-    // Extract the exit status until the end detector.
-    return stdout.slice(lastButOne + endDetector.length, last);
-  }
-  return undefined;
+  // Extract the exit status until the end detector.
+  return target.slice(first + endDetector.length, second);
 }

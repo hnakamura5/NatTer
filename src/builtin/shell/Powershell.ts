@@ -5,7 +5,7 @@ import {
 } from "@/datatypes/ShellSpecification";
 
 export const PowerShellSpecification: ShellSpecification = {
-  name: "PowerShell",
+  name: "powershell",
   pathKind: "win32",
 
   escapes: ["`"],
@@ -29,7 +29,11 @@ export const PowerShellSpecification: ShellSpecification = {
 
   detectEndOfCommandAndExitCode: (opts) => {
     const { stdout, endDetector } = opts;
-    return detectEndOfCommandAndExitCodeByEcho(stdout, endDetector);
+    return detectEndOfCommandAndExitCodeByEcho(
+      PowerShellSpecification,
+      stdout,
+      endDetector
+    );
   },
 
   isExitCodeOK: (exitCode) => {

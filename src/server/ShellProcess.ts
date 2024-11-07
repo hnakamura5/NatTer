@@ -6,22 +6,23 @@ import {
 } from "@/datatypes/ShellSpecification";
 import { z } from "zod";
 import * as iconv from "iconv-lite";
-import { PathKind } from "@/datatypes/PathAbstraction";
 import {
   Command,
   CommandSchema,
   emptyCommand,
   getOutputPartOfStdout,
 } from "@/datatypes/Command";
-import path from "node:path";
 
 import { server } from "@/server/tRPCServer";
 import { PowerShellSpecification } from "@/builtin/shell/Powershell";
-import { pathOf } from "@/server/pathAbstractionUtil";
 import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
+import { BashSpecification } from "@/builtin/shell/Bash";
+import { CmdSpecification } from "@/builtin/shell/Cmd";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
-ProcessSpecs.set("powershell", PowerShellSpecification);
+ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
+ProcessSpecs.set(BashSpecification.name, BashSpecification);
+ProcessSpecs.set(CmdSpecification.name, CmdSpecification);
 
 type Process = {
   id: ProcessID;
@@ -58,7 +59,11 @@ function receiveCommandResponse(
   // stdout handling.
   process.handle.stdout.removeAllListeners("data");
   process.handle.stdout.on("data", (data: Buffer) => {
+    console.log(
+      `Received data in command ${current.command} in process ${process.id} data: ${data} len: ${data.length}`
+    );
     if (current.isFinished) {
+      console.log(`Received in Finished command`);
       return;
     }
     const response = decodeFromShellEncoding(process, data);
@@ -132,9 +137,11 @@ function startProcess(config: ShellConfig): ProcessID {
   if (processHolder.length > 100) {
     throw new Error("Too many processes. This is for debugging.");
   }
-  const proc = spawn(executable, args);
+  const proc = spawn(executable, args, {
+    shell: true,
+  });
   const pid = processHolder.length;
-  console.log(`Start process call ${pid} with ${shellSpec.path}`);
+  console.log(`Start process call ${pid} with ${config.executable}`);
   const process = {
     id: pid,
     handle: proc,
@@ -147,22 +154,25 @@ function startProcess(config: ShellConfig): ProcessID {
   };
   processHolder.push(process);
   commandsOfProcessID.push([]);
-  console.log(`Started process ${pid} with ${shellSpec.path}`);
+  console.log(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
   const exactCommand = process.shellSpec.extendCommandWithEndDetector("");
+  console.log(`First command ${exactCommand.newCommand}`);
   process.currentCommand = emptyCommand(
     pid,
     commandsOfProcessID[process.id].length
   );
   const current = process.currentCommand;
-  current.command = shellSpec.path + args.join(" ");
+  current.command = config.executable + " " + config.args?.join(" ");
   current.exactCommand = exactCommand.newCommand;
   current.endDetector = exactCommand.endDetector;
   // Memorize as a command.
   commandsOfProcessID[pid].push(current);
   receiveCommandResponse(process, currentSetter(process));
   process.handle.stdin.write(exactCommand.newCommand + "\n");
-  console.log(`Started process ${pid} with command ${exactCommand.newCommand}`);
+  console.log(
+    `Started process ${pid} with command ${exactCommand.newCommand} detector ${exactCommand.endDetector}`
+  );
   return pid;
 }
 
@@ -358,5 +368,11 @@ export const shellRouter = server.router({
     .output(z.array(CommandSchema))
     .query(async (pid) => {
       return commandsOfProcessID[pid.input].concat();
+    }),
+  name: proc
+    .input(ProcessIDScheme)
+    .output(z.string())
+    .query(async (pid) => {
+      return processHolder[pid.input].config.name;
     }),
 });

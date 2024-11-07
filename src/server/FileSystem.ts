@@ -35,12 +35,12 @@ export const fileSystemRouter = server.router({
 
   stat: proc
     .input(z.string())
-    .output(FileStatScheme)
+    .output(FileStatScheme.optional())
     .query(async (opts) => {
       const filePath = opts.input;
-      const stats = fs.stat(path.normalize(filePath));
-      return stats
-        .then((stats) => {
+      try {
+        const stats = fs.stat(path.normalize(filePath));
+        return stats.then((stats) => {
           return {
             fullPath: filePath,
             isDir: stats.isDirectory(),
@@ -52,11 +52,11 @@ export const fileSystemRouter = server.router({
             byteSize: stats.size,
             permissionMode: stats.mode,
           };
-        })
-        .catch((err) => {
-          logger.logTrace(`Failed to stat ${filePath}: ${err}`);
-          throw err;
         });
+      } catch (err) {
+        logger.logTrace(`Failed to stat ${filePath}: ${err}`);
+        return undefined;
+      }
     }),
 
   move: proc

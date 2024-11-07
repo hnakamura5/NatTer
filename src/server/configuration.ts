@@ -6,14 +6,13 @@ import Electron from "electron";
 
 const proc = server.procedure;
 
-const configFilePath = Electron.app.getPath("home") + "/.natter/config.json";
+const configFilePath = Electron.app.getPath("home") + "/.NatTer/config.json";
 
 export const configurationRouter = server.router({
   read: proc.output(ConfigSchema).query(async () => {
     const configRead = fs.readFile(configFilePath, "utf-8");
     console.log("Reading config from: ", configFilePath);
     return configRead.then((config) => {
-      console.log("Read config: ", config);
       const parsed = parseConfig(config);
       if (parsed) {
         return parsed;

@@ -28,7 +28,7 @@ export const CommandSchema = z.object({
 });
 export type Command = z.infer<typeof CommandSchema>;
 
-export function emptyCommand(pid: number, cid:number): Command {
+export function emptyCommand(pid: number, cid: number): Command {
   return {
     command: "",
     pid: pid,
@@ -51,11 +51,10 @@ export function emptyCommand(pid: number, cid:number): Command {
 }
 
 export function getOutputPartOfStdout(command: Command): string {
-  const result = command.stdout.slice(
-    command.stdout.indexOf(command.exactCommand) +
-      command.exactCommand.length +
-      1
-  );
+  const commandIndex = command.stdout.indexOf(command.exactCommand);
+  const sliceStart =
+    commandIndex === -1 ? 0 : commandIndex + command.exactCommand.length + 1;
+  const result = command.stdout.slice(sliceStart);
   if (command.isFinished) {
     return result.slice(0, result.indexOf(command.endDetector));
   }
@@ -63,9 +62,10 @@ export function getOutputPartOfStdout(command: Command): string {
 }
 
 export function summarizeCommand(command: Command): string {
+  const length = 30;
   let result = command.command;
-  if (result.length > 20) {
-    result = result.slice(0, 20) + "...";
+  if (result.length > length) {
+    result = result.slice(0, length) + " ...";
   }
   return result.replace(/\n/g, " ");
 }

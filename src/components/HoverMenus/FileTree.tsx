@@ -73,7 +73,7 @@ function DirectoryLabel(props: { stat: FileStat }) {
   );
 }
 
-const ListMargin = "3px"
+const ListMargin = "3px";
 
 function TreeView(props: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -110,8 +110,14 @@ function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
     },
   });
 
+
   if (!stat.data) {
-    return <Box>Loading...</Box>;
+    return (
+      <TreeItem
+        itemId={props.path}
+        label={`The pass ${props.path} not found.`}
+      />
+    );
   }
 
   if (stat.data.isDir) {

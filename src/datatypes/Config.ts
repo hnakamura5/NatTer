@@ -1,4 +1,5 @@
 import { z } from "zod";
+import JSON5 from "json5";
 
 export const ShellConfigSchema = z.object({
   name: z.string(),
@@ -21,7 +22,7 @@ export type Config = z.infer<typeof ConfigSchema>;
 
 export function parseConfig(json: string): Config | undefined {
   try {
-    return ConfigSchema.parse(JSON.parse(json));
+    return ConfigSchema.parse(JSON5.parse(json));
   } catch (e) {
     console.error("Failed to parse config: ", e);
     return undefined;

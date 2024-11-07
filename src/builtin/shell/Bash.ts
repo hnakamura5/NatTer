@@ -5,7 +5,7 @@ import {
 } from "@/datatypes/ShellSpecification";
 
 export const BashSpecification: ShellSpecification = {
-  name: "Bash",
+  name: "bash",
   pathKind: "posix",
 
   escapes: ["\\"],
@@ -23,14 +23,17 @@ export const BashSpecification: ShellSpecification = {
   delimiter: ";",
   exitCodeVariable: "$?",
 
-
   extendCommandWithEndDetector: (command: string) => {
     return extendCommandWithEndDetectorByEcho(BashSpecification, command);
   },
 
   detectEndOfCommandAndExitCode: (opts) => {
     const { stdout, endDetector } = opts;
-    return detectEndOfCommandAndExitCodeByEcho(stdout, endDetector);
+    return detectEndOfCommandAndExitCodeByEcho(
+      BashSpecification,
+      stdout,
+      endDetector
+    );
   },
 
   isExitCodeOK: (exitCode) => {
