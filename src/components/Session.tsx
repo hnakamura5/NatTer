@@ -1,5 +1,5 @@
 import { api } from "@/api";
-import ProcessAccordion from "@/components/Session/ProcessAccordion";
+import ProcessAccordion from "@/components/ProcessAccordion";
 import { Box } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
 import { useEffect, useRef, useState } from "react";

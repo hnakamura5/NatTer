@@ -1,8 +1,8 @@
+import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import {
-  ShellSpecification,
-  detectEndOfCommandAndExitCodeByEcho,
-  extendCommandWithEndDetectorByEcho,
-} from "@/datatypes/ShellSpecification";
+  detectCommandResponseAndExitCodeByEcho,
+  extendCommandWithBoundaryDetectorByEcho,
+} from "@/datatypes/ShellUtils/BoundaryDetectorByEcho";
 
 export const BashSpecification: ShellSpecification = {
   name: "bash",
@@ -23,16 +23,23 @@ export const BashSpecification: ShellSpecification = {
   delimiter: ";",
   exitCodeVariable: "$?",
 
-  extendCommandWithEndDetector: (command: string) => {
-    return extendCommandWithEndDetectorByEcho(BashSpecification, command);
+  isInteractionSupported: (kind) => {
+    return kind === "command" || kind === "terminal";
   },
 
-  detectEndOfCommandAndExitCode: (opts) => {
-    const { stdout, endDetector } = opts;
-    return detectEndOfCommandAndExitCodeByEcho(
+  extendCommandWithBoundaryDetector: (command: string) => {
+    return extendCommandWithBoundaryDetectorByEcho(
+      BashSpecification,
+      command
+    );
+  },
+
+  detectResponseAndExitCode: (opts) => {
+    const {interact , stdout, boundaryDetector } = opts;
+    return detectCommandResponseAndExitCodeByEcho(
       BashSpecification,
       stdout,
-      endDetector
+      boundaryDetector
     );
   },
 
@@ -46,4 +53,10 @@ export const BashSpecification: ShellSpecification = {
     list: (dir) => `ls -lA ${dir}`,
     getUser: () => "whoami",
   },
+
+  promptCommands: {
+    get: () => "echo $PS1",
+    set: (prompt) => `PS1="${prompt}"`,
+  },
 };
+

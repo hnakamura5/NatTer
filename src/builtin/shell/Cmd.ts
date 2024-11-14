@@ -1,8 +1,8 @@
+import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import {
-  ShellSpecification,
-  detectEndOfCommandAndExitCodeByEcho,
-  extendCommandWithEndDetectorByEcho,
-} from "@/datatypes/ShellSpecification";
+  detectCommandResponseAndExitCodeByEcho,
+  extendCommandWithBoundaryDetectorByEcho,
+} from "@/datatypes/ShellUtils/BoundaryDetectorByEcho";
 
 export const CmdSpecification: ShellSpecification = {
   name: "cmd",
@@ -24,16 +24,20 @@ export const CmdSpecification: ShellSpecification = {
   exitCodeVariable: "%ERRORLEVEL%",
   quoteLivesInString: true,
 
-  extendCommandWithEndDetector: (command: string) => {
-    return extendCommandWithEndDetectorByEcho(CmdSpecification, command);
+  isInteractionSupported: (kind) => {
+    return kind === "command";
   },
 
-  detectEndOfCommandAndExitCode: (opts) => {
-    const { stdout, endDetector } = opts;
-    return detectEndOfCommandAndExitCodeByEcho(
+  extendCommandWithBoundaryDetector: (command: string) => {
+    return extendCommandWithBoundaryDetectorByEcho(CmdSpecification, command);
+  },
+
+  detectResponseAndExitCode: (opts) => {
+    const { interact, stdout, boundaryDetector } = opts;
+    return detectCommandResponseAndExitCodeByEcho(
       CmdSpecification,
       stdout,
-      endDetector
+      boundaryDetector
     );
   },
 
@@ -46,5 +50,10 @@ export const CmdSpecification: ShellSpecification = {
     changeCurrent: (dir) => `cd "${dir}"`,
     list: (dir) => `dir "${dir}"`,
     getUser: () => "whoami",
+  },
+
+  promptCommands: {
+    get: () => "echo %PROMPT%",
+    set: (prompt) => `PROMPT=${prompt}`,
   },
 };

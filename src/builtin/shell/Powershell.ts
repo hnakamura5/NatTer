@@ -1,8 +1,8 @@
+import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import {
-  ShellSpecification,
-  detectEndOfCommandAndExitCodeByEcho,
-  extendCommandWithEndDetectorByEcho,
-} from "@/datatypes/ShellSpecification";
+  detectCommandResponseAndExitCodeByEcho,
+  extendCommandWithBoundaryDetectorByEcho,
+} from "@/datatypes/ShellUtils/BoundaryDetectorByEcho";
 
 export const PowerShellSpecification: ShellSpecification = {
   name: "powershell",
@@ -23,16 +23,23 @@ export const PowerShellSpecification: ShellSpecification = {
   delimiter: ";",
   exitCodeVariable: "$?",
 
-  extendCommandWithEndDetector: (command: string) => {
-    return extendCommandWithEndDetectorByEcho(PowerShellSpecification, command);
+  isInteractionSupported: (kind) => {
+    return kind === "command" || kind === "terminal";
   },
 
-  detectEndOfCommandAndExitCode: (opts) => {
-    const { stdout, endDetector } = opts;
-    return detectEndOfCommandAndExitCodeByEcho(
+  extendCommandWithBoundaryDetector: (command: string) => {
+    return extendCommandWithBoundaryDetectorByEcho(
+      PowerShellSpecification,
+      command
+    );
+  },
+
+  detectResponseAndExitCode: (opts) => {
+    const { interact, stdout, boundaryDetector } = opts;
+    return detectCommandResponseAndExitCodeByEcho(
       PowerShellSpecification,
       stdout,
-      endDetector
+      boundaryDetector
     );
   },
 
@@ -46,5 +53,10 @@ export const PowerShellSpecification: ShellSpecification = {
     changeCurrent: (dir) => `cd "${dir}"`,
     list: (dir) => `ls "${dir}"`,
     getUser: () => "whoami",
+  },
+
+  promptCommands: {
+    get: () => "prompt",
+    set: (prompt) => `function prompt{ return "${prompt}"; }`,
   },
 };

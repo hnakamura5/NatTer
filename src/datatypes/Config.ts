@@ -1,5 +1,6 @@
 import { z } from "zod";
 import JSON5 from "json5";
+import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 
 export const ShellConfigSchema = z.object({
   name: z.string(),
@@ -7,6 +8,7 @@ export const ShellConfigSchema = z.object({
   args: z.array(z.string()).optional(),
   kind: z.enum(["bash", "cmd", "powershell"]),
   encoding: z.string().optional(),
+  interact: ShellInteractKindSchema,
 });
 
 export type ShellConfig = z.infer<typeof ShellConfigSchema>;

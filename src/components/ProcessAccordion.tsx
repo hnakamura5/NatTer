@@ -16,29 +16,17 @@ import {
 } from "@/datatypes/Command";
 
 import { ErrorBoundary } from "react-error-boundary";
-import FocusBoundary from "../FocusBoundary";
+import FocusBoundary from "./FocusBoundary";
 import { EasyFocus } from "@/components/EasyFocus";
 
 import styled from "@emotion/styled";
 
-import { AnsiUp } from "ansi-up";
-import { GlobalFocusMap } from "../GlobalFocusMap";
+import { AnsiUp } from "@/datatypes/ansiUpCustom";
+import { GlobalFocusMap } from "./GlobalFocusMap";
 import { css } from "@emotion/react";
 import { Theme } from "@/datatypes/Theme";
 import { logger } from "@/datatypes/Logger";
 import DOMPurify from "dompurify";
-
-// The original implementation of ansi_up.js does not escape the space.
-// We fix this by force overriding the doEscape method.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(AnsiUp.prototype as any).doEscape = function (txt: any) {
-  return txt.replace(/[ &<>]/gm, function (str: string) {
-    if (str === " ") return "&nbsp;";
-    if (str === "&") return "&amp;";
-    if (str === "<") return "&lt;";
-    if (str === ">") return "&gt;";
-  });
-};
 
 function statusIcon(command: Command, theme: Theme) {
   const marginTop = -0.4;
@@ -170,7 +158,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const ansiUp = new AnsiUp();
   const purifier = DOMPurify();
   const stdoutHTML = purifier.sanitize(
-    ansiUp.ansi_to_html(getOutputPartOfStdout(command)).replace(/\n/g, "<br />")
+    ansiUp.ansi_to_html(command.stdoutResponse).replace(/\n/g, "<br />")
   );
   const stderrHTML = purifier.sanitize(
     ansiUp.ansi_to_html(command.stderr).replace(/\n/g, "<br />")
@@ -179,7 +167,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const sendKey = api.shell.sendKey.useMutation();
 
   //TODO: console.log(`command: ${command.command}, id: ${props.listIndex}`);
-  //TODO: console.log(`stdout: ${command.stdout}`);
+  console.log(`stdout: ${command.stdout}`);
   //TODO: console.log(`stderr: ${command.stderr}`);
 
   return (

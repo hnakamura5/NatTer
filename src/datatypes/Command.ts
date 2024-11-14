@@ -24,7 +24,7 @@ export const CommandSchema = z.object({
   exitStatus: z.string().optional(),
   exitStatusIsOK: z.boolean().optional(),
   stdoutResponse: z.string(),
-  endDetector: z.string(),
+  boundaryDetector: z.string(),
 });
 export type Command = z.infer<typeof CommandSchema>;
 
@@ -46,7 +46,7 @@ export function emptyCommand(pid: number, cid: number): Command {
     exitStatus: undefined,
     exitStatusIsOK: undefined,
     stdoutResponse: "",
-    endDetector: "",
+    boundaryDetector: "",
   };
 }
 
@@ -56,7 +56,7 @@ export function getOutputPartOfStdout(command: Command): string {
     commandIndex === -1 ? 0 : commandIndex + command.exactCommand.length + 1;
   const result = command.stdout.slice(sliceStart);
   if (command.isFinished) {
-    return result.slice(0, result.indexOf(command.endDetector));
+    return result.slice(0, result.indexOf(command.boundaryDetector));
   }
   return result;
 }
