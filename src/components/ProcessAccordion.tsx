@@ -73,7 +73,7 @@ function ResponseSelector(props: { command: Command }) {
   if (interactMode.data == "terminal") {
     console.log(`terminal mode`);
     //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
-    return <Xterm pid={props.command.pid} cid={props.command.cid} />;
+    return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
   } else {
     console.log(`other mode`);
     return <CommandResponse command={props.command} />;
@@ -84,7 +84,6 @@ function ProcessAccordionDetail(props: {
   command: Command;
   focalPoint: React.RefObject<HTMLDivElement>;
 }) {
-  const theme = useTheme();
   const CommandDetailPadding = {
     paddingLeft: 1.5,
     paddingRight: 0,

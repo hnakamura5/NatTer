@@ -94,10 +94,6 @@ function receiveCommandResponse(
       clock: process.clock,
     });
     addStdout(process.config, current, response);
-    current.timeline.push({
-      response: response,
-      isError: false,
-    });
     clockIncrement(process);
     // Check if the command is finished.
     const detected = process.shellSpec.detectResponseAndExitCode({
@@ -135,10 +131,6 @@ function receiveCommandResponse(
     //console.log(`stderr: ${response}`);
     current.stderr = current.stderr.concat(response);
     process.event.emit("stderr", response);
-    current.timeline.push({
-      response: response,
-      isError: true,
-    });
     clockIncrement(process);
   });
 }
@@ -387,24 +379,6 @@ export const shellRouter = server.router({
         });
       });
     }),
-  pollTimeline: proc
-    .input(ProcessIDScheme)
-    .output(
-      z.object({
-        timeline: z.array(
-          z.object({ response: z.string(), isError: z.boolean() })
-        ),
-        timelineCount: z.number().int(),
-        isFinished: z.boolean(),
-      })
-    )
-    .query(async (pid) => {
-      return {
-        timeline: processHolder[pid.input].currentCommand.timeline,
-        timelineCount: processHolder[pid.input].currentCommand.timeline.length,
-        isFinished: processHolder[pid.input].currentCommand.isFinished,
-      };
-    }),
 
   // Stop the shell process.
   stop: proc
@@ -434,7 +408,25 @@ export const shellRouter = server.router({
     .input(ProcessIDScheme)
     .output(z.array(CommandSchema))
     .query(async (pid) => {
-      return commandsOfProcessID[pid.input].concat();
+      return commandsOfProcessID[pid.input];
+    }),
+  numCommands: proc
+    .input(ProcessIDScheme)
+    .output(z.number().int())
+    .query(async (pid) => {
+      return commandsOfProcessID[pid.input].length;
+    }),
+  command : proc
+    .input(
+      z.object({
+        pid: ProcessIDScheme,
+        cid: z.number().int()
+      })
+    )
+    .output(CommandSchema)
+    .query(async (opts) => {
+      const { pid, cid } = opts.input;
+      return commandsOfProcessID[pid][cid];
     }),
   name: proc
     .input(ProcessIDScheme)

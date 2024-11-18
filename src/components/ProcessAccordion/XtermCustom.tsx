@@ -1,6 +1,5 @@
 // React wrapper for xterm.js
 
-import { useEffect, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
@@ -8,11 +7,15 @@ import { SearchAddon } from "@xterm/addon-search";
 import { SerializeAddon } from "@xterm/addon-serialize";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { Unicode11Addon } from "@xterm/addon-unicode11";
+import "@xterm/xterm/css/xterm.css";
+
 import { logger } from "@/datatypes/Logger";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/AppState";
-import { api } from "@/api";
-import { ErrorBoundary } from "react-error-boundary";
 import { Theme } from "@/datatypes/Theme";
+import { ErrorBoundary } from "react-error-boundary";
+
+import { api } from "@/api";
 
 type terminalHandle = {
   terminal: Terminal;
@@ -27,9 +30,10 @@ function newTerminal(theme: Theme): terminalHandle {
     cursorBlink: true,
     allowProposedApi: true,
     theme: {
-      background: theme.terminal.backgroundColor,
+      background: theme.terminal.secondaryBackgroundColor,
       foreground: theme.terminal.textColor,
     },
+    fontFamily: theme.terminal.font,
   });
   const fitAddon = new FitAddon();
   const serializeAddon = new SerializeAddon();
@@ -79,23 +83,26 @@ export default function XtermCustom(props: XtermCustomProps) {
   const cid = props.cid;
   const theme = useTheme();
   const termDivRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<terminalHandle | null>(null);
 
-  const handle = getTerminal(pid, cid, theme);
-  console.log(`XtermCustom ${pid}-${cid} ${handle.serialize.serialize()}`);
 
+  const sendKey = api.shell.sendKey.useMutation();
+  const resize = api.shell.resize.useMutation();
   // Bind the terminal to the DOM on the first render.
   useEffect(() => {
+    const handle = newTerminal(theme);
+    if (!handle) {
+      console.log(`no handle ${pid}-${cid}`);
+      return;
+    }
+    handleRef.current = handle;
     if (!termDivRef.current) {
       return;
     }
     const terminal = handle.terminal;
     const fit = handle.fit;
     console.log(`open terminal ${pid}-${cid}`);
-    try {
-      terminal.open(termDivRef.current);
-    } catch (e) {
-      console.log(`open terminal error ${e}`);
-    }
+    terminal.open(termDivRef.current);
     terminal.write("Loading...\r\n");
     console.log(
       `write terminal ${pid}-${cid} area:${
@@ -103,24 +110,12 @@ export default function XtermCustom(props: XtermCustomProps) {
       } serial:${handle.serialize.serialize()}`
     );
 
-    //fit.fit();
+    fit.fit();
     window.onresize = () => {
       if (termDivRef.current) {
-        //fit.fit();
+        fit.fit();
       }
     };
-    return () => {
-      console.log(`dispose terminal ${pid}-${cid}`);
-      terminal.reset();
-    };
-  }, []);
-
-  const sendKey = api.shell.sendKey.useMutation();
-  const resize = api.shell.resize.useMutation();
-  useEffect(() => {
-    if (!termDivRef.current) {
-      return;
-    }
     handle.terminal.onData((data) => {
       console.log(`terminal onData: ${data}`);
       sendKey.mutate({ pid: pid, key: data });
@@ -129,9 +124,10 @@ export default function XtermCustom(props: XtermCustomProps) {
       console.log(`terminal onResize: ${size}`);
       resize.mutate({ pid: pid, cols: size.cols, rows: size.rows });
     });
-    handle.terminal.onWriteParsed((data) => {
-      console.log(`terminal onWriteParsed: ${data}`);
-    });
+    return () => {
+      console.log(`dispose terminal ${pid}-${cid}`);
+      terminal.dispose();
+    };
   }, []);
 
   api.shell.onStdout.useSubscription(pid, {
@@ -139,7 +135,7 @@ export default function XtermCustom(props: XtermCustomProps) {
       logger.logTrace(`stdout: ${error}`);
     },
     onData: (data) => {
-      handle.terminal.write(data.stdout);
+      handleRef.current?.terminal.write(data.stdout);
     },
   });
 

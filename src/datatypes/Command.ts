@@ -15,12 +15,6 @@ export const CommandSchema = z.object({
   isFinished: z.boolean(),
   stdout: z.string(),
   stderr: z.string(),
-  timeline: z.array(
-    z.object({
-      response: z.string(),
-      isError: z.boolean(),
-    })
-  ),
   exitStatus: z.string().optional(),
   exitStatusIsOK: z.boolean().optional(),
   stdoutResponse: z.string(),

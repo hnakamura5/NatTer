@@ -5,18 +5,22 @@ import { SearchAddon } from "@xterm/addon-search";
 import { SerializeAddon } from "@xterm/addon-serialize";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { Unicode11Addon } from "@xterm/addon-unicode11";
+import "@xterm/xterm/css/xterm.css";
+
 import { useEffect, useRef } from "react";
 import { Theme } from "@/datatypes/Theme";
 import { useTheme } from "@/AppState";
+
 
 let count = 0;
 
 function newTerminal(theme: Theme) {
   const terminal = new Terminal({
     theme: {
-      background: theme.terminal.backgroundColor,
+      background: theme.terminal.secondaryBackgroundColor,
       foreground: theme.terminal.textColor,
     },
+    fontFamily: theme.terminal.font,
     allowProposedApi: true,
   });
   const fitAddon = new FitAddon();
@@ -39,8 +43,6 @@ function newTerminal(theme: Theme) {
   };
 }
 
-const handleGlobal = new Map<number, { terminal: Terminal; opened: boolean }>();
-
 interface XtermProps {
   pid: number;
   cid: number;
@@ -50,36 +52,28 @@ export default function Xterm(props: XtermProps) {
   const { pid, cid } = props;
   const theme = useTheme();
   const termDivRef = useRef<HTMLDivElement>(null);
-  const terminalRef = useRef<{ terminal: Terminal; opened: boolean } | null>(null);
+  const terminalRef = useRef<{ terminal: Terminal; opened: boolean } | null>(
+    null
+  );
 
   useEffect(() => {
-    if (!handleGlobal.has(pid)) {
-      console.log(`new terminal ${pid}-${cid}`);
-      const newTerm = { ...newTerminal(theme), opened: false };
-      handleGlobal.set(pid, newTerm);
-      terminalRef.current = newTerm;
-    } else {
-      terminalRef.current = handleGlobal.get(pid) || null;
-    }
-
-    const handle = terminalRef.current;
+    const handle = newTerminal(theme);
     if (!handle) {
       console.log(`no handle ${pid}-${cid}`);
       return;
     }
-
-    const { terminal, opened } = handle;
-    if (!opened && termDivRef.current) {
+    const terminal = handle.terminal;
+    if (termDivRef.current) {
       terminal.open(termDivRef.current);
-      handle.opened = true;
       console.log(`open terminal ${pid}-${cid}`);
     }
+    handle.fit.fit();
 
     terminal.write(`pid: ${pid} cid: ${cid}\r\n`);
 
     return () => {
       console.log(`dispose terminal ${pid}-${cid}`);
-      // terminal.dispose();
+      terminal.dispose();
     };
   }, []);
 
