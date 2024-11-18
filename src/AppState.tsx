@@ -2,6 +2,11 @@ import { api } from "@/api";
 import { Config } from "@/datatypes/Config";
 import { Theme, DefaultDarkTheme } from "@/datatypes/Theme";
 import { useState, useContext, createContext } from "react";
+import {
+  ThemeProvider as EmotionThemeProvider,
+  useTheme as emotionUseTheme,
+} from "@emotion/react";
+import { createTheme } from "@mui/material";
 
 const ConfigContext = createContext<Config | undefined>(undefined);
 
@@ -27,18 +32,37 @@ function ConfigProvider(props: { children: React.ReactNode }) {
 }
 
 // TODO: ThemeProvider of emotion does not work.
-const ThemeContext = createContext(DefaultDarkTheme);
-export const useTheme = () => {
-  return useContext(ThemeContext);
-};
+// const ThemeContext = createContext(DefaultDarkTheme);
+// export const useTheme = () => {
+//   return useContext(ThemeContext);
+// };
+
+// function ThemeProvider(props: { children: React.ReactNode }) {
+//   const [theme, setTheme] = useState<Theme>(DefaultDarkTheme);
+//   return (
+//     <ThemeContext.Provider value={theme}>
+//       {props.children}
+//     </ThemeContext.Provider>
+//   );
+// }
+function themeWithMUI(theme: Theme) {
+  const muiTheme = createTheme({
+    palette: {
+      mode: "dark",
+    },
+    ...theme,
+  });
+  return muiTheme;
+}
 
 function ThemeProvider(props: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(DefaultDarkTheme);
+  const theme = themeWithMUI(DefaultDarkTheme);
   return (
-    <ThemeContext.Provider value={theme}>
-      {props.children}
-    </ThemeContext.Provider>
+    <EmotionThemeProvider theme={theme}>{props.children}</EmotionThemeProvider>
   );
+}
+export function useTheme() {
+  return emotionUseTheme();
 }
 
 export function AppStateProvider(props: { children: React.ReactNode }) {

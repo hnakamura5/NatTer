@@ -25,15 +25,10 @@ const VerticalBox = styled(Box)({
   height: "100vh",
 });
 
-const HorizontalBox = styled(Box)({
+const HorizontalFromBottomBox = styled(Box)({
   display: "flex",
-  flexDirection: "column",
-  // border: "1px solid grey",
-});
-
-const FromBottomBox = styled(Box)({
-  display: "flex",
-  alignItems: "flex-end",
+  flexDirection: "column-reverse",
+  justifyContent: "flex-start",
   height: "100%",
 });
 
@@ -72,7 +67,8 @@ function SessionContainer(props: SessionContainerProps) {
 
   const defaultShell = getDefaultShell(config);
   console.log(
-    `defaultShell: ${defaultShell.name} ${defaultShell.executable} ${defaultShell.args} ${defaultShell.kind} ${defaultShell.encoding}`
+    `defaultShell: ${defaultShell.name} ${defaultShell.executable} ${defaultShell.args}
+     ${defaultShell.kind} ${defaultShell.encoding}`
   );
 
   // Start the shell process.
@@ -123,15 +119,13 @@ function SessionContainer(props: SessionContainerProps) {
               >
                 <VerticalBox>
                   <HoverMenusBar />
-                  <HorizontalBox>
-                    <FromBottomBox>
-                      <FullWidthBox>
-                        <Session />
-                        <CurrentBar />
-                        <InputBox />
-                      </FullWidthBox>
-                    </FromBottomBox>
-                  </HorizontalBox>
+                  <HorizontalFromBottomBox>
+                    <FullWidthBox>
+                      <Session />
+                      <CurrentBar />
+                      <InputBox />
+                    </FullWidthBox>
+                  </HorizontalFromBottomBox>
                 </VerticalBox>
               </Box>
             </pidContext.Provider>

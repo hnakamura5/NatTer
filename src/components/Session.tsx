@@ -7,8 +7,7 @@ import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
 
-interface SessionProps {
-}
+interface SessionProps {}
 
 function Session(props: SessionProps) {
   const pid = usePid();
@@ -22,7 +21,7 @@ function Session(props: SessionProps) {
     handleGFM.focus(GFM.Key.LastCommand);
     // Scroll to the bottom.
     bottom.current?.scrollIntoView({ behavior: "smooth" });
-  }, [length]);
+  }, [handleGFM, length]);
 
   // Fetching commands.
   const commands = api.shell.commands.useQuery(pid, {
@@ -40,7 +39,7 @@ function Session(props: SessionProps) {
   }
 
   // List of commands into list of ProcessAccordion.
-  const processAccordions = commands.data.map((command, index) => {
+  const processAccordions = commands.data.reverse().map((command, index) => {
     console.log(`command: ${command.command} key: ${index}`);
     return (
       <ProcessAccordion
@@ -58,6 +57,8 @@ function Session(props: SessionProps) {
         sx={{
           maxHeight: "calc(100vh - 50px)", // TODO: calculate using actual height.
           overflow: "auto",
+          flexDirection: "column-reverse",
+          justifyContent: "flex-start",
         }}
       >
         {processAccordions}

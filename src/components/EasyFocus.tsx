@@ -1,3 +1,4 @@
+import { logger } from "@/datatypes/Logger";
 import React, { useEffect } from "react";
 import { set } from "zod";
 
@@ -312,6 +313,7 @@ export module EasyFocus {
     children: React.ReactNode;
     focusTarget: React.RefObject<HTMLElement>;
     badgeStyle?: BadgeStyle;
+    name?: string;
     onBeforeFocus?: () => void;
   }) {
     const [jumpTag, setJumpTag] = React.useState<FocusTagType>(undefined);
@@ -337,6 +339,7 @@ export module EasyFocus {
       if (!isVisible) {
         return;
       }
+      logger.logTrace(`EasyFocus.Land: register key=${props.name} ref=${props.focusTarget}`);
       manager.addLand(props.focusTarget, setJumpTag, props.onBeforeFocus);
       return () => manager.removeLand(props.focusTarget);
     }, [ref, isVisible]);

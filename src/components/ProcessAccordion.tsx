@@ -1,64 +1,139 @@
 import { useEffect, useRef, useState } from "react";
-import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  AccordionSlots,
+} from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import LoopICon from "@mui/icons-material/Loop";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { Box } from "@mui/system";
 import DomPurify from "dompurify";
 
 import { useTheme } from "@/AppState";
 import { api } from "@/api";
-import {
-  Command,
-  getOutputPartOfStdout,
-  summarizeCommand,
-} from "@/datatypes/Command";
+import { Command, getOutputPartOfStdout } from "@/datatypes/Command";
 
 import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "./FocusBoundary";
 import { EasyFocus } from "@/components/EasyFocus";
 
 import styled from "@emotion/styled";
-
-import { AnsiUp } from "@/datatypes/ansiUpCustom";
-import { GlobalFocusMap } from "./GlobalFocusMap";
-import { css } from "@emotion/react";
-import { Theme } from "@/datatypes/Theme";
+import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
-import DOMPurify from "dompurify";
+import { CommandResponse } from "@/components/ProcessAccordion/CommandResponse";
+import { CommandSummary } from "./ProcessAccordion/CommandSummary";
+import XtermCustom from "./ProcessAccordion/XtermCustom";
+import Xterm from "./ProcessAccordion/Xterm";
 
-function statusIcon(command: Command, theme: Theme) {
-  const marginTop = -0.4;
-  const marginLeft = -1.0;
-  if (command.exitStatusIsOK === undefined) {
-    return (
-      <LoopICon
-        sx={{ scale: 0.7, marginTop: marginTop, marginLeft: marginLeft }}
-      />
-    );
-  }
-  if (command.exitStatusIsOK) {
-    return (
-      <CheckCircleOutlineIcon
-        sx={{
-          color: theme.terminal.stdoutColor,
-          scale: 0.7,
-          marginTop: marginTop,
-          marginLeft: marginLeft,
-        }}
-      />
-    );
-  }
+const AccordionStyle = styled(Box)(({ theme }) => ({
+  color: theme.terminal.textColor,
+  backgroundColor: theme.terminal.backgroundColor,
+  fontFamily: theme.terminal.font,
+  fontSize: theme.terminal.fontSize,
+  textAlign: "left",
+  overflow: "hidden",
+  overflowWrap: "anywhere",
+}));
+
+function ProcessAccordionStyle(props: { children: React.ReactNode }) {
+  const theme = useTheme();
+  return <AccordionStyle>{props.children}</AccordionStyle>;
+}
+
+function ProcessAccordionSummary(props: { command: Command }) {
+  const theme = useTheme();
+  const CommandSummaryPadding = {
+    paddingX: "5px",
+    paddingTop: "5px",
+    paddingBottom: "4px",
+    marginY: "-15px",
+  };
+
   return (
-    <ErrorOutlineIcon
-      sx={{
-        color: theme.terminal.stderrColor,
-        scale: 0.7,
-        marginTop: marginTop,
-        marginLeft: marginLeft,
+    <ProcessAccordionStyle>
+      <AccordionSummary
+        expandIcon={
+          <ExpandMoreIcon
+            sx={{
+              color: theme.terminal.textColor,
+              margin: -1,
+            }}
+          />
+        }
+        sx={CommandSummaryPadding}
+      >
+        <CommandSummary command={props.command} />
+      </AccordionSummary>
+    </ProcessAccordionStyle>
+  );
+}
+
+function ResponseSelector(props: { command: Command }) {
+  const interactMode = api.shell.interactMode.useQuery(props.command.pid);
+  if (interactMode.data == "terminal") {
+    console.log(`terminal mode`);
+    //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
+    return <Xterm pid={props.command.pid} cid={props.command.cid} />;
+  } else {
+    console.log(`other mode`);
+    return <CommandResponse command={props.command} />;
+  }
+}
+
+function ProcessAccordionDetail(props: {
+  command: Command;
+  focalPoint: React.RefObject<HTMLDivElement>;
+}) {
+  const theme = useTheme();
+  const CommandDetailPadding = {
+    paddingLeft: 1.5,
+    paddingRight: 0,
+    paddingY: 1,
+    marginY: -1,
+  };
+
+  return (
+    <ProcessAccordionStyle>
+      <AccordionDetails sx={CommandDetailPadding}>
+        <div ref={props.focalPoint} tabIndex={0}>
+          <ResponseSelector command={props.command} />
+        </div>
+      </AccordionDetails>
+    </ProcessAccordionStyle>
+  );
+}
+
+function ProcessKeyHandle(props: {
+  command: Command;
+  children: React.ReactNode;
+}) {
+  const command = props.command;
+  const sendKey = api.shell.sendKey.useMutation();
+
+  return (
+    <div
+      onKeyDown={(e) => {
+        console.log(`key: ${e.key}`);
+        // TODO: handle copy and so on.
+        return;
+        if (command.isFinished) {
+          return;
+        }
+        sendKey.mutate(
+          {
+            pid: command.pid,
+            key: e.key,
+          },
+          {
+            onError: (error) => {
+              logger.logTrace(`failed to send key: ${error}`);
+            },
+          }
+        );
       }}
-    />
+    >
+      {props.children}
+    </div>
   );
 }
 
@@ -69,75 +144,29 @@ interface ProcessAccordionProps {
 }
 
 function ProcessAccordion(props: ProcessAccordionProps) {
+  const command = props.command;
   const theme = useTheme();
 
-  const AccordionStyle = styled(Box)({
-    color: theme.terminal.textColor,
-    backgroundColor: theme.terminal.backgroundColor,
-    fontFamily: theme.terminal.font,
-    fontSize: theme.terminal.fontSize,
-    textAlign: "left",
-    overflow: "hidden",
-    overflowWrap: "anywhere",
-  });
-  const CommandStyle = styled(Box)({
-    width: "100%",
-    backgroundColor: theme.terminal.backgroundColor,
-    paddingLeft: "0px",
-  });
-  const ResponseStyle = styled(Box)({
-    width: "calc(100% + 15px)",
-    marginLeft: "-8px",
-    backgroundColor: theme.terminal.secondaryBackgroundColor,
-    paddingBottom: "5px",
-  });
-
-  const CommandSummaryPadding = {
-    paddingX: "5px",
-    paddingTop: "5px",
-    paddingBottom: "4px",
-    marginY: "-15px",
-  };
-  const ResponseInternalPadding = {
-    paddingLeft: 1.5,
-    paddingRight: 0,
-    paddingY: 1,
-    marginY: -1,
-  };
-  const colorLine = (color: string) => {
-    return {
-      borderLeft: `4px solid ${color}`,
-      paddingLeft: 1,
-    };
-  };
-  const colorSection = (color: string) => {
-    return {
-      borderLeft: `4px solid ${color}`,
-      paddingLeft: 1,
-      borderBottom: `2px solid ${color}`,
-      paddingBottom: `2px`,
-    };
-  };
-  const CurrentDirStyle = styled.span({
-    color: theme.terminal.directoryColor,
-  });
-  const UserStyle = styled.span({
-    color: theme.terminal.userColor,
-    float: "right",
-    marginRight: "10px",
-  });
-  const TimeStyle = styled.span({
-    color: theme.terminal.timeColor,
-    style: "bold underline",
-    marginRight: "10px",
-  });
+  // Scroll control.
+  const top = useRef<HTMLDivElement>(null);
+  const bottom = useRef<HTMLDivElement>(null);
+  const [scrollIntoView, setScrollIntoView] = useState<boolean>(false);
+  useEffect(() => {
+    if (scrollIntoView) {
+      bottom.current?.scrollIntoView({ behavior: "smooth" });
+      top.current?.scrollIntoView({ behavior: "smooth" });
+      setScrollIntoView(false);
+    }
+  }, [scrollIntoView]);
 
   const [expanded, setExpanded] = useState<boolean>(true);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded);
+    if (newExpanded) {
+      setScrollIntoView(true);
+    }
   };
 
-  const command = props.command;
   // Focus control.
   const handleGFM = GlobalFocusMap.useHandle();
   useEffect(() => {
@@ -150,119 +179,60 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       // focus back to the input box on finish.
       handleGFM.focus(GlobalFocusMap.Key.InputBox);
     }
-  }, [command, props.isLast]);
+  }, [command, handleGFM, props.isLast]);
 
   const focalPoint = useRef<HTMLDivElement>(null);
-
-  // Convert stdout and stderr to HTML.
-  const ansiUp = new AnsiUp();
-  const purifier = DOMPurify();
-  const stdoutHTML = purifier.sanitize(
-    ansiUp.ansi_to_html(command.stdoutResponse).replace(/\n/g, "<br />")
-  );
-  const stderrHTML = purifier.sanitize(
-    ansiUp.ansi_to_html(command.stderr).replace(/\n/g, "<br />")
-  );
-
-  const sendKey = api.shell.sendKey.useMutation();
 
   //TODO: console.log(`command: ${command.command}, id: ${props.listIndex}`);
   console.log(`stdout: ${command.stdout}`);
   //TODO: console.log(`stderr: ${command.stderr}`);
 
   return (
-    <ErrorBoundary fallbackRender={ProcessAccordionError}>
-      <FocusBoundary
-        onKeyDown={(e) => {
-          console.log(`key: ${e.key}`);
-          if (!command.isFinished) {
-            sendKey.mutate(
-              {
-                pid: command.pid,
-                key: e.key,
-              },
-              {
-                onError: (error) => {
-                  logger.logTrace(`failed to send key: ${error}`);
-                },
-              }
-            );
-          }
-        }}
-      >
-        <EasyFocus.Land
-          focusTarget={focalPoint}
-          onBeforeFocus={() => setExpanded(true)}
-        >
-          <GlobalFocusMap.Target
-            focusKey={GlobalFocusMap.Key.LastCommand}
-            target={props.isLast ? focalPoint : undefined}
+    <ErrorBoundary
+      fallbackRender={ProcessAccordionError}
+      onError={(error, stack) => {
+        logger.logTrace(`ProcessAccordion error: ${error}`);
+        console.log(stack);
+      }}
+    >
+      <FocusBoundary defaultBorderColor={theme.terminal.backgroundColor}>
+        <ProcessKeyHandle command={command}>
+          <EasyFocus.Land
+            focusTarget={focalPoint}
+            onBeforeFocus={() => setExpanded(true)}
+            key={`ProcessAccordion-${props.command.pid}-${props.listIndex}`}
           >
-            <Accordion
-              expanded={expanded}
-              onChange={handleChange}
-              sx={{
-                margin: "0px !important", //TODO: better way?
-              }}
+            <GlobalFocusMap.Target
+              focusKey={GlobalFocusMap.Key.LastCommand}
+              target={props.isLast ? focalPoint : undefined}
             >
-              <AccordionStyle>
-                <AccordionSummary
-                  expandIcon={
-                    <ExpandMoreIcon
-                      sx={{
-                        color: theme.terminal.textColor,
-                        margin: -1,
-                      }}
-                    />
-                  }
-                  sx={CommandSummaryPadding}
-                >
-                  {statusIcon(command, theme)}
-                  <CommandStyle>
-                    <span>{summarizeCommand(command)}</span>
-                  </CommandStyle>
-                </AccordionSummary>
-              </AccordionStyle>
-              <AccordionStyle>
-                <AccordionDetails sx={ResponseInternalPadding}>
-                  <ResponseStyle>
-                    <div ref={focalPoint} tabIndex={0}>
-                      <Box sx={colorSection(theme.terminal.useCommandColor)}>
-                        <span>
-                          <TimeStyle>{command.startTime}</TimeStyle>
-                          <CurrentDirStyle>
-                            {command.currentDirectory}
-                          </CurrentDirStyle>
-                          <UserStyle>{command.user}</UserStyle>
-                          <br />
-                          <span>
-                            {command.styledCommand
-                              ? command.styledCommand
-                              : command.command}
-                          </span>
-                        </span>
-                      </Box>
-                      <Box sx={colorLine(theme.terminal.stdoutColor)}>
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: stdoutHTML,
-                          }}
-                        />
-                      </Box>
-                      <Box sx={colorLine(theme.terminal.stderrColor)}>
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: stderrHTML,
-                          }}
-                        />
-                      </Box>
-                    </div>
-                  </ResponseStyle>
-                </AccordionDetails>
-              </AccordionStyle>
-            </Accordion>
-          </GlobalFocusMap.Target>
-        </EasyFocus.Land>
+              <div
+                ref={top}
+                id={`ProcessAccordion-top-${props.command.pid}-${props.command.cid}`}
+              />
+              <Accordion
+                expanded={expanded}
+                onChange={handleChange}
+                sx={{
+                  margin: "0px !important", //TODO: better way?
+                }}
+                slotProps={{
+                  transition: { timeout: 500 },
+                }}
+              >
+                <ProcessAccordionSummary command={command} />
+                <ProcessAccordionDetail
+                  command={command}
+                  focalPoint={focalPoint}
+                />
+              </Accordion>
+              <div
+                ref={bottom}
+                id={`ProcessAccordion-bottom-${props.command.pid}-${props.command.cid}`}
+              />
+            </GlobalFocusMap.Target>
+          </EasyFocus.Land>
+        </ProcessKeyHandle>
       </FocusBoundary>
     </ErrorBoundary>
   );

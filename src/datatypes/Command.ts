@@ -61,8 +61,7 @@ export function getOutputPartOfStdout(command: Command): string {
   return result;
 }
 
-export function summarizeCommand(command: Command): string {
-  const length = 30;
+export function summarizeCommand(command: Command, length: number): string {
   let result = command.command;
   if (result.length > length) {
     result = result.slice(0, length) + " ...";

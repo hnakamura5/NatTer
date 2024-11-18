@@ -27,13 +27,14 @@ import FocusBoundary from "@/components/FocusBoundary";
 import { UnderConstruction } from "@/components/UnderConstruction";
 
 function FileTreeWrapper() {
+  const theme = useTheme();
   const pid = usePid();
   const currentDir = api.shell.current.useQuery(pid);
   if (!currentDir.data) {
     return <div>Loading...</div>;
   }
   return (
-    <FocusBoundary>
+    <FocusBoundary defaultBorderColor={theme.system.backgroundColor}>
       <FileTree home={currentDir.data.directory} />
     </FocusBoundary>
   );
@@ -103,7 +104,7 @@ function HoverMenuItem(props: {
           {props.popup}
         </Popper>
         <Item handleClick={handleClick} anchorRef={anchorRef}>
-          <props.icon sx={{ color: props.color, fontSize: iconSize }} />
+          <props.icon sx={{ color: theme.system.defaultIconColor, fontSize: iconSize }} />
         </Item>
       </div>
     </ClickAwayListener>

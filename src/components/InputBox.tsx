@@ -86,7 +86,7 @@ function Button(props: {
     backgroundColor: theme.terminal.backgroundColor,
     width: iconWidth,
     padding: "0px",
-    scale: 0.7,
+    scale: 0.6,
   });
   return (
     <Tooltip title={props.tooltip}>
@@ -172,8 +172,8 @@ function InputBox(props: InputBoxProps) {
   return (
     <ErrorBoundary fallbackRender={InputBoxError}>
       <OverToLeft>
-        <FocusBoundary>
-          <EasyFocus.Land focusTarget={inputBoxRef}>
+        <FocusBoundary defaultBorderColor={theme.terminal.backgroundColor}>
+          <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox-${pid}`}>
             <GlobalFocusMap.Target
               focusKey={GlobalFocusMap.Key.InputBox}
               target={inputBoxRef}

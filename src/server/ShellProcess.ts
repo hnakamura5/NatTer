@@ -14,12 +14,17 @@ import {
   getOutputPartOfStdout,
 } from "@/datatypes/Command";
 
+import { EventEmitter, on } from "events";
+
 import { server } from "@/server/tRPCServer";
 import { PowerShellSpecification } from "@/builtin/shell/Powershell";
 import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
 import { BashSpecification } from "@/builtin/shell/Bash";
 import { CmdSpecification } from "@/builtin/shell/Cmd";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
+import { observable } from "@trpc/server/observable";
+import { TrackChangesRounded } from "@mui/icons-material";
+import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
@@ -35,6 +40,7 @@ type Process = {
   currentDirectory: string;
   user: string;
   clock: number;
+  event: EventEmitter;
 };
 const processHolder: Process[] = [];
 const commandsOfProcessID: Command[][] = [];
@@ -52,6 +58,13 @@ export const ProcessIDScheme = z
     return value < processHolder.length;
   });
 export type ProcessID = z.infer<typeof ProcessIDScheme>;
+
+export const StdoutEventSchema = z.object({
+  commandID: z.number().int(),
+  stdout: z.string(),
+  clock: z.number().int(),
+});
+export type StdoutEvent = z.infer<typeof StdoutEventSchema>;
 
 function addStdout(config: ShellConfig, current: Command, response: string) {
   current.stdout = current.stdout.concat(response);
@@ -74,6 +87,12 @@ function receiveCommandResponse(
     const response = decodeFromShellEncoding(process, data);
     console.log(`onStdout: ${response}`);
     console.log(`onStdout: end.`);
+    // Stdout handling. Emit the event, add to the command, and increment the clock.
+    process.event.emit("stdout", {
+      stdout: response,
+      commandId: current.cid,
+      clock: process.clock,
+    });
     addStdout(process.config, current, response);
     current.timeline.push({
       response: response,
@@ -86,10 +105,11 @@ function receiveCommandResponse(
       stdout: current.stdout,
       boundaryDetector: current.boundaryDetector,
     });
-    if (detected === undefined) {
+    const commandFinished = detected !== undefined;
+    if (!commandFinished) {
       return false;
     }
-    // End of command.
+    // Finish the command.
     const exitStatus = detected.exitStatus;
     current.isFinished = true;
     current.exitStatus = exitStatus;
@@ -99,6 +119,7 @@ function receiveCommandResponse(
     );
     current.stdoutResponse = detected.response;
     console.log(`stdoutResponsePart: ${current.stdoutResponse}`);
+    process.event.emit("finish", current);
     if (onEnd !== undefined) {
       console.log(`Call onEnd in process ${process.id}`);
       onEnd(current);
@@ -113,6 +134,7 @@ function receiveCommandResponse(
     const response = decodeFromShellEncoding(process, data);
     //console.log(`stderr: ${response}`);
     current.stderr = current.stderr.concat(response);
+    process.event.emit("stderr", response);
     current.timeline.push({
       response: response,
       isError: true,
@@ -176,14 +198,13 @@ function startProcess(config: ShellConfig): ProcessID {
     currentDirectory: "",
     user: "",
     clock: 0,
+    event: new EventEmitter(),
   };
   processHolder.push(process);
   commandsOfProcessID.push([]);
   console.log(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
-  const exactCommand = process.shellSpec.extendCommandWithBoundaryDetector(
-    ""
-  );
+  const exactCommand = process.shellSpec.extendCommandWithBoundaryDetector("");
   console.log(`First command ${exactCommand.newCommand}`);
   process.currentCommand = emptyCommand(
     pid,
@@ -326,31 +347,45 @@ export const shellRouter = server.router({
       sendKey(processHolder[pid], key);
     }),
 
-  // Poll the current command status of the shell process asynchronously.
-  pollStdout: proc
-    .input(
-      z.object({
-        pid: ProcessIDScheme,
-      })
-    )
-    .output(
-      z.object({
-        stdout: z.string(),
-        isFinished: z.boolean(),
-      })
-    )
-    .query(async (opts) => {
-      const { pid } = opts.input;
-      return {
-        stdout: processHolder[pid].currentCommand.stdout,
-        isFinished: processHolder[pid].currentCommand.isFinished,
+  // Subscription api for process. Intended to be used from terminal.
+  // using trpc V10 API.  https://trpc.io/docs/v10/subscriptions
+  onStdout: proc.input(ProcessIDScheme).subscription(async (opts) => {
+    console.log(`onStdout subscription call: ${opts.input}`);
+    const pid = opts.input;
+    const process = processHolder[pid];
+    return observable<StdoutEvent>((emit) => {
+      const onData = (data: StdoutEvent) => {
+        emit.next(data);
       };
-    }),
-  pollStderr: proc
+      process.event.on("stdout", onData);
+      return () => {
+        process.event.off("stdout", onData);
+      };
+    });
+  }),
+  onStderr: proc
     .input(ProcessIDScheme)
     .output(z.string())
-    .query(async (pid) => {
-      return processHolder[pid.input].currentCommand.stderr;
+    .subscription(async (opts) => {
+      const pid = opts.input;
+      const process = processHolder[pid];
+      return new Promise((resolve) => {
+        process.event.on("stderr", (e: string) => {
+          resolve(e);
+        });
+      });
+    }),
+  onCommandFinish: proc
+    .input(ProcessIDScheme)
+    .output(CommandSchema)
+    .subscription(async (opts) => {
+      const pid = opts.input;
+      const process = processHolder[pid];
+      return new Promise((resolve) => {
+        process.event.on("finish", (command: Command) => {
+          resolve(command);
+        });
+      });
     }),
   pollTimeline: proc
     .input(ProcessIDScheme)
@@ -412,5 +447,23 @@ export const shellRouter = server.router({
     .output(ShellConfigSchema)
     .query(async (pid) => {
       return processHolder[pid.input].config;
+    }),
+  interactMode: proc
+    .input(ProcessIDScheme)
+    .output(ShellInteractKindSchema)
+    .query(async (pid) => {
+      return processHolder[pid.input].config.interact;
+    }),
+  resize : proc
+    .input(
+      z.object({
+        pid: ProcessIDScheme,
+        rows: z.number().int(),
+        cols: z.number().int(),
+      })
+    )
+    .mutation(async (opts) => {
+      const { pid, rows, cols } = opts.input;
+      processHolder[pid].handle.resize(rows, cols);
     }),
 });
