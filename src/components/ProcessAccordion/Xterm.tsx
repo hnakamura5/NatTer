@@ -10,6 +10,7 @@ import "@xterm/xterm/css/xterm.css";
 import { useEffect, useRef } from "react";
 import { Theme } from "@/datatypes/Theme";
 import { useTheme } from "@/AppState";
+import { CommandID, ProcessID } from "@/datatypes/Command";
 
 
 let count = 0;
@@ -44,8 +45,8 @@ function newTerminal(theme: Theme) {
 }
 
 interface XtermProps {
-  pid: number;
-  cid: number;
+  pid: ProcessID;
+  cid: CommandID;
 }
 
 export default function Xterm(props: XtermProps) {

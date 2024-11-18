@@ -9,6 +9,7 @@ import { z } from "zod";
 import * as iconv from "iconv-lite";
 import {
   Command,
+  CommandIDSchema,
   CommandSchema,
   emptyCommand,
   getOutputPartOfStdout,
@@ -23,7 +24,6 @@ import { BashSpecification } from "@/builtin/shell/Bash";
 import { CmdSpecification } from "@/builtin/shell/Cmd";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 import { observable } from "@trpc/server/observable";
-import { TrackChangesRounded } from "@mui/icons-material";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
@@ -50,17 +50,17 @@ function clockIncrement(process: Process) {
   return process.clock;
 }
 
-export const ProcessIDScheme = z
+const ProcessIDScheme = z
   .number()
   .int()
   .min(0)
   .refine((value) => {
     return value < processHolder.length;
   });
-export type ProcessID = z.infer<typeof ProcessIDScheme>;
+type ProcessID = z.infer<typeof ProcessIDScheme>;
 
 export const StdoutEventSchema = z.object({
-  commandID: z.number().int(),
+  cid: CommandIDSchema,
   stdout: z.string(),
   clock: z.number().int(),
 });
@@ -414,19 +414,43 @@ export const shellRouter = server.router({
     .input(ProcessIDScheme)
     .output(z.number().int())
     .query(async (pid) => {
+      for (let i = 0; i < commandsOfProcessID[pid.input].length; i++) {
+        console.log(`Command ${i}: ${commandsOfProcessID[pid.input][i].command}`);
+      }
       return commandsOfProcessID[pid.input].length;
     }),
-  command : proc
+  command: proc
     .input(
       z.object({
         pid: ProcessIDScheme,
-        cid: z.number().int()
+        cid: z.number().int(),
       })
     )
     .output(CommandSchema)
     .query(async (opts) => {
       const { pid, cid } = opts.input;
       return commandsOfProcessID[pid][cid];
+    }),
+  isFinished: proc
+    .input(
+      z.object({
+        pid: ProcessIDScheme.refine((value) => {
+          return value < processHolder.length;
+        }),
+        cid: CommandIDSchema.refine((value) => {
+          return value < commandsOfProcessID[value.pid].length;
+        }),
+      })
+    )
+    .output(z.boolean())
+    .query(async (opts) => {
+      const { pid, cid } = opts.input;
+      try {
+        return commandsOfProcessID[pid][cid].isFinished;
+      } catch (e) {
+        console.log(`isFinished error: ${pid} ${cid}`);
+        throw e;
+      }
     }),
   name: proc
     .input(ProcessIDScheme)
@@ -446,7 +470,7 @@ export const shellRouter = server.router({
     .query(async (pid) => {
       return processHolder[pid.input].config.interact;
     }),
-  resize : proc
+  resize: proc
     .input(
       z.object({
         pid: ProcessIDScheme,

@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 import React from "react";
-import { ProcessID } from "@/api";
+import { ProcessID } from "@/datatypes/Command";
 
 // Defines the state with scope of one session
 

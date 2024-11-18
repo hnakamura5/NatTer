@@ -1,14 +1,12 @@
 import { Box } from "@mui/system";
 import styled from "@emotion/styled";
 import { useTheme } from "@/AppState";
-import { Command } from "@/datatypes/Command";
+import { Command, CommandID } from "@/datatypes/Command";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 import DOMPurify from "dompurify";
 import { Paper } from "@mui/material";
+import { api } from "@/api";
 
-export interface CommandResponseProps {
-  command: Command;
-}
 const ResponseStyle = styled(Box)(({ theme }) => ({
   width: "calc(100% + 15px)",
   marginLeft: "-8px",
@@ -31,7 +29,7 @@ const TimeStyle = styled.span(({ theme }) => ({
   marginRight: "10px",
 }));
 
-export function CommandResponse(props: CommandResponseProps) {
+export function CommandResponse(props:{command: Command}) {
   const { command } = props;
   const theme = useTheme();
 

@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/AppState";
 import { Theme } from "@/datatypes/Theme";
 import { ErrorBoundary } from "react-error-boundary";
+import { ProcessID, CommandID } from "@/datatypes/Command";
 
 import { api } from "@/api";
 
@@ -55,7 +56,11 @@ function newTerminal(theme: Theme): terminalHandle {
   };
 }
 const xtermMap = new Map<string, terminalHandle>();
-function getTerminal(pid: number, cid: number, theme: Theme): terminalHandle {
+function getTerminal(
+  pid: ProcessID,
+  cid: CommandID,
+  theme: Theme
+): terminalHandle {
   const key = `Xterm-${pid}-${cid}`;
   console.log(`get terminal ${key}`);
   let handle = xtermMap.get(key);
@@ -65,7 +70,7 @@ function getTerminal(pid: number, cid: number, theme: Theme): terminalHandle {
   }
   return handle;
 }
-function disposeTerminal(pid: number, cid: number) {
+function disposeTerminal(pid: ProcessID, cid: CommandID) {
   const key = `Xterm-${pid}-${cid}`;
   const handle = xtermMap.get(key);
   if (handle) {
@@ -75,8 +80,8 @@ function disposeTerminal(pid: number, cid: number) {
 }
 
 interface XtermCustomProps {
-  pid: number;
-  cid: number;
+  pid: ProcessID;
+  cid: CommandID;
 }
 export default function XtermCustom(props: XtermCustomProps) {
   const pid = props.pid;
@@ -84,7 +89,6 @@ export default function XtermCustom(props: XtermCustomProps) {
   const theme = useTheme();
   const termDivRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<terminalHandle | null>(null);
-
 
   const sendKey = api.shell.sendKey.useMutation();
   const resize = api.shell.resize.useMutation();

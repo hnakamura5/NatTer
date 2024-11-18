@@ -1,10 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  AccordionSlots,
-} from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
 import DomPurify from "dompurify";
@@ -24,6 +19,12 @@ import { CommandResponse } from "@/components/ProcessAccordion/CommandResponse";
 import { CommandSummary } from "./ProcessAccordion/CommandSummary";
 import XtermCustom from "./ProcessAccordion/XtermCustom";
 import Xterm from "./ProcessAccordion/Xterm";
+import { usePid } from "@/SessionStates";
+import { CommandID, ProcessID } from "@/datatypes/Command";
+
+const queryOption = {
+  refetchInterval: 200,
+};
 
 const AccordionStyle = styled(Box)(({ theme }) => ({
   color: theme.terminal.textColor,
@@ -35,12 +36,22 @@ const AccordionStyle = styled(Box)(({ theme }) => ({
   overflowWrap: "anywhere",
 }));
 
-function ProcessAccordionStyle(props: { children: React.ReactNode }) {
-  const theme = useTheme();
-  return <AccordionStyle>{props.children}</AccordionStyle>;
+function SummarySelector(props: { cid: CommandID }) {
+  const pid = usePid();
+  const command = api.shell.command.useQuery(
+    {
+      pid: pid,
+      cid: props.cid,
+    },
+    queryOption
+  );
+  if (!command.data) {
+    return <Box>Command not found.</Box>;
+  }
+  return <CommandSummary command={command.data} />;
 }
 
-function ProcessAccordionSummary(props: { command: Command }) {
+function ProcessAccordionSummary(props: { cid: CommandID }) {
   const theme = useTheme();
   const CommandSummaryPadding = {
     paddingX: "5px",
@@ -50,7 +61,7 @@ function ProcessAccordionSummary(props: { command: Command }) {
   };
 
   return (
-    <ProcessAccordionStyle>
+    <AccordionStyle>
       <AccordionSummary
         expandIcon={
           <ExpandMoreIcon
@@ -62,26 +73,55 @@ function ProcessAccordionSummary(props: { command: Command }) {
         }
         sx={CommandSummaryPadding}
       >
-        <CommandSummary command={props.command} />
+        <SummarySelector cid={props.cid} />
       </AccordionSummary>
-    </ProcessAccordionStyle>
+    </AccordionStyle>
   );
 }
 
-function ResponseSelector(props: { command: Command }) {
-  const interactMode = api.shell.interactMode.useQuery(props.command.pid);
-  if (interactMode.data == "terminal") {
-    console.log(`terminal mode`);
-    //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
-    return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
+function FinishedCommandResponse(props: { cid: CommandID }) {
+  const pid = usePid();
+  const command = api.shell.command.useQuery(
+    {
+      pid: pid,
+      cid: props.cid,
+    },
+    queryOption
+  );
+  if (!command.data) {
+    return <Box>Command not found.</Box>;
+  }
+  return <CommandResponse command={command.data} />;
+}
+
+function ResponseSelector(props: { cid: CommandID }) {
+  const pid = usePid();
+  const cid = props.cid;
+  const isFinished = api.shell.isFinished.useQuery(
+    {
+      pid: pid,
+      cid: cid,
+    },
+    queryOption
+  );
+  const interactMode = api.shell.interactMode.useQuery(pid);
+  if (isFinished.data) {
+    console.log(`finished mode`);
+    return <FinishedCommandResponse cid={cid} />;
   } else {
-    console.log(`other mode`);
-    return <CommandResponse command={props.command} />;
+    if (interactMode.data == "terminal") {
+      console.log(`terminal mode`);
+      //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
+      return <XtermCustom pid={pid} cid={cid} />;
+    } else {
+      console.log(`other mode`);
+      return <FinishedCommandResponse cid={cid} />;
+    }
   }
 }
 
 function ProcessAccordionDetail(props: {
-  command: Command;
+  cid: CommandID;
   focalPoint: React.RefObject<HTMLDivElement>;
 }) {
   const CommandDetailPadding = {
@@ -92,35 +132,41 @@ function ProcessAccordionDetail(props: {
   };
 
   return (
-    <ProcessAccordionStyle>
+    <AccordionStyle>
       <AccordionDetails sx={CommandDetailPadding}>
         <div ref={props.focalPoint} tabIndex={0}>
-          <ResponseSelector command={props.command} />
+          <ResponseSelector cid={props.cid} />
         </div>
       </AccordionDetails>
-    </ProcessAccordionStyle>
+    </AccordionStyle>
   );
 }
 
 function ProcessKeyHandle(props: {
-  command: Command;
+  cid: CommandID;
   children: React.ReactNode;
 }) {
-  const command = props.command;
+  const pid = usePid();
   const sendKey = api.shell.sendKey.useMutation();
+  const isFinished = api.shell.isFinished.useQuery(
+    {
+      pid: pid,
+      cid: props.cid,
+    },
+    queryOption
+  );
 
   return (
     <div
       onKeyDown={(e) => {
         console.log(`key: ${e.key}`);
         // TODO: handle copy and so on.
-        return;
-        if (command.isFinished) {
+        if (isFinished.data) {
           return;
         }
         sendKey.mutate(
           {
-            pid: command.pid,
+            pid: pid,
             key: e.key,
           },
           {
@@ -137,13 +183,13 @@ function ProcessKeyHandle(props: {
 }
 
 interface ProcessAccordionProps {
-  command: Command;
-  listIndex: number;
+  cid: CommandID;
   isLast?: boolean;
 }
 
 function ProcessAccordion(props: ProcessAccordionProps) {
-  const command = props.command;
+  const pid = usePid();
+  const cid = props.cid;
   const theme = useTheme();
 
   // Scroll control.
@@ -157,7 +203,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       setScrollIntoView(false);
     }
   }, [scrollIntoView]);
-
+  // Expansion control.
   const [expanded, setExpanded] = useState<boolean>(true);
   const handleChange = (_: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded);
@@ -165,26 +211,31 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       setScrollIntoView(true);
     }
   };
-
   // Focus control.
   const handleGFM = GlobalFocusMap.useHandle();
+  const isFinished = api.shell.isFinished.useQuery(
+    {
+      pid: pid,
+      cid: cid,
+    },
+    queryOption
+  );
   useEffect(() => {
     if (
       props.isLast &&
-      command.isFinished &&
+      isFinished.data &&
       handleGFM.isFocused(GlobalFocusMap.Key.LastCommand)
     ) {
       // If this is the last command and focused,
       // focus back to the input box on finish.
       handleGFM.focus(GlobalFocusMap.Key.InputBox);
     }
-  }, [command, handleGFM, props.isLast]);
-
+  }, [handleGFM, props.isLast, isFinished.data]);
   const focalPoint = useRef<HTMLDivElement>(null);
 
   //TODO: console.log(`command: ${command.command}, id: ${props.listIndex}`);
-  console.log(`stdout: ${command.stdout}`);
   //TODO: console.log(`stderr: ${command.stderr}`);
+  console.log(`ProcessAccordion: ${pid}-${cid}`);
 
   return (
     <ErrorBoundary
@@ -195,20 +246,17 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       }}
     >
       <FocusBoundary defaultBorderColor={theme.terminal.backgroundColor}>
-        <ProcessKeyHandle command={command}>
+        <ProcessKeyHandle cid={cid}>
           <EasyFocus.Land
             focusTarget={focalPoint}
             onBeforeFocus={() => setExpanded(true)}
-            key={`ProcessAccordion-${props.command.pid}-${props.listIndex}`}
+            key={`ProcessAccordion-${pid}-${cid}`}
           >
             <GlobalFocusMap.Target
               focusKey={GlobalFocusMap.Key.LastCommand}
               target={props.isLast ? focalPoint : undefined}
             >
-              <div
-                ref={top}
-                id={`ProcessAccordion-top-${props.command.pid}-${props.command.cid}`}
-              />
+              <div ref={top} id={`ProcessAccordion-top-${pid}-${cid}`} />
               <Accordion
                 expanded={expanded}
                 onChange={handleChange}
@@ -216,18 +264,15 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                   margin: "0px !important", //TODO: better way?
                 }}
                 slotProps={{
-                  transition: { timeout: 500 },
+                  transition: { timeout: 300 },
                 }}
               >
-                <ProcessAccordionSummary command={command} />
-                <ProcessAccordionDetail
-                  command={command}
-                  focalPoint={focalPoint}
-                />
+                <ProcessAccordionSummary cid={cid} />
+                <ProcessAccordionDetail cid={cid} focalPoint={focalPoint} />
               </Accordion>
               <div
                 ref={bottom}
-                id={`ProcessAccordion-bottom-${props.command.pid}-${props.command.cid}`}
+                id={`ProcessAccordion-bottom-${pid}-${props.cid}`}
               />
             </GlobalFocusMap.Target>
           </EasyFocus.Land>

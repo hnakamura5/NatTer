@@ -1,9 +1,15 @@
-import { styled } from "@mui/material";
 import { z } from "zod";
 
+// Command ID (-1 is silent command)
+export const CommandIDSchema = z.number().int().min(-1);
+export type CommandID = z.infer<typeof CommandIDSchema>;
+
+export const ProcessIDSchema = z.number().int().min(0);
+export type ProcessID = z.infer<typeof ProcessIDSchema>;
+
 export const CommandSchema = z.object({
-  pid: z.number().int().min(0), // Process ID
-  cid: z.number().int().min(-1), // Command ID (-1 is silent command)
+  pid: ProcessIDSchema,
+  cid: CommandIDSchema,
   command: z.string(),
   exactCommand: z.string(),
   styledCommand: z.string().optional(),
@@ -22,7 +28,7 @@ export const CommandSchema = z.object({
 });
 export type Command = z.infer<typeof CommandSchema>;
 
-export function emptyCommand(pid: number, cid: number): Command {
+export function emptyCommand(pid: ProcessID, cid: CommandID): Command {
   return {
     command: "",
     pid: pid,
@@ -36,7 +42,6 @@ export function emptyCommand(pid: number, cid: number): Command {
     isFinished: false,
     stdout: "",
     stderr: "",
-    timeline: [],
     exitStatus: undefined,
     exitStatusIsOK: undefined,
     stdoutResponse: "",

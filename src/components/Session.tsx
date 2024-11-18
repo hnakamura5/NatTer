@@ -24,32 +24,31 @@ function Session(props: SessionProps) {
   }, [handleGFM, length]);
 
   // Fetching commands.
-  const commands = api.shell.commands.useQuery(pid, {
+  const numCommands = api.shell.numCommands.useQuery(pid, {
     onError: (error) => {
       logger.logTrace(`commands fetch: ${error}`);
     },
     refetchInterval: 200,
   });
-  if (!commands.data) {
+  if (!numCommands.data) {
     return <Box>Loading...</Box>;
   }
   // Detecting new command exists.
-  if (commands.data.length !== length) {
-    setLength(commands.data.length);
+  if (numCommands.data !== length) {
+    setLength(numCommands.data);
   }
-
-  // List of commands into list of ProcessAccordion.
-  const processAccordions = commands.data.reverse().map((command, index) => {
-    console.log(`command: ${command.command} key: ${index}`);
-    return (
-      <ProcessAccordion
-        command={command}
-        key={command.clock}
-        listIndex={index}
-        isLast={index === commands.data.length - 1}
-      />
-    );
-  });
+  if (numCommands.data === 0) {
+    return <Box>No commands.</Box>;
+  }
+  const processAccordions = Array.from(
+    { length: numCommands.data },
+    (_, i) => i
+  )
+    .map((i) => {
+      return (
+        <ProcessAccordion key={i} cid={i} isLast={i === numCommands.data - 1} />
+      );
+    });
 
   return (
     <ErrorBoundary fallbackRender={SessionError}>
@@ -57,8 +56,6 @@ function Session(props: SessionProps) {
         sx={{
           maxHeight: "calc(100vh - 50px)", // TODO: calculate using actual height.
           overflow: "auto",
-          flexDirection: "column-reverse",
-          justifyContent: "flex-start",
         }}
       >
         {processAccordions}
