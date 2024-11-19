@@ -29,7 +29,12 @@ import { UnderConstruction } from "@/components/UnderConstruction";
 function FileTreeWrapper() {
   const theme = useTheme();
   const pid = usePid();
-  const currentDir = api.shell.current.useQuery(pid);
+  const currentDir = api.shell.current.useQuery(pid, {
+    refetchInterval: 1000,
+    onError: (error) => {
+      console.error(`currentDir fetch: ${error}`);
+    },
+  });
   if (!currentDir.data) {
     return <div>Loading...</div>;
   }

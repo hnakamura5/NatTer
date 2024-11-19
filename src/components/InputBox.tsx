@@ -113,6 +113,7 @@ function ControlButtons(props: { submit: (command: string) => void }) {
     props.submit(text);
     setText("");
   }, [text, setText, props]);
+
   return (
     <IconBox>
       <Button
@@ -168,6 +169,8 @@ function InputBox(props: InputBoxProps) {
     },
     [pid, execute]
   );
+
+  console.log("InputBox rendered");
 
   return (
     <ErrorBoundary fallbackRender={InputBoxError}>

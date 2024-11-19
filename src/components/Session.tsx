@@ -25,10 +25,10 @@ function Session(props: SessionProps) {
 
   // Fetching commands.
   const numCommands = api.shell.numCommands.useQuery(pid, {
+    refetchInterval: 200,
     onError: (error) => {
       logger.logTrace(`commands fetch: ${error}`);
     },
-    refetchInterval: 200,
   });
   if (!numCommands.data) {
     return <Box>Loading...</Box>;

@@ -19,7 +19,11 @@ export function useConfig() {
 }
 
 function ConfigProvider(props: { children: React.ReactNode }) {
-  const config = api.config.read.useQuery();
+  const config = api.config.read.useQuery(undefined, {
+    onError: (error) => {
+      console.error("Failed to load config: ", error);
+    },
+  });
   console.log("ConfigProvider: ", config.data);
   if (!config.data) {
     return <div>Failed to load config</div>;

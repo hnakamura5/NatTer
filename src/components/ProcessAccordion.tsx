@@ -21,9 +21,14 @@ import XtermCustom from "./ProcessAccordion/XtermCustom";
 import Xterm from "./ProcessAccordion/Xterm";
 import { usePid } from "@/SessionStates";
 import { CommandID, ProcessID } from "@/datatypes/Command";
+import { UseTRPCQueryOptions } from "@trpc/react-query/shared";
 
 const queryOption = {
-  refetchInterval: 200,
+  refetchInterval: 500,
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  onError(e: any) {
+    logger.logTrace(`ProcessAccordion: error ${e}`);
+  },
 };
 
 const AccordionStyle = styled(Box)(({ theme }) => ({
