@@ -281,6 +281,13 @@ function stopProcess(process: Process) {
   process.handle.kill();
 }
 
+export function shutdown() {
+  processHolder.forEach((process) => {
+    console.log(`Shutdown process ${process.id}`);
+    process.handle.kill();
+  });
+}
+
 const proc = server.procedure;
 export const shellRouter = server.router({
   // Start a new process of shell.
@@ -414,9 +421,6 @@ export const shellRouter = server.router({
     .input(ProcessIDScheme)
     .output(z.number().int())
     .query(async (pid) => {
-      for (let i = 0; i < commandsOfProcessID[pid.input].length; i++) {
-        console.log(`Command ${i}: ${commandsOfProcessID[pid.input][i].command}`);
-      }
       return commandsOfProcessID[pid.input].length;
     }),
   command: proc
@@ -438,7 +442,7 @@ export const shellRouter = server.router({
           return value < processHolder.length;
         }),
         cid: CommandIDSchema.refine((value) => {
-          return value < commandsOfProcessID[value.pid].length;
+          return value < commandsOfProcessID[value].length;
         }),
       })
     )
