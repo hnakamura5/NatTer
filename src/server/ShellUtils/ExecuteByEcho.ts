@@ -1,19 +1,10 @@
 import {
   Process,
-  newProcess,
   clockIncrement,
   decodeFromShellEncoding,
   encodeToShellEncoding,
 } from "@/server/types/Process";
-
-import {
-  Command,
-  CommandID,
-  CommandSchema,
-  ProcessID,
-  emptyCommand,
-  getOutputPartOfStdout,
-} from "@/datatypes/Command";
+import { Command, CommandID, emptyCommand } from "@/datatypes/Command";
 import { ShellConfig } from "@/datatypes/Config";
 
 function addStdout(config: ShellConfig, current: Command, response: string) {
@@ -66,7 +57,9 @@ function receiveCommandResponse(
     console.log(`stdoutResponsePart: ${current.stdoutResponse}`);
     process.event.emit("finish", current);
     if (onEnd !== undefined) {
-      console.log(`Call onEnd in process ${process.id}`);
+      console.log(
+        `Call onEnd in process ${process.id} for command ${current.exactCommand}`
+      );
       onEnd(current);
     }
     return true;
@@ -103,13 +96,12 @@ export function executeCommandByEcho(
   onEnd?: (command: Command) => void
 ): Command {
   // The command including the end detector.
-  console.log(`Execute command ${command} in process ${process.id}`);
   const encoded = encodeToShellEncoding(process, command);
   const exactCommand = process.shellSpec.extendCommandWithBoundaryDetector(
     encoded.toString()
   );
   console.log(
-    `Execute command ${command} (exact: ${exactCommand.newCommand}) in process ${process.id}`
+    `Execute command ${command} (exact: ${exactCommand.newCommand}) in process ${process.id} cid: ${cid}`
   );
   // Set new current command.
   process.currentCommand = emptyCommand(process.id, cid);

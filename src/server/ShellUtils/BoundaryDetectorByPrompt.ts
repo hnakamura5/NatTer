@@ -2,7 +2,7 @@ import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import {
   defaultRandomBoundaryDetector,
   getCommandWithDelimiterSandwichOnDemand,
-} from "@/datatypes/ShellUtils/BoundaryDetectorUtils";
+} from "@/server/ShellUtils/BoundaryDetectorUtils";
 
 // Implement detection algorithm using prompt.
 // This is suitable for terminal shells with prompt.

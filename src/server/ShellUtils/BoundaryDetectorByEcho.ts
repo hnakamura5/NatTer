@@ -1,5 +1,5 @@
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
-import { defaultRandomBoundaryDetector } from "@/datatypes/ShellUtils/BoundaryDetectorUtils";
+import { defaultRandomBoundaryDetector } from "@/server/ShellUtils/BoundaryDetectorUtils";
 
 // Implement detection algorithm using echo command.
 // This is suitable for non-terminal shells.

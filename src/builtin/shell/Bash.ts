@@ -2,7 +2,7 @@ import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import {
   detectCommandResponseAndExitCodeByEcho,
   extendCommandWithBoundaryDetectorByEcho,
-} from "@/datatypes/ShellUtils/BoundaryDetectorByEcho";
+} from "@/server/ShellUtils/BoundaryDetectorByEcho";
 
 export const BashSpecification: ShellSpecification = {
   name: "bash",

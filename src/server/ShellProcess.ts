@@ -1,10 +1,10 @@
-import { spawnShell } from "@/server/utils/childShell";
+import { spawnShell } from "@/server/ShellUtils/childShell";
 import {
   ShellSpecification,
   ShellSpecificationSchema,
 } from "@/datatypes/ShellSpecification";
 import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
-import { isCommandClosed } from "@/datatypes/ShellUtils/CommandClose";
+import { isCommandClosed } from "@/server/ShellUtils/CommandClose";
 import { z } from "zod";
 import {
   Command,
@@ -24,7 +24,7 @@ import { AnsiUp } from "@/datatypes/ansiUpCustom";
 import { observable } from "@trpc/server/observable";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import { Process, newProcess, clockIncrement } from "@/server/types/Process";
-import { executeCommandByEcho } from "@/datatypes/ShellUtils/ExecuteByEcho";
+import { executeCommandByEcho } from "@/server/ShellUtils/ExecuteByEcho";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
@@ -57,6 +57,7 @@ function currentSetter(process: Process) {
       const currentDir = process.shellSpec.directoryCommands.getCurrent();
       const getUser = process.shellSpec.directoryCommands.getUser();
       executeCommand(process, currentDir, true, undefined, (command) => {
+        console.log(`currentDirectory: ${command.stdoutResponse}`);
         process.currentDirectory = escapeTrim(command.stdoutResponse);
         executeCommand(process, getUser, true, undefined, (command) => {
           console.log(`User: ${command.stdoutResponse}`);
@@ -91,31 +92,17 @@ function startProcess(config: ShellConfig): ProcessID {
   commandsOfProcessID.push([]);
   console.log(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
-  // const exactCommand = process.shellSpec.extendCommandWithBoundaryDetector("");
-  // console.log(`First command ${exactCommand.newCommand}`);
-  // process.currentCommand = emptyCommand(
-  //   pid,
-  //   commandsOfProcessID[process.id].length
-  // );
-  // const current = process.currentCommand;
-  //current.exactCommand = exactCommand.newCommand;
-  //current.boundaryDetector = exactCommand.boundaryDetector;
-  // Memorize as a command.
-  // commandsOfProcessID[pid].push(current);
-  // executeCommandAndReceiveResponse(
-  //   process,
-  //   exactCommand,
-  //   currentSetter(process)
-  // );
   executeCommandByEcho(
     process,
     ``,
     commandsOfProcessID[process.id].length,
     undefined,
     (command) => {
+      console.log(`First command ${command.exactCommand}`);
+      // Memorize the shell execution command.
       command.command = `"${config.executable}" ${config.args?.join(" ")}`;
       commandsOfProcessID[process.id].push(command);
-      currentSetter(process);
+      currentSetter(process)();
     }
   );
   console.log(
@@ -141,6 +128,10 @@ function executeCommand(
 
 function sendKey(process: Process, key: string) {
   // TODO: handle the key code to appropriate code?
+  if (process.currentCommand.isFinished) {
+    console.log(`Send key ${key} to process ${process.id} finished command.`);
+    return;
+  }
   console.log(`Send key ${key} to process ${process.id}`);
   clockIncrement(process);
   process.handle.write(key);
@@ -292,6 +283,7 @@ export const shellRouter = server.router({
     .input(ProcessIDScheme)
     .output(z.number().int())
     .query(async (pid) => {
+      console.log(`numCommands call ${pid.input}`);
       return commandsOfProcessID[pid.input].length;
     }),
   command: proc
@@ -310,16 +302,18 @@ export const shellRouter = server.router({
     .input(
       z.object({
         pid: ProcessIDScheme.refine((value) => {
+          console.log(`isFinished call pid refine ${value}`);
           return value < processHolder.length;
         }),
-        cid: CommandIDSchema.refine((value) => {
-          return value < commandsOfProcessID[value].length;
-        }),
+        cid: CommandIDSchema,
       })
     )
     .output(z.boolean())
     .query(async (opts) => {
       const { pid, cid } = opts.input;
+      console.log(
+        `isFinished call ${pid} ${cid} ${commandsOfProcessID[pid][cid].isFinished}`
+      );
       return commandsOfProcessID[pid][cid].isFinished;
     }),
   name: proc

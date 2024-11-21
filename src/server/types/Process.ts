@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ChildShellStream } from "@/server/utils/childShell";
+import { ChildShellStream } from "@/server/ShellUtils/childShell";
 import { ShellConfig } from "@/datatypes/Config";
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { Command } from "@/datatypes/Command";
