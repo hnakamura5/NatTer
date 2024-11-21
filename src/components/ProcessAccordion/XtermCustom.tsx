@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/AppState";
 import { Theme } from "@/datatypes/Theme";
 import { ErrorBoundary } from "react-error-boundary";
-import { ProcessID, CommandID } from "@/datatypes/Command";
+import { CommandID, ProcessID } from "@/datatypes/Command";
 
 import { api } from "@/api";
 

@@ -24,3 +24,5 @@ export function extendCommandWithBoundaryDetectorByPrompt(
   };
 }
 
+// TODO: implement detection algorithm using prompt.
+// TODO:  or implement echo and prompt as executor?

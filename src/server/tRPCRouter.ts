@@ -1,7 +1,7 @@
 import { server } from "@/server/tRPCServer";
 import { z } from "zod";
-import { shellRouter } from "@/server/shellProcess";
-import { fileSystemRouter } from "@/server/fileSystem";
+import { shellRouter } from "@/server/ShellProcess";
+import { fileSystemRouter } from "@/server/FileSystem";
 import { osShellRouter } from "@/server/osShell";
 import { configurationRouter } from "@/server/configuration";
 

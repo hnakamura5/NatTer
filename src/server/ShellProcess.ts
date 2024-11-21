@@ -1,63 +1,42 @@
-import { spawnShell, ChildShellStream } from "@/server/childShell";
-
+import { spawnShell } from "@/server/utils/childShell";
 import {
   ShellSpecification,
   ShellSpecificationSchema,
 } from "@/datatypes/ShellSpecification";
+import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
 import { isCommandClosed } from "@/datatypes/ShellUtils/CommandClose";
 import { z } from "zod";
-import * as iconv from "iconv-lite";
 import {
   Command,
   CommandIDSchema,
   CommandSchema,
   emptyCommand,
   getOutputPartOfStdout,
+  ProcessID,
+  ProcessIDSchema as ProcessIDSchemaRaw,
 } from "@/datatypes/Command";
-
-import { EventEmitter, on } from "events";
 
 import { server } from "@/server/tRPCServer";
 import { PowerShellSpecification } from "@/builtin/shell/Powershell";
-import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
 import { BashSpecification } from "@/builtin/shell/Bash";
 import { CmdSpecification } from "@/builtin/shell/Cmd";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 import { observable } from "@trpc/server/observable";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
+import { Process, newProcess, clockIncrement } from "@/server/types/Process";
+import { executeCommandByEcho } from "@/datatypes/ShellUtils/ExecuteByEcho";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
 ProcessSpecs.set(BashSpecification.name, BashSpecification);
 ProcessSpecs.set(CmdSpecification.name, CmdSpecification);
 
-type Process = {
-  id: ProcessID;
-  handle: ChildShellStream;
-  shellSpec: ShellSpecification;
-  config: ShellConfig;
-  currentCommand: Command;
-  currentDirectory: string;
-  user: string;
-  clock: number;
-  event: EventEmitter;
-};
 const processHolder: Process[] = [];
 const commandsOfProcessID: Command[][] = [];
-function clockIncrement(process: Process) {
-  process.clock += 1;
-  process.currentCommand.clock = process.clock;
-  return process.clock;
-}
 
-const ProcessIDScheme = z
-  .number()
-  .int()
-  .min(0)
-  .refine((value) => {
-    return value < processHolder.length;
-  });
-type ProcessID = z.infer<typeof ProcessIDScheme>;
+const ProcessIDScheme = ProcessIDSchemaRaw.refine((value) => {
+  return value < processHolder.length;
+});
 
 export const StdoutEventSchema = z.object({
   cid: CommandIDSchema,
@@ -66,89 +45,9 @@ export const StdoutEventSchema = z.object({
 });
 export type StdoutEvent = z.infer<typeof StdoutEventSchema>;
 
-function addStdout(config: ShellConfig, current: Command, response: string) {
-  current.stdout = current.stdout.concat(response);
-}
-
-function receiveCommandResponse(
-  process: Process,
-  onEnd?: (command: Command) => void
-) {
-  const current = process.currentCommand;
-  // stdout handling.
-  process.handle.onStdout((data: Buffer) => {
-    // console.log(
-    //   `Received data in command ${current.command} in process ${process.id} data: ${data} len: ${data.length}`
-    // );
-    if (current.isFinished) {
-      console.log(`Received in Finished command`);
-      return true;
-    }
-    const response = decodeFromShellEncoding(process, data);
-    console.log(`onStdout: ${response}`);
-    console.log(`onStdout: end.`);
-    // Stdout handling. Emit the event, add to the command, and increment the clock.
-    process.event.emit("stdout", {
-      stdout: response,
-      commandId: current.cid,
-      clock: process.clock,
-    });
-    addStdout(process.config, current, response);
-    clockIncrement(process);
-    // Check if the command is finished.
-    const detected = process.shellSpec.detectResponseAndExitCode({
-      interact: process.config.interact,
-      stdout: current.stdout,
-      boundaryDetector: current.boundaryDetector,
-    });
-    const commandFinished = detected !== undefined;
-    if (!commandFinished) {
-      return false;
-    }
-    // Finish the command.
-    const exitStatus = detected.exitStatus;
-    current.isFinished = true;
-    current.exitStatus = exitStatus;
-    current.exitStatusIsOK = process.shellSpec.isExitCodeOK(exitStatus);
-    console.log(
-      `Finished ${current.command} by status ${current.exitStatus} in process ${process.id}`
-    );
-    current.stdoutResponse = detected.response;
-    console.log(`stdoutResponsePart: ${current.stdoutResponse}`);
-    process.event.emit("finish", current);
-    if (onEnd !== undefined) {
-      console.log(`Call onEnd in process ${process.id}`);
-      onEnd(current);
-    }
-    return true;
-  });
-  // stderr handling.
-  process.handle.onStderr((data: Buffer) => {
-    if (current.isFinished) {
-      return;
-    }
-    const response = decodeFromShellEncoding(process, data);
-    //console.log(`stderr: ${response}`);
-    current.stderr = current.stderr.concat(response);
-    process.event.emit("stderr", response);
-    clockIncrement(process);
-  });
-}
-
 const ansiUp = new AnsiUp();
 function escapeTrim(command: string): string {
   return ansiUp.ansi_to_text(command).trim();
-}
-
-function executeCommandAndReceiveResponse(
-  process: Process,
-  exactCommand: { newCommand: string; boundaryDetector: string },
-  onEnd?: (command: Command) => void
-) {
-  // TODO: prompt detection have to set the prompt before the command.
-  receiveCommandResponse(process, onEnd);
-  // Execute the command.
-  process.handle.execute(exactCommand.newCommand);
 }
 
 // Re-set the current directory after the command.
@@ -178,59 +77,51 @@ function startProcess(config: ShellConfig): ProcessID {
   if (processHolder.length > 100) {
     throw new Error("Too many processes. This is for debugging.");
   }
-  const proc = spawnShell(config.interact, executable, args);
+  const childShell = spawnShell(config.interact, executable, args);
   const pid = processHolder.length;
   console.log(`Start process call ${pid} with ${config.executable}`);
-  const process = {
-    id: pid,
-    handle: proc,
-    config: config,
-    shellSpec: shellSpec,
-    currentCommand: emptyCommand(pid, -1),
-    currentDirectory: "",
-    user: "",
-    clock: 0,
-    event: new EventEmitter(),
-  };
+  const process = newProcess(
+    pid,
+    childShell,
+    config,
+    shellSpec,
+    emptyCommand(pid, -1)
+  );
   processHolder.push(process);
   commandsOfProcessID.push([]);
   console.log(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
-  const exactCommand = process.shellSpec.extendCommandWithBoundaryDetector("");
-  console.log(`First command ${exactCommand.newCommand}`);
-  process.currentCommand = emptyCommand(
-    pid,
-    commandsOfProcessID[process.id].length
-  );
-  const current = process.currentCommand;
-  current.command = `"${config.executable}" ${config.args?.join(" ")}`;
-  current.exactCommand = exactCommand.newCommand;
-  current.boundaryDetector = exactCommand.boundaryDetector;
+  // const exactCommand = process.shellSpec.extendCommandWithBoundaryDetector("");
+  // console.log(`First command ${exactCommand.newCommand}`);
+  // process.currentCommand = emptyCommand(
+  //   pid,
+  //   commandsOfProcessID[process.id].length
+  // );
+  // const current = process.currentCommand;
+  //current.exactCommand = exactCommand.newCommand;
+  //current.boundaryDetector = exactCommand.boundaryDetector;
   // Memorize as a command.
-  commandsOfProcessID[pid].push(current);
-  executeCommandAndReceiveResponse(
+  // commandsOfProcessID[pid].push(current);
+  // executeCommandAndReceiveResponse(
+  //   process,
+  //   exactCommand,
+  //   currentSetter(process)
+  // );
+  executeCommandByEcho(
     process,
-    exactCommand,
-    currentSetter(process)
+    ``,
+    commandsOfProcessID[process.id].length,
+    undefined,
+    (command) => {
+      command.command = `"${config.executable}" ${config.args?.join(" ")}`;
+      commandsOfProcessID[process.id].push(command);
+      currentSetter(process);
+    }
   );
   console.log(
-    `Started process ${pid} with command ${exactCommand.newCommand} detector ${exactCommand.boundaryDetector}`
+    `Started process ${pid} with command ${process.currentCommand.exactCommand} detector ${process.currentCommand.boundaryDetector}`
   );
   return pid;
-}
-
-function decodeFromShellEncoding(process: Process, data: Buffer): string {
-  if (process.config.encoding === undefined) {
-    return data.toString();
-  }
-  return iconv.decode(data, process.config.encoding);
-}
-
-function encodeToShellEncoding(process: Process, command: string): Buffer {
-  if (process.config.encoding === undefined) {
-    return Buffer.from(command);
-  }
-  return iconv.encode(command, process.config.encoding);
 }
 
 function executeCommand(
@@ -240,31 +131,11 @@ function executeCommand(
   styledCommand?: string,
   onEnd?: (command: Command) => void
 ): Command {
-  // The command including the end detector.
-  const encoded = encodeToShellEncoding(process, command);
-  const exactCommand = process.shellSpec.extendCommandWithBoundaryDetector(
-    encoded.toString()
-  );
-  console.log(
-    `Execute command ${command} (exact: ${exactCommand.newCommand}) in process ${process.id}`
-  );
-  // Set new current command.
-  process.currentCommand = emptyCommand(
-    process.id,
-    isSilent ? -1 : commandsOfProcessID[process.id].length
-  );
-  const current = process.currentCommand;
-  current.command = command;
-  current.exactCommand = exactCommand.newCommand;
-  current.currentDirectory = process.currentDirectory;
-  current.user = process.user;
-  current.boundaryDetector = exactCommand.boundaryDetector;
-  current.styledCommand = styledCommand;
+  const cid = isSilent ? -1 : commandsOfProcessID[process.id].length;
+  executeCommandByEcho(process, command, cid, styledCommand, onEnd);
   if (!isSilent) {
     commandsOfProcessID[process.id].push(process.currentCommand);
   }
-  executeCommandAndReceiveResponse(process, exactCommand, onEnd);
-  console.log(`Executed command ${command} in process ${process.id}`);
   return process.currentCommand;
 }
 
@@ -449,12 +320,7 @@ export const shellRouter = server.router({
     .output(z.boolean())
     .query(async (opts) => {
       const { pid, cid } = opts.input;
-      try {
-        return commandsOfProcessID[pid][cid].isFinished;
-      } catch (e) {
-        console.log(`isFinished error: ${pid} ${cid}`);
-        throw e;
-      }
+      return commandsOfProcessID[pid][cid].isFinished;
     }),
   name: proc
     .input(ProcessIDScheme)

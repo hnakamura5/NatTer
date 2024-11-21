@@ -12,7 +12,6 @@ import { Theme } from "@/datatypes/Theme";
 import { useTheme } from "@/AppState";
 import { CommandID, ProcessID } from "@/datatypes/Command";
 
-
 let count = 0;
 
 function newTerminal(theme: Theme) {

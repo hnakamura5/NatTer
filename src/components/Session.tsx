@@ -30,6 +30,7 @@ function Session(props: SessionProps) {
       logger.logTrace(`commands fetch: ${error}`);
     },
   });
+  console.log(`numCommands in pid-${pid}: ${numCommands.data}`, );
   if (!numCommands.data) {
     return <Box>Loading...</Box>;
   }

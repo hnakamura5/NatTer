@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { createIPCHandler } from "electron-trpc/main";
 import { router } from "@/server/tRPCRouter";
-import { shutdown } from "@/server/shellProcess";
+import { shutdown } from "@/server/ShellProcess";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
