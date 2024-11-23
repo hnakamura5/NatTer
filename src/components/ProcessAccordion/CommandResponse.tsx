@@ -29,7 +29,7 @@ const TimeStyle = styled.span(({ theme }) => ({
   marginRight: "10px",
 }));
 
-export function CommandResponse(props:{command: Command}) {
+export function CommandResponse(props: { command: Command }) {
   const { command } = props;
   const theme = useTheme();
 
@@ -52,10 +52,16 @@ export function CommandResponse(props:{command: Command}) {
   const ansiUp = new AnsiUp();
   const purifier = DOMPurify();
   const stdoutHTML = purifier.sanitize(
-    ansiUp.ansi_to_html(command.stdoutResponse).replace(/\n/g, "<br />")
+    ansiUp
+      .ansi_to_html(command.stdoutResponse)
+      //.replace(/\n/g, "<br />")
+      .replace(/\r/g, "<br />")
   );
   const stderrHTML = purifier.sanitize(
-    ansiUp.ansi_to_html(command.stderr).replace(/\n/g, "<br />")
+    ansiUp
+      .ansi_to_html(command.stderr)
+      .replace(/\n/g, "<br />")
+      .replace(/\r/g, "<br />")
   );
 
   return (

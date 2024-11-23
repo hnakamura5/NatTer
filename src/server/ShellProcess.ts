@@ -20,13 +20,13 @@ import { server } from "@/server/tRPCServer";
 import { PowerShellSpecification } from "@/builtin/shell/Powershell";
 import { BashSpecification } from "@/builtin/shell/Bash";
 import { CmdSpecification } from "@/builtin/shell/Cmd";
-import { AnsiUp } from "@/datatypes/ansiUpCustom";
 import { observable } from "@trpc/server/observable";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import { Process, newProcess, clockIncrement } from "@/server/types/Process";
 import { executeCommandByEcho } from "@/server/ShellUtils/ExecuteByEcho";
 import { executeCommandByPrompt } from "./ShellUtils/ExecuteByPrompt";
 import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
+import stripAnsi from "strip-ansi";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
@@ -47,10 +47,6 @@ export const StdoutEventSchema = z.object({
 });
 export type StdoutEvent = z.infer<typeof StdoutEventSchema>;
 
-const ansiUp = new AnsiUp();
-function escapeTrim(command: string): string {
-  return ansiUp.ansi_to_text(command).trim();
-}
 
 // Re-set the current directory after the command.
 function currentSetter(process: Process) {
@@ -168,6 +164,7 @@ export function shutdown() {
     console.log(`Shutdown process ${process.id}`);
     process.handle.kill();
   });
+  console.log(`Shutdown all processes.`);
 }
 
 const proc = server.procedure;

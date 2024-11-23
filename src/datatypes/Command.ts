@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AnsiUp } from "@/datatypes/ansiUpCustom";
+import stripAnsi from 'strip-ansi';
 
 // Command ID (-1 is silent command)
 export const CommandIDSchema = z.number().int().min(-1);
@@ -70,14 +70,13 @@ export function newCommand(
   return result;
 }
 
-const ansiUp = new AnsiUp();
 // Convert ANSI to plain text and remove the command itself if included.
 // The caller must remove end boundaryDetector themselves.
 export function getStdoutOutputPartInPlain(
   command: Command,
   includesCommandItSelf: boolean
 ): string {
-  const result = ansiUp.ansi_to_text(command.stdoutResponse).trim();
+  const result = stripAnsi(command.stdoutResponse).trim();
   console.log(`getStdoutOutputPartInPlain: ${result}, includesCommandItSelf: ${includesCommandItSelf} exactCommand: ${command.exactCommand}`);
   if (!includesCommandItSelf) {
     return result;

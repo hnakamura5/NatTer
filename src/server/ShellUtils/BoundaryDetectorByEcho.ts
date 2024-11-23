@@ -6,6 +6,7 @@ import {
 } from "@/server/ShellUtils/BoundaryDetectorUtils";
 import { detectCommandResponseAndExitCodeFunctionType } from "@/server/ShellUtils/ExecuteUtils";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
+import stripAnsi from "strip-ansi";
 
 // Implement detection algorithm using echo command.
 // This is suitable for non-terminal shells.
@@ -45,7 +46,6 @@ export function extendCommandWithBoundaryDetectorByEcho(
   };
 }
 
-const ansiUp = new AnsiUp();
 function detectByEchoWithoutCommandItself(
   boundaryDetector: string,
   target: string
@@ -78,7 +78,7 @@ function detectByEchoWithoutCommandItself(
   // Extract the exit status until the end detector.
   return {
     response: target.slice(first + boundaryDetector.length, second),
-    exitStatus: ansiUp.ansi_to_text(
+    exitStatus: stripAnsi(
       target.slice(second + boundaryDetector.length, third)
     ),
   };

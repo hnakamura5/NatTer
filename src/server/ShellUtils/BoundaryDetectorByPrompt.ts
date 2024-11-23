@@ -6,7 +6,7 @@ import {
   isCommandEchoBackToStdout,
 } from "@/server/ShellUtils/BoundaryDetectorUtils";
 import { detectCommandResponseAndExitCodeFunctionType } from "@/server/ShellUtils/ExecuteUtils";
-import { AnsiUp } from "@/datatypes/ansiUpCustom";
+import stripAnsi from "strip-ansi";
 
 // Implement detection algorithm using prompt.
 // This is suitable for terminal shells with prompt.
@@ -30,7 +30,6 @@ export function extendCommandWithBoundaryDetectorByPrompt(
 // TODO: implement detection algorithm using prompt.
 // TODO:  or implement echo and prompt as executor?
 
-const ansiUp = new AnsiUp();
 export const detectCommandResponseAndExitCodeByPrompt: detectCommandResponseAndExitCodeFunctionType =
   (
     shellSpec: ShellSpecification,
@@ -54,7 +53,7 @@ export const detectCommandResponseAndExitCodeByPrompt: detectCommandResponseAndE
     }
     return {
       response: stdout.slice(0, first),
-      exitStatus: ansiUp.ansi_to_text(
+      exitStatus: stripAnsi(
         stdout.slice(first + boundaryDetector.length, second)
       ),
     };

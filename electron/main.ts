@@ -79,6 +79,7 @@ app.on("activate", () => {
 
 app.on("quit", () => {
   shutdown();
+  console.log("app quit");
 });
 
 app.whenReady().then(createWindow);

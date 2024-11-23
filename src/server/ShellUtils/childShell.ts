@@ -40,56 +40,72 @@ export class ChildShellStream {
   write(data: string) {
     if (this.usePty) {
       this.pty?.write(data);
-    } else {
+    } else if(this.childProcess) {
       this.childProcess?.stdin.write(data);
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
   execute(command: string) {
     if (this.usePty) {
       this.pty?.write(command + "\r");
-    } else {
+    } else if (this.childProcess) {
       this.childProcess?.stdin.write(command + "\n");
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
   kill(signal?: NodeJS.Signals) {
     if (this.usePty) {
       this.pty?.kill(signal);
-    } else {
+      this.pty = undefined;
+    } else if (this.childProcess) {
       this.childProcess?.kill(signal);
+      this.childProcess = undefined;
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
   resize(cols: number, rows: number) {
     if (this.usePty) {
       this.pty?.resize(cols, rows);
-    } else {
+    } else if (this.childProcess) {
       // child_process does not support resizing
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
   clear() {
     if (this.usePty) {
       this.pty?.clear();
-    } else {
+    } else if (this.childProcess) {
       // child_process does not support clearing
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
   pause() {
     if (this.usePty) {
       this.pty?.pause();
-    } else {
+    } else if (this.childProcess) {
       // child_process does not support pausing
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
   resume() {
     if (this.usePty) {
       this.pty?.resume();
-    } else {
+    } else if (this.childProcess) {
       // child_process does not support resuming
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
@@ -98,18 +114,22 @@ export class ChildShellStream {
       this.pty?.onData((str: string) => {
         callback(Buffer.from(str));
       });
-    } else {
+    } else if (this.childProcess) {
       this.childProcess?.stdout.removeAllListeners("data");
       this.childProcess?.stdout?.on("data", callback);
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
   onStderr(callback: (data: Buffer) => void) {
     if (this.usePty) {
       // node-pty does not support stderr
-    } else {
+    } else if (this.childProcess) {
       this.childProcess?.stderr.removeAllListeners("data");
       this.childProcess?.stderr?.on("data", callback);
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 
@@ -118,9 +138,11 @@ export class ChildShellStream {
       this.pty?.onExit(({ exitCode, signal }) => {
         callback(exitCode, signal);
       });
-    } else {
+    } else if (this.childProcess) {
       this.childProcess?.removeAllListeners("exit");
       this.childProcess?.on("exit", callback);
+    } else {
+      throw new Error("Shell stream is not initialized");
     }
   }
 }
