@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AnsiUp } from "@/datatypes/ansiUpCustom";
 
 // Command ID (-1 is silent command)
 export const CommandIDSchema = z.number().int().min(-1);
@@ -49,15 +50,45 @@ export function emptyCommand(pid: ProcessID, cid: CommandID): Command {
   };
 }
 
-export function getOutputPartOfStdout(command: Command): string {
-  const commandIndex = command.stdout.indexOf(command.exactCommand);
-  const sliceStart =
-    commandIndex === -1 ? 0 : commandIndex + command.exactCommand.length + 1;
-  const result = command.stdout.slice(sliceStart);
-  if (command.isFinished) {
-    return result.slice(0, result.indexOf(command.boundaryDetector));
-  }
+export function newCommand(
+  pid: ProcessID,
+  cid: CommandID,
+  command: string,
+  exactCommand: string,
+  currentDirectory: string,
+  user: string,
+  boundaryDetector: string,
+  styledCommand?: string
+): Command {
+  const result = emptyCommand(pid, cid);
+  result.command = command;
+  result.exactCommand = exactCommand;
+  result.currentDirectory = currentDirectory;
+  result.user = user;
+  result.boundaryDetector = boundaryDetector;
+  result.styledCommand = styledCommand;
   return result;
+}
+
+const ansiUp = new AnsiUp();
+// Convert ANSI to plain text and remove the command itself if included.
+// The caller must remove end boundaryDetector themselves.
+export function getStdoutOutputPartInPlain(
+  command: Command,
+  includesCommandItSelf: boolean
+): string {
+  const result = ansiUp.ansi_to_text(command.stdoutResponse).trim();
+  console.log(`getStdoutOutputPartInPlain: ${result}, includesCommandItSelf: ${includesCommandItSelf} exactCommand: ${command.exactCommand}`);
+  if (!includesCommandItSelf) {
+    return result;
+  }
+  const commandIndex = result.indexOf(command.exactCommand);
+  console.log(`getStdoutOutputPartInPlain: commandIndex: ${commandIndex}`);
+  if (commandIndex === -1) {
+    return result;
+  }
+  const sliceStart = commandIndex + command.exactCommand.length + 1;
+  return result.slice(sliceStart);
 }
 
 export function summarizeCommand(command: Command, length: number): string {

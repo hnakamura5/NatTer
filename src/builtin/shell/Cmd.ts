@@ -28,20 +28,6 @@ export const CmdSpecification: ShellSpecification = {
     return kind === "command";
   },
 
-  extendCommandWithBoundaryDetector: (command: string) => {
-    return extendCommandWithBoundaryDetectorByEcho(CmdSpecification, command);
-  },
-
-  detectResponseAndExitCode: (opts) => {
-    const { interact, stdout, boundaryDetector } = opts;
-    return detectCommandResponseAndExitCodeByEcho(
-      CmdSpecification,
-      interact,
-      stdout,
-      boundaryDetector
-    );
-  },
-
   isExitCodeOK: (exitCode) => {
     return exitCode === "0";
   },

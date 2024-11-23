@@ -1,4 +1,5 @@
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
+import { ShellInteractKind } from "@/datatypes/ShellInteract";
 
 export function defaultRandomBoundaryDetector(
   usePty: boolean,
@@ -9,6 +10,7 @@ export function defaultRandomBoundaryDetector(
   const ACK = String.fromCharCode(6);
   let Additional = [EOT, ENQ, ACK];
   if (usePty) {
+    // With PTY, control characters are displayed in escaped form.
     Additional = ["@", "%", "~"]; // TODO: temporary.
   }
 
@@ -49,4 +51,17 @@ export function getCommandWithDelimiterSandwichOnDemand(
     command = `${shellSpec.delimiter}${command}`;
   }
   return command;
+}
+
+export function isCommandEchoBackToStdout(
+  shellSpec: ShellSpecification,
+  interact: ShellInteractKind
+) {
+  if (shellSpec.commandNotEchoBack === undefined) {
+    return true;
+  }
+  if (interact === "terminal") {
+    return true;
+  }
+  return !shellSpec.commandNotEchoBack(interact);
 }

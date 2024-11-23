@@ -31,22 +31,6 @@ export const BashSpecification: ShellSpecification = {
     return interact === "command";
   },
 
-  extendCommandWithBoundaryDetector: (command: string) => {
-    return extendCommandWithBoundaryDetectorByEcho(
-      BashSpecification,
-      command
-    );
-  },
-
-  detectResponseAndExitCode: (opts) => {
-    const {interact , stdout, boundaryDetector } = opts;
-    return detectCommandResponseAndExitCodeByEcho(
-      BashSpecification,
-      stdout,
-      boundaryDetector
-    );
-  },
-
   isExitCodeOK: (exitCode) => {
     return exitCode === "0";
   },

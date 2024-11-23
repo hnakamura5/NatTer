@@ -11,7 +11,7 @@ import {
   CommandIDSchema,
   CommandSchema,
   emptyCommand,
-  getOutputPartOfStdout,
+  getStdoutOutputPartInPlain,
   ProcessID,
   ProcessIDSchema as ProcessIDSchemaRaw,
 } from "@/datatypes/Command";
@@ -25,6 +25,8 @@ import { observable } from "@trpc/server/observable";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import { Process, newProcess, clockIncrement } from "@/server/types/Process";
 import { executeCommandByEcho } from "@/server/ShellUtils/ExecuteByEcho";
+import { executeCommandByPrompt } from "./ShellUtils/ExecuteByPrompt";
+import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
@@ -52,16 +54,26 @@ function escapeTrim(command: string): string {
 
 // Re-set the current directory after the command.
 function currentSetter(process: Process) {
+  const includesCommandItSelf = isCommandEchoBackToStdout(
+    process.shellSpec,
+    process.config.interact
+  );
   return () => {
     if (process.shellSpec.directoryCommands !== undefined) {
       const currentDir = process.shellSpec.directoryCommands.getCurrent();
       const getUser = process.shellSpec.directoryCommands.getUser();
       executeCommand(process, currentDir, true, undefined, (command) => {
         console.log(`currentDirectory: ${command.stdoutResponse}`);
-        process.currentDirectory = escapeTrim(command.stdoutResponse);
+        process.currentDirectory = getStdoutOutputPartInPlain(
+          command,
+          includesCommandItSelf
+        );
         executeCommand(process, getUser, true, undefined, (command) => {
           console.log(`User: ${command.stdoutResponse}`);
-          process.user = escapeTrim(command.stdoutResponse);
+          process.user = getStdoutOutputPartInPlain(
+            command,
+            includesCommandItSelf
+          );
         });
       });
     }
@@ -92,7 +104,11 @@ function startProcess(config: ShellConfig): ProcessID {
   commandsOfProcessID.push([]);
   console.log(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
-  executeCommandByEcho(
+  const executer =
+    config.interact === "terminal"
+      ? executeCommandByPrompt
+      : executeCommandByEcho;
+  executer(
     process,
     ``,
     commandsOfProcessID[process.id].length,
@@ -106,7 +122,7 @@ function startProcess(config: ShellConfig): ProcessID {
     }
   );
   console.log(
-    `Started process ${pid} with command ${process.currentCommand.exactCommand} detector ${process.currentCommand.boundaryDetector}`
+    `Started process ${pid} with command "${process.currentCommand.exactCommand}" detector ${process.currentCommand.boundaryDetector}`
   );
   return pid;
 }
@@ -119,7 +135,11 @@ function executeCommand(
   onEnd?: (command: Command) => void
 ): Command {
   const cid = isSilent ? -1 : commandsOfProcessID[process.id].length;
-  executeCommandByEcho(process, command, cid, styledCommand, onEnd);
+  if (process.config.interact === "terminal") {
+    executeCommandByPrompt(process, command, cid, styledCommand, onEnd);
+  } else {
+    executeCommandByEcho(process, command, cid, styledCommand, onEnd);
+  }
   if (!isSilent) {
     commandsOfProcessID[process.id].push(process.currentCommand);
   }

@@ -6,7 +6,7 @@ import DomPurify from "dompurify";
 
 import { useTheme } from "@/AppState";
 import { api } from "@/api";
-import { Command, getOutputPartOfStdout } from "@/datatypes/Command";
+import { Command } from "@/datatypes/Command";
 
 import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "./FocusBoundary";

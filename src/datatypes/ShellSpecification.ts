@@ -56,37 +56,6 @@ export const ShellSpecificationSchema = z
 
     // Command end detection.
     boundaryDetectorCharset: z.array(z.string()).optional(),
-    // Customize the command to enable the end detection.
-    // Typically, echo some special string and exit code after the command.
-    extendCommandWithBoundaryDetector: z
-      .function()
-      .args(z.string())
-      .returns(
-        z.object({
-          newCommand: z.string(),
-          boundaryDetector: z.string(),
-        })
-      ),
-    // Detect the end of the command response.
-    // The boundaryDetector is the string returned by extendCommandWithBoundaryDetector.
-    detectResponseAndExitCode: z
-      .function()
-      .args(
-        z.object({
-          interact: ShellInteractKindSchema,
-          stdout: z.string(),
-          boundaryDetector: z.string(),
-        })
-      )
-      .returns(
-        z
-          .object({
-            response: z.string(),
-            exitStatus: z.string(),
-          })
-          .optional()
-      ), // Exit code or undefined.
-
     // Check if the exit code is OK.
     isExitCodeOK: z.function().args(z.string()).returns(z.boolean()),
 

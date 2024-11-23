@@ -3,6 +3,7 @@ import {
   detectCommandResponseAndExitCodeByEcho,
   extendCommandWithBoundaryDetectorByEcho,
 } from "@/server/ShellUtils/BoundaryDetectorByEcho";
+import { detectCommandResponseAndExitCodeByPrompt } from "@/server/ShellUtils/BoundaryDetectorByPrompt";
 
 export const PowerShellSpecification: ShellSpecification = {
   name: "powershell",
@@ -25,23 +26,6 @@ export const PowerShellSpecification: ShellSpecification = {
 
   isInteractionSupported: (kind) => {
     return kind === "command" || kind === "terminal";
-  },
-
-  extendCommandWithBoundaryDetector: (command: string) => {
-    return extendCommandWithBoundaryDetectorByEcho(
-      PowerShellSpecification,
-      command
-    );
-  },
-
-  detectResponseAndExitCode: (opts) => {
-    const { interact, stdout, boundaryDetector } = opts;
-    return detectCommandResponseAndExitCodeByEcho(
-      PowerShellSpecification,
-      interact,
-      stdout,
-      boundaryDetector
-    );
   },
 
   isExitCodeOK: (exitCode) => {

@@ -1,6 +1,11 @@
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
-import { defaultRandomBoundaryDetector } from "@/server/ShellUtils/BoundaryDetectorUtils";
+import {
+  defaultRandomBoundaryDetector,
+  isCommandEchoBackToStdout,
+} from "@/server/ShellUtils/BoundaryDetectorUtils";
+import { detectCommandResponseAndExitCodeFunctionType } from "@/server/ShellUtils/ExecuteUtils";
+import { AnsiUp } from "@/datatypes/ansiUpCustom";
 
 // Implement detection algorithm using echo command.
 // This is suitable for non-terminal shells.
@@ -40,16 +45,7 @@ export function extendCommandWithBoundaryDetectorByEcho(
   };
 }
 
-export function isCommandEchoBackToStdout(
-  shellSpec: ShellSpecification,
-  interact: ShellInteractKind
-) {
-  if (shellSpec.commandNotEchoBack === undefined) {
-    return true;
-  }
-  return !shellSpec.commandNotEchoBack(interact);
-}
-
+const ansiUp = new AnsiUp();
 function detectByEchoWithoutCommandItself(
   boundaryDetector: string,
   target: string
@@ -82,7 +78,9 @@ function detectByEchoWithoutCommandItself(
   // Extract the exit status until the end detector.
   return {
     response: target.slice(first + boundaryDetector.length, second),
-    exitStatus: target.slice(second + boundaryDetector.length, third),
+    exitStatus: ansiUp.ansi_to_text(
+      target.slice(second + boundaryDetector.length, third)
+    ),
   };
 }
 
@@ -101,27 +99,28 @@ function skipCommandWithEchoItself(
   return stdout.slice(1); // Skip the last quote.
 }
 
-export function detectCommandResponseAndExitCodeByEcho(
-  shellSpec: ShellSpecification,
-  interact: ShellInteractKind,
-  stdout: string,
-  boundaryDetector: string
-) {
-  console.log(`detectCommandResponseAndExitCodeByEcho stdout: ${stdout}`);
-  console.log(
-    `detectCommandResponseAndExitCodeByEcho end. (len: ${stdout.length})`
-  );
-  let target: string | undefined = stdout;
-  if (isCommandEchoBackToStdout(shellSpec, interact)) {
-    target = skipCommandWithEchoItself(shellSpec, stdout, boundaryDetector);
-  }
-  console.log(`skipCommandWithEchoItself target: ${target}`);
-  if (target === undefined) {
-    return undefined;
-  }
-  const result = detectByEchoWithoutCommandItself(boundaryDetector, target);
-  console.log(
-    `detectByEchoWithoutCommandItself result: ${result?.response}, ${result?.exitStatus}`
-  );
-  return result;
-}
+export const detectCommandResponseAndExitCodeByEcho: detectCommandResponseAndExitCodeFunctionType =
+  (
+    shellSpec: ShellSpecification,
+    interact: ShellInteractKind,
+    stdout: string,
+    boundaryDetector: string
+  ) => {
+    console.log(`detectCommandResponseAndExitCodeByEcho stdout: ${stdout}`);
+    console.log(
+      `detectCommandResponseAndExitCodeByEcho end. (len: ${stdout.length})`
+    );
+    let target: string | undefined = stdout;
+    if (isCommandEchoBackToStdout(shellSpec, interact)) {
+      target = skipCommandWithEchoItself(shellSpec, stdout, boundaryDetector);
+    }
+    console.log(`skipCommandWithEchoItself target: ${target}`);
+    if (target === undefined) {
+      return undefined;
+    }
+    const result = detectByEchoWithoutCommandItself(boundaryDetector, target);
+    console.log(
+      `detectByEchoWithoutCommandItself result: ${result?.response}, ${result?.exitStatus}`
+    );
+    return result;
+  };
