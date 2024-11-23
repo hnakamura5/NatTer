@@ -39,6 +39,13 @@ export const ShellSpecificationSchema = z
       .args(ShellInteractKindSchema)
       .returns(z.boolean()),
 
+    // The command is not echo back to stdout unless tty. e.g. bash
+    commandNotEchoBack: z
+      .function()
+      .args(ShellInteractKindSchema)
+      .returns(z.boolean())
+      .optional(),
+
     // If defined, overrides the default command closed detection.
     // In that case, syntax specification is ignored.
     isCommandClosedOverride: z

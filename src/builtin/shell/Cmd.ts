@@ -36,6 +36,7 @@ export const CmdSpecification: ShellSpecification = {
     const { interact, stdout, boundaryDetector } = opts;
     return detectCommandResponseAndExitCodeByEcho(
       CmdSpecification,
+      interact,
       stdout,
       boundaryDetector
     );

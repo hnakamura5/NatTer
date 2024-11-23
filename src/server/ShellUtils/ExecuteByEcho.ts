@@ -6,6 +6,7 @@ import {
 } from "@/server/types/Process";
 import { Command, CommandID, emptyCommand } from "@/datatypes/Command";
 import { ShellConfig } from "@/datatypes/Config";
+import { detectCommandResponseAndExitCodeByEcho } from "./BoundaryDetectorByEcho";
 
 function addStdout(config: ShellConfig, current: Command, response: string) {
   current.stdout = current.stdout.concat(response);
@@ -36,11 +37,12 @@ function receiveCommandResponse(
     addStdout(process.config, current, response);
     clockIncrement(process);
     // Check if the command is finished.
-    const detected = process.shellSpec.detectResponseAndExitCode({
-      interact: process.config.interact,
-      stdout: current.stdout,
-      boundaryDetector: current.boundaryDetector,
-    });
+    const detected = detectCommandResponseAndExitCodeByEcho(
+      process.shellSpec,
+      process.config.interact,
+      current.stdout,
+      current.boundaryDetector
+    );
     const commandFinished = detected !== undefined;
     if (!commandFinished) {
       return false;

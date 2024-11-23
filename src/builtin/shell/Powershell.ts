@@ -38,6 +38,7 @@ export const PowerShellSpecification: ShellSpecification = {
     const { interact, stdout, boundaryDetector } = opts;
     return detectCommandResponseAndExitCodeByEcho(
       PowerShellSpecification,
+      interact,
       stdout,
       boundaryDetector
     );

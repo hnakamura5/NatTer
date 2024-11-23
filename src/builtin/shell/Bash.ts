@@ -23,8 +23,12 @@ export const BashSpecification: ShellSpecification = {
   delimiter: ";",
   exitCodeVariable: "$?",
 
-  isInteractionSupported: (kind) => {
-    return kind === "command" || kind === "terminal";
+  isInteractionSupported: (interact) => {
+    return interact === "command" || interact === "terminal";
+  },
+
+  commandNotEchoBack: (interact) => {
+    return interact === "command";
   },
 
   extendCommandWithBoundaryDetector: (command: string) => {
