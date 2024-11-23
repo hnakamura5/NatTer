@@ -203,8 +203,8 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const [scrollIntoView, setScrollIntoView] = useState<boolean>(false);
   useEffect(() => {
     if (scrollIntoView) {
-      bottom.current?.scrollIntoView({ behavior: "smooth" });
-      top.current?.scrollIntoView({ behavior: "smooth" });
+      bottom.current?.scrollIntoView({ behavior: "auto" });
+      top.current?.scrollIntoView({ behavior: "auto" });
       setScrollIntoView(false);
     }
   }, [scrollIntoView]);
@@ -225,15 +225,15 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     },
     queryOption
   );
+  // On finish of the last command, focus back to the input box.
   useEffect(() => {
     if (
       props.isLast &&
       isFinished.data &&
       handleGFM.isFocused(GlobalFocusMap.Key.LastCommand)
     ) {
-      // If this is the last command and focused,
-      // focus back to the input box on finish.
       handleGFM.focus(GlobalFocusMap.Key.InputBox);
+      bottom.current?.scrollIntoView({ behavior: "auto" });
     }
   }, [handleGFM, props.isLast, isFinished.data]);
   const focalPoint = useRef<HTMLDivElement>(null);

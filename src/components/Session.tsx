@@ -13,14 +13,15 @@ function Session(props: SessionProps) {
   const pid = usePid();
   // Length is used as the trigger of the event of submitting new command.
   const [length, setLength] = useState<number>(0);
-  // Mechanism to scroll to the bottom of the session.
+  // Ref to scroll to the bottom of the session. (Now not used.)
   const bottom = useRef<HTMLDivElement>(null);
+  // Handle to focus on the last command.
   const handleGFM = GFM.useHandle();
-  // Effect on the length change.
+  // Effect on the length change, that is, new command is added.
   useEffect(() => {
+    // Switch focus to the last command.
+    // ProcessAccordion will switch focus to the input box if it is the last command.
     handleGFM.focus(GFM.Key.LastCommand);
-    // Scroll to the bottom.
-    bottom.current?.scrollIntoView({ behavior: "smooth" });
   }, [handleGFM, length]);
 
   // Fetching commands.
@@ -30,7 +31,7 @@ function Session(props: SessionProps) {
       logger.logTrace(`commands fetch: ${error}`);
     },
   });
-  console.log(`numCommands in pid-${pid}: ${numCommands.data}`, );
+  console.log(`numCommands in pid-${pid}: ${numCommands.data}`);
   if (!numCommands.data) {
     return <Box>Loading...</Box>;
   }
@@ -38,18 +39,15 @@ function Session(props: SessionProps) {
   if (numCommands.data !== length) {
     setLength(numCommands.data);
   }
-  if (numCommands.data === 0) {
-    return <Box>No commands.</Box>;
-  }
+
   const processAccordions = Array.from(
     { length: numCommands.data },
     (_, i) => i
-  )
-    .map((i) => {
-      return (
-        <ProcessAccordion key={i} cid={i} isLast={i === numCommands.data - 1} />
-      );
-    });
+  ).map((i) => {
+    return (
+      <ProcessAccordion key={i} cid={i} isLast={i === numCommands.data - 1} />
+    );
+  });
 
   return (
     <ErrorBoundary fallbackRender={SessionError}>
