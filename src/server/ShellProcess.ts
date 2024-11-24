@@ -47,7 +47,6 @@ export const StdoutEventSchema = z.object({
 });
 export type StdoutEvent = z.infer<typeof StdoutEventSchema>;
 
-
 // Re-set the current directory after the command.
 function currentSetter(process: Process) {
   const includesCommandItSelf = isCommandEchoBackToStdout(
@@ -60,15 +59,17 @@ function currentSetter(process: Process) {
       const getUser = process.shellSpec.directoryCommands.getUser();
       executeCommand(process, currentDir, true, undefined, (command) => {
         console.log(`currentDirectory: ${command.stdoutResponse}`);
-        process.currentDirectory = getStdoutOutputPartInPlain(
-          command,
-          includesCommandItSelf
+        getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
+          (dir) => {
+            process.currentDirectory = dir;
+          }
         );
         executeCommand(process, getUser, true, undefined, (command) => {
           console.log(`User: ${command.stdoutResponse}`);
-          process.user = getStdoutOutputPartInPlain(
-            command,
-            includesCommandItSelf
+          getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
+            (user) => {
+              process.user = user;
+            }
           );
         });
       });
@@ -150,7 +151,8 @@ function sendKey(process: Process, key: string) {
   }
   console.log(`Send key ${key} to process ${process.id}`);
   clockIncrement(process);
-  process.handle.write(key);
+  // [HN] TODO: filtering the key. e.g. NonConvert
+  // [HN]  process.handle.write(key);
 }
 
 function stopProcess(process: Process) {
@@ -300,7 +302,7 @@ export const shellRouter = server.router({
     .input(ProcessIDScheme)
     .output(z.number().int())
     .query(async (pid) => {
-      console.log(`numCommands call ${pid.input}`);
+      //console.log(`numCommands call ${pid.input}`);
       return commandsOfProcessID[pid.input].length;
     }),
   command: proc
@@ -319,7 +321,7 @@ export const shellRouter = server.router({
     .input(
       z.object({
         pid: ProcessIDScheme.refine((value) => {
-          console.log(`isFinished call pid refine ${value}`);
+          //console.log(`isFinished call pid refine ${value}`);
           return value < processHolder.length;
         }),
         cid: CommandIDSchema,
@@ -328,9 +330,9 @@ export const shellRouter = server.router({
     .output(z.boolean())
     .query(async (opts) => {
       const { pid, cid } = opts.input;
-      console.log(
-        `isFinished call ${pid} ${cid} ${commandsOfProcessID[pid][cid].isFinished}`
-      );
+      // console.log(
+      //   `isFinished call ${pid} ${cid} ${commandsOfProcessID[pid][cid].isFinished}`
+      // );
       return commandsOfProcessID[pid][cid].isFinished;
     }),
   name: proc

@@ -1,9 +1,4 @@
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
-import {
-  detectCommandResponseAndExitCodeByEcho,
-  extendCommandWithBoundaryDetectorByEcho,
-} from "@/server/ShellUtils/BoundaryDetectorByEcho";
-import { detectCommandResponseAndExitCodeByPrompt } from "@/server/ShellUtils/BoundaryDetectorByPrompt";
 
 export const PowerShellSpecification: ShellSpecification = {
   name: "powershell",
@@ -34,7 +29,8 @@ export const PowerShellSpecification: ShellSpecification = {
   },
 
   directoryCommands: {
-    getCurrent: () => "Convert-Path $(pwd)",
+    //getCurrent: () => "Convert-Path $(pwd)",
+    getCurrent: () => "Convert-Path .",
     changeCurrent: (dir) => `cd "${dir}"`,
     list: (dir) => `ls "${dir}"`,
     getUser: () => "whoami",

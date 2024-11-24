@@ -8,6 +8,8 @@ export class ChildShellStream {
   private pty?: pty.IPty;
   private childProcess?: ChildProcessWithoutNullStreams;
   private usePty;
+  private onStdoutCallBacks: ((data: Buffer) => void)[] = [];
+  private onExitCallBacks: ((code: number, signal?: number | undefined) => void)[] = [];
 
   constructor(
     private shellInterface: ShellInteractKind,
@@ -26,6 +28,18 @@ export class ChildShellStream {
       this.pty = pty.spawn(command, args || [], {
         cwd: options?.cwd,
         env: options?.env,
+      });
+      // [HN] this.pty?.resize(512, 16);
+      this.pty?.onData((str: string) => {
+        const data = Buffer.from(str);
+        for (const callback of this.onStdoutCallBacks) {
+          callback(data);
+        }
+      });
+      this.pty?.onExit(({ exitCode, signal }) => {
+        for (const callback of this.onExitCallBacks) {
+          callback(exitCode, signal);
+        }
       });
     } else {
       // Use child_process
@@ -48,6 +62,7 @@ export class ChildShellStream {
   }
 
   execute(command: string) {
+    console.log(`childShell executing command: ${command}`);
     if (this.usePty) {
       this.pty?.write(command + "\r");
     } else if (this.childProcess) {
@@ -111,9 +126,7 @@ export class ChildShellStream {
 
   onStdout(callback: (data: Buffer) => void) {
     if (this.usePty) {
-      this.pty?.onData((str: string) => {
-        callback(Buffer.from(str));
-      });
+      this.onStdoutCallBacks = [callback];
     } else if (this.childProcess) {
       this.childProcess?.stdout.removeAllListeners("data");
       this.childProcess?.stdout?.on("data", callback);
@@ -135,9 +148,7 @@ export class ChildShellStream {
 
   onExit(callback: (code: number, signal?: number | undefined) => void) {
     if (this.usePty) {
-      this.pty?.onExit(({ exitCode, signal }) => {
-        callback(exitCode, signal);
-      });
+      this.onExitCallBacks = [callback];
     } else if (this.childProcess) {
       this.childProcess?.removeAllListeners("exit");
       this.childProcess?.on("exit", callback);

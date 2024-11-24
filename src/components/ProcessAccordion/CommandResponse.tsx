@@ -49,6 +49,7 @@ export function CommandResponse(props: { command: Command }) {
   };
 
   // Convert stdout and stderr to HTML.
+  // TODO: Do we have to use xterm serialization for terminal output?
   const ansiUp = new AnsiUp();
   const purifier = DOMPurify();
   const stdoutHTML = purifier.sanitize(

@@ -110,19 +110,17 @@ function ResponseSelector(props: { cid: CommandID }) {
     queryOption
   );
   const interactMode = api.shell.interactMode.useQuery(pid);
-  if (isFinished.data) {
-    console.log(`finished mode`);
-    return <FinishedCommandResponse cid={cid} />;
-  } else {
+  // if (isFinished.data) {
+  //   console.log(`finished mode`);
+  //   return <FinishedCommandResponse cid={cid} />;
+  // } else {
     if (interactMode.data == "terminal") {
-      console.log(`terminal mode`);
       //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
       return <XtermCustom pid={pid} cid={cid} />;
     } else {
-      console.log(`other mode`);
       return <FinishedCommandResponse cid={cid} />;
     }
-  }
+  //}
 }
 
 function ProcessAccordionDetail(props: {

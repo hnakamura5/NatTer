@@ -1,8 +1,4 @@
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
-import {
-  detectCommandResponseAndExitCodeByEcho,
-  extendCommandWithBoundaryDetectorByEcho,
-} from "@/server/ShellUtils/BoundaryDetectorByEcho";
 
 export const CmdSpecification: ShellSpecification = {
   name: "cmd",

@@ -36,13 +36,13 @@ export function receiveCommandResponse(
     // console.log(
     //   `Received data in command ${current.command} in process ${process.id} data: ${data} len: ${data.length}`
     // );
-    if (current.isFinished) {
-      console.log(`Received in Finished command`);
-      return true;
-    }
     const response = decodeFromShellEncoding(process, data);
     console.log(`onStdout: ${response}`);
-    console.log(`onStdout: end.`);
+    if (current.isFinished) {
+      console.log(`onStdout for finished end.`);
+      return true;
+    }
+    console.log(`onStdout end.`);
     // Stdout handling. Emit the event, add to the command, and increment the clock.
     process.event.emit("stdout", {
       stdout: response,
@@ -72,6 +72,7 @@ export function receiveCommandResponse(
     );
     current.stdoutResponse = detected.response;
     console.log(`detect stdoutResponse: ${current.stdoutResponse}, exitStatus: ${exitStatus}`);
+    process.handle.clear(); // TODO: Is this required?
     process.event.emit("finish", current);
     if (onEnd !== undefined) {
       console.log(

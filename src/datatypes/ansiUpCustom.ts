@@ -1,4 +1,3 @@
-
 import { AnsiUp } from "ansi_up";
 
 // The original implementation of ansi_up.js does not escape the space.

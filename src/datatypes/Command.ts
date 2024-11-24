@@ -1,5 +1,38 @@
 import { z } from "zod";
-import stripAnsi from 'strip-ansi';
+import  stripAnsiRaw from "strip-ansi";
+import { Terminal } from "@xterm/headless";
+import { SerializeAddon } from "@xterm/addon-serialize";
+import { AnsiUp } from "./ansiUpCustom";
+
+const xterm = new Terminal({
+  allowProposedApi: true,
+});
+const serializeAddon = new SerializeAddon();
+xterm.loadAddon(serializeAddon);
+function stripAnsi(text: string) {
+  xterm.clear();
+  xterm.reset();
+  xterm.resize(512, 64);  //[HN] TODO: set appropriate size.
+  console.log(`stripAnsi: write ${text}`);
+  let result: string | undefined = undefined;
+  xterm.write(text, () => {
+    result = serializeAddon.serialize();
+    console.log(`stripAnsi: write done serial: ${result}`);
+  });
+  return new Promise<string>((resolve) => {
+    const interval = setInterval(() => {
+      if (result) {
+        clearInterval(interval);
+        resolve(stripAnsiRaw(result));
+      }
+    }, 100);
+  });
+}
+
+// function stripAnsi(text: string): string {
+//   const ansiUp = new AnsiUp();
+//   return ansiUp.ansi_to_text(text);
+// }
 
 // Command ID (-1 is silent command)
 export const CommandIDSchema = z.number().int().min(-1);
@@ -72,12 +105,14 @@ export function newCommand(
 
 // Convert ANSI to plain text and remove the command itself if included.
 // The caller must remove end boundaryDetector themselves.
-export function getStdoutOutputPartInPlain(
+export async function getStdoutOutputPartInPlain(
   command: Command,
   includesCommandItSelf: boolean
-): string {
-  const result = stripAnsi(command.stdoutResponse).trim();
-  console.log(`getStdoutOutputPartInPlain: ${result}, includesCommandItSelf: ${includesCommandItSelf} exactCommand: ${command.exactCommand}`);
+) {
+  const result = (await stripAnsi(command.stdoutResponse)).trim();
+  console.log(
+    `getStdoutOutputPartInPlain: ${result}, includesCommandItSelf: ${includesCommandItSelf} exactCommand: ${command.exactCommand}`
+  );
   if (!includesCommandItSelf) {
     return result;
   }

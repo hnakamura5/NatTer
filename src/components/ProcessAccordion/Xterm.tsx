@@ -33,7 +33,7 @@ function newTerminal(theme: Theme) {
   terminal.loadAddon(new ClipboardAddon());
   terminal.loadAddon(new Unicode11Addon());
   terminal.unicode.activeVersion = "11";
-  terminal.resize(80, 24);
+  terminal.resize(512, 64); //[HN] TODO: set appropriate size.
   console.log(`new terminal handle ${count++}`);
   return {
     terminal: terminal,
@@ -67,7 +67,7 @@ export default function Xterm(props: XtermProps) {
       terminal.open(termDivRef.current);
       console.log(`open terminal ${pid}-${cid}`);
     }
-    handle.fit.fit();
+    //handle.fit.fit();
 
     terminal.write(`pid: ${pid} cid: ${cid}\r\n`);
 
@@ -77,5 +77,5 @@ export default function Xterm(props: XtermProps) {
     };
   }, []);
 
-  return <div ref={termDivRef} id={`Xterm-${pid}`} />;
+  return <div ref={termDivRef} id={`Xterm-${pid}-${cid}`} />;
 }

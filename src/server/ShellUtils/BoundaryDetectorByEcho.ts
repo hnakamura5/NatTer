@@ -32,7 +32,6 @@ export function extendCommandWithBoundaryDetectorByEcho(
   command: string
 ) {
   const boundaryDetector = defaultRandomBoundaryDetector(false, shellSpec);
-  //console.log(`boundaryDetector: ${boundaryDetector} len: ${boundaryDetector.length}`);
   const needDelimiter =
     command.length > 0 && !command.trim().endsWith(shellSpec.delimiter);
   const delimiter = needDelimiter ? shellSpec.delimiter : "";

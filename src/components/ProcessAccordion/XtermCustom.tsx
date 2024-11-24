@@ -46,7 +46,7 @@ function newTerminal(theme: Theme): terminalHandle {
   terminal.loadAddon(new ClipboardAddon());
   terminal.loadAddon(new Unicode11Addon());
   terminal.unicode.activeVersion = "11";
-  terminal.resize(80, 24);
+  terminal.resize(512, 64); //[HN] TODO: set appropriate size.
   console.log(`new terminal ${count++}`);
   return {
     terminal: terminal,
@@ -114,10 +114,10 @@ export default function XtermCustom(props: XtermCustomProps) {
       } serial:${handle.serialize.serialize()}`
     );
 
-    fit.fit();
+    //fit.fit();
     window.onresize = () => {
       if (termDivRef.current) {
-        fit.fit();
+        //fit.fit();
       }
     };
     handle.terminal.onData((data) => {
