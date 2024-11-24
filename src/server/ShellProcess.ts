@@ -11,7 +11,6 @@ import {
   CommandIDSchema,
   CommandSchema,
   emptyCommand,
-  getStdoutOutputPartInPlain,
   ProcessID,
   ProcessIDSchema as ProcessIDSchemaRaw,
 } from "@/datatypes/Command";
@@ -26,7 +25,9 @@ import { Process, newProcess, clockIncrement } from "@/server/types/Process";
 import { executeCommandByEcho } from "@/server/ShellUtils/ExecuteByEcho";
 import { executeCommandByPrompt } from "./ShellUtils/ExecuteByPrompt";
 import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
-import stripAnsi from "strip-ansi";
+import {
+  getStdoutOutputPartInPlain
+} from "@/server/ShellUtils/ExecuteUtils";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);

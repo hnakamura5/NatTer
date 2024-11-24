@@ -117,7 +117,7 @@ export default function XtermCustom(props: XtermCustomProps) {
     //fit.fit();
     window.onresize = () => {
       if (termDivRef.current) {
-        //fit.fit();
+        fit.fit();
       }
     };
     handle.terminal.onData((data) => {

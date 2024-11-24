@@ -29,9 +29,10 @@ export function executeCommandAndReceiveResponseByEcho(
     detectCommandResponseAndExitCodeByEcho,
     isSilent,
     onEnd
-  );
-  // Execute the command.
-  process.handle.execute(exactCommand.newCommand);
+  ).then(() => {
+    // Execute the command.
+    process.handle.execute(exactCommand.newCommand);
+  });
 }
 
 export function executeCommandByEcho(

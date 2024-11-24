@@ -13,6 +13,56 @@ import {
 import { ShellConfig } from "@/datatypes/Config";
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
+import { Terminal } from "@xterm/headless";
+import stripAnsiRaw from "strip-ansi";
+import { SerializeAddon } from "@xterm/addon-serialize";
+
+const xterm = new Terminal({
+  allowProposedApi: true,
+});
+const serializeAddon = new SerializeAddon();
+xterm.loadAddon(serializeAddon);
+function stripAnsi(text: string) {
+  xterm.clear();
+  xterm.reset();
+  xterm.resize(512, 64); //[HN] TODO: set appropriate size.
+  console.log(`stripAnsi: write ${text}`);
+  let result: string | undefined = undefined;
+  xterm.write(text, () => {
+    result = serializeAddon.serialize();
+    console.log(`stripAnsi: write done serial: ${result}`);
+  });
+  return new Promise<string>((resolve) => {
+    const interval = setInterval(() => {
+      if (result) {
+        clearInterval(interval);
+        resolve(stripAnsiRaw(result));
+      }
+    }, 100);
+  });
+}
+
+// Convert ANSI to plain text and remove the command itself if included.
+// The caller must remove end boundaryDetector themselves.
+export async function getStdoutOutputPartInPlain(
+  command: Command,
+  includesCommandItSelf: boolean
+) {
+  const result = (await stripAnsi(command.stdoutResponse)).trim();
+  console.log(
+    `getStdoutOutputPartInPlain: ${result}, includesCommandItSelf: ${includesCommandItSelf} exactCommand: ${command.exactCommand}`
+  );
+  if (!includesCommandItSelf) {
+    return result;
+  }
+  const commandIndex = result.indexOf(command.exactCommand);
+  console.log(`getStdoutOutputPartInPlain: commandIndex: ${commandIndex}`);
+  if (commandIndex === -1) {
+    return result;
+  }
+  const sliceStart = commandIndex + command.exactCommand.length + 1;
+  return result.slice(sliceStart).trim();
+}
 
 function addStdout(config: ShellConfig, current: Command, response: string) {
   current.stdout = current.stdout.concat(response);
@@ -25,7 +75,34 @@ export type detectCommandResponseAndExitCodeFunctionType = (
   boundaryDetector: string
 ) => { response: string; exitStatus: string } | undefined;
 
-export function withCanonicalTerminalSizeTemporarily(
+async function resizeAndWait(process: Process, cols: number, rows: number) {
+  // TODO: Too a dirty hack to detect the end of the resizing.
+  let completed = false;
+  let interval: NodeJS.Timeout | undefined = undefined;
+  process.handle.onStdout((data: Buffer) => {
+    // Dispose the rewriting of stdout by resize.
+    const response = decodeFromShellEncoding(process, data);
+    console.log(`onStdout by resize: ${response}`);
+    if (interval) {
+      clearInterval(interval);
+    }
+    interval = setInterval(() => {
+      completed = true;
+    }, 100);
+  });
+  process.handle.resize(80, 24);
+  // wait 500 ms
+  //await new Promise((resolve) => setTimeout(resolve, 500));
+  let count = 0;
+  while (!completed) {
+    if (count++ > 100) {
+      throw new Error("Resize failed.");
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
+async function withCanonicalTerminalSizeTemporarily(
   process: Process,
   onEnd?: (command: Command) => void
 ) {
@@ -33,18 +110,27 @@ export function withCanonicalTerminalSizeTemporarily(
   if (size?.cols === 512 && size?.rows === 16) {
     return onEnd;
   }
-  process.handle.resize(512, 16);
+  console.log(`cols: ${size?.cols}, rows: ${size?.rows}`);
+  // TODO: Resizing causes the terminal puts many lines to the stdout.
+  // TODO: e.g. \e[K (line clear) and previous commands.
+  await resizeAndWait(process, 512, 16);
+  console.log(`Resize done.`);
   return (command: Command) => {
     if (size) {
-      process.handle.resize(size.rows, size.cols);
-    }
-    if (onEnd) {
-      onEnd(command);
+      resizeAndWait(process, size.cols, size.rows).then(() => {
+        if (onEnd) {
+          onEnd(command);
+        }
+      });
+    } else {
+      if (onEnd) {
+        onEnd(command);
+      }
     }
   };
 }
 
-export function receiveCommandResponse(
+export async function receiveCommandResponse(
   process: Process,
   detectCommandResponseAndExitCode: detectCommandResponseAndExitCodeFunctionType,
   isSilent?: boolean,
@@ -52,7 +138,7 @@ export function receiveCommandResponse(
 ) {
   const current = process.currentCommand;
   if (isSilent) {
-    //onEnd = withCanonicalTerminalSizeTemporarily(process, onEnd);
+    onEnd = await withCanonicalTerminalSizeTemporarily(process, onEnd);
   }
   // stdout handling.
   process.handle.onStdout((data: Buffer) => {

@@ -105,7 +105,8 @@ export function executeCommandByPrompt(
       detectCommandResponseAndExitCodeByPrompt,
       isSilent,
       onEnd
-    );
-    process.handle.execute(exactCommand);
+    ).then(() => {
+      process.handle.execute(exactCommand);
+    });
   });
 }
