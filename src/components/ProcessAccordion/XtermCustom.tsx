@@ -89,6 +89,7 @@ export default function XtermCustom(props: XtermCustomProps) {
   const theme = useTheme();
   const termDivRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<terminalHandle | null>(null);
+  const [isFinished, setIsFinished] = useState(false);
 
   const sendKey = api.shell.sendKey.useMutation();
   const resize = api.shell.resize.useMutation();
@@ -107,7 +108,6 @@ export default function XtermCustom(props: XtermCustomProps) {
     const fit = handle.fit;
     console.log(`open terminal ${pid}-${cid}`);
     terminal.open(termDivRef.current);
-    terminal.write("Loading...\r\n");
     console.log(
       `write terminal ${pid}-${cid} area:${
         handle.terminal.textarea?.value
@@ -134,18 +134,26 @@ export default function XtermCustom(props: XtermCustomProps) {
     };
   }, []);
 
-  api.shell.onStdout.useSubscription(pid, {
-    onError(error) {
-      logger.logTrace(`stdout: ${error}`);
-    },
-    onData: (data) => {
-      handleRef.current?.terminal.write(data.stdout);
-    },
-  });
+  api.shell.onStdout.useSubscription(
+    { pid: pid, cid: cid },
+    {
+      onError(error) {
+        logger.logTrace(`stdout: ${error}`);
+      },
+      onData: (data) => {
+        logger.log(
+          `stdout onData: cid: ${data.cid} isFinished: ${data.isFinished}, stdout: ${data.stdout} in pid-${pid} cid-${cid}`
+        );
+        if (data.cid === cid && !data.isFinished) {
+          handleRef.current?.terminal.write(data.stdout);
+        }
+      },
+    }
+  );
 
   return (
     <ErrorBoundary fallbackRender={XtermCustomError}>
-      <div ref={termDivRef} id={`XtermCustom-${pid}`} />
+      <div ref={termDivRef} id={`XtermCustom-${pid}-${cid}`} />
     </ErrorBoundary>
   );
 }

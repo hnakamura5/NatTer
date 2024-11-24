@@ -9,7 +9,10 @@ export class ChildShellStream {
   private childProcess?: ChildProcessWithoutNullStreams;
   private usePty;
   private onStdoutCallBacks: ((data: Buffer) => void)[] = [];
-  private onExitCallBacks: ((code: number, signal?: number | undefined) => void)[] = [];
+  private onExitCallBacks: ((
+    code: number,
+    signal?: number | undefined
+  ) => void)[] = [];
 
   constructor(
     private shellInterface: ShellInteractKind,
@@ -54,7 +57,7 @@ export class ChildShellStream {
   write(data: string) {
     if (this.usePty) {
       this.pty?.write(data);
-    } else if(this.childProcess) {
+    } else if (this.childProcess) {
       this.childProcess?.stdin.write(data);
     } else {
       throw new Error("Shell stream is not initialized");
@@ -64,6 +67,7 @@ export class ChildShellStream {
   execute(command: string) {
     console.log(`childShell executing command: ${command}`);
     if (this.usePty) {
+      // TODO: snap the size for silent command.
       this.pty?.write(command + "\r");
     } else if (this.childProcess) {
       this.childProcess?.stdin.write(command + "\n");
@@ -89,6 +93,20 @@ export class ChildShellStream {
       this.pty?.resize(cols, rows);
     } else if (this.childProcess) {
       // child_process does not support resizing
+    } else {
+      throw new Error("Shell stream is not initialized");
+    }
+  }
+
+  getSize() {
+    if (this.usePty) {
+      if (this.pty) {
+        return { cols: this.pty.cols, rows: this.pty.rows };
+      }
+      return undefined;
+    } else if (this.childProcess) {
+      // child_process does not support getting size
+      return undefined;
     } else {
       throw new Error("Shell stream is not initialized");
     }

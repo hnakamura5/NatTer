@@ -43,6 +43,7 @@ const ProcessIDScheme = ProcessIDSchemaRaw.refine((value) => {
 export const StdoutEventSchema = z.object({
   cid: CommandIDSchema,
   stdout: z.string(),
+  isFinished: z.boolean(),
   clock: z.number().int(),
 });
 export type StdoutEvent = z.infer<typeof StdoutEventSchema>;
@@ -61,6 +62,7 @@ function currentSetter(process: Process) {
         console.log(`currentDirectory: ${command.stdoutResponse}`);
         getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
           (dir) => {
+            console.log(`set currentDirectory: ${dir}`);
             process.currentDirectory = dir;
           }
         );
@@ -68,6 +70,7 @@ function currentSetter(process: Process) {
           console.log(`User: ${command.stdoutResponse}`);
           getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
             (user) => {
+              console.log(`set User: ${user}`);
               process.user = user;
             }
           );
@@ -110,6 +113,7 @@ function startProcess(config: ShellConfig): ProcessID {
     ``,
     commandsOfProcessID[process.id].length,
     undefined,
+    false,
     (command) => {
       console.log(`First command ${command.exactCommand}`);
       // Memorize the shell execution command.
@@ -133,9 +137,9 @@ function executeCommand(
 ): Command {
   const cid = isSilent ? -1 : commandsOfProcessID[process.id].length;
   if (process.config.interact === "terminal") {
-    executeCommandByPrompt(process, command, cid, styledCommand, onEnd);
+    executeCommandByPrompt(process, command, cid, styledCommand, isSilent, onEnd);
   } else {
-    executeCommandByEcho(process, command, cid, styledCommand, onEnd);
+    executeCommandByEcho(process, command, cid, styledCommand, isSilent, onEnd);
   }
   if (!isSilent) {
     commandsOfProcessID[process.id].push(process.currentCommand);
@@ -229,20 +233,29 @@ export const shellRouter = server.router({
 
   // Subscription api for process. Intended to be used from terminal.
   // using trpc V10 API.  https://trpc.io/docs/v10/subscriptions
-  onStdout: proc.input(ProcessIDScheme).subscription(async (opts) => {
-    console.log(`onStdout subscription call: ${opts.input}`);
-    const pid = opts.input;
-    const process = processHolder[pid];
-    return observable<StdoutEvent>((emit) => {
-      const onData = (data: StdoutEvent) => {
-        emit.next(data);
-      };
-      process.event.on("stdout", onData);
-      return () => {
-        process.event.off("stdout", onData);
-      };
-    });
-  }),
+  onStdout: proc
+    .input(
+      z.object({
+        pid: ProcessIDScheme,
+        cid: CommandIDSchema,
+      })
+    )
+    .subscription(async (opts) => {
+      console.log(`onStdout subscription call: ${opts.input}`);
+      const { pid, cid } = opts.input;
+      const process = processHolder[pid];
+      return observable<StdoutEvent>((emit) => {
+        const onData = (data: StdoutEvent) => {
+          if (data.cid === cid) {
+            emit.next(data);
+          }
+        };
+        process.event.on("stdout", onData);
+        return () => {
+          process.event.off("stdout", onData);
+        };
+      });
+    }),
   onStderr: proc
     .input(ProcessIDScheme)
     .output(z.string())

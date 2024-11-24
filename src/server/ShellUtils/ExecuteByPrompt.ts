@@ -15,10 +15,8 @@ import { detectCommandResponseAndExitCodeByPrompt } from "@/server/ShellUtils/Bo
 import {
   defaultRandomBoundaryDetector,
   isCommandEchoBackToStdout,
-} from "./BoundaryDetectorUtils";
-import { receiveCommandResponse } from "./ExecuteUtils";
-
-// TODO: ここから
+} from "@/server/ShellUtils/BoundaryDetectorUtils";
+import { receiveCommandResponse } from "@/server/ShellUtils/ExecuteUtils";
 
 function setPromptIsFinished(
   process: Process,
@@ -77,6 +75,7 @@ export function executeCommandByPrompt(
   command: string,
   cid: CommandID,
   styledCommand?: string,
+  isSilent?: boolean,
   onEnd?: (command: Command) => void
 ) {
   // The command including the detector
@@ -104,6 +103,7 @@ export function executeCommandByPrompt(
     receiveCommandResponse(
       process,
       detectCommandResponseAndExitCodeByPrompt,
+      isSilent,
       onEnd
     );
     process.handle.execute(exactCommand);

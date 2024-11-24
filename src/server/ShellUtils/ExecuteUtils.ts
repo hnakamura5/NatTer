@@ -25,12 +25,35 @@ export type detectCommandResponseAndExitCodeFunctionType = (
   boundaryDetector: string
 ) => { response: string; exitStatus: string } | undefined;
 
+export function withCanonicalTerminalSizeTemporarily(
+  process: Process,
+  onEnd?: (command: Command) => void
+) {
+  const size = process.handle.getSize();
+  if (size?.cols === 512 && size?.rows === 16) {
+    return onEnd;
+  }
+  process.handle.resize(512, 16);
+  return (command: Command) => {
+    if (size) {
+      process.handle.resize(size.rows, size.cols);
+    }
+    if (onEnd) {
+      onEnd(command);
+    }
+  };
+}
+
 export function receiveCommandResponse(
   process: Process,
   detectCommandResponseAndExitCode: detectCommandResponseAndExitCodeFunctionType,
+  isSilent?: boolean,
   onEnd?: (command: Command) => void
 ) {
   const current = process.currentCommand;
+  if (isSilent) {
+    //onEnd = withCanonicalTerminalSizeTemporarily(process, onEnd);
+  }
   // stdout handling.
   process.handle.onStdout((data: Buffer) => {
     // console.log(
@@ -45,8 +68,9 @@ export function receiveCommandResponse(
     console.log(`onStdout end.`);
     // Stdout handling. Emit the event, add to the command, and increment the clock.
     process.event.emit("stdout", {
+      cid: current.cid,
       stdout: response,
-      commandId: current.cid,
+      isFinished: current.isFinished,
       clock: process.clock,
     });
     addStdout(process.config, current, response);
@@ -71,7 +95,9 @@ export function receiveCommandResponse(
       `Finished ${process.id}-${current.cid} ${current.command} by status ${current.exitStatus} in process ${process.id}`
     );
     current.stdoutResponse = detected.response;
-    console.log(`detect stdoutResponse: ${current.stdoutResponse}, exitStatus: ${exitStatus}`);
+    console.log(
+      `detect stdoutResponse: ${current.stdoutResponse}, exitStatus: ${exitStatus}`
+    );
     process.handle.clear(); // TODO: Is this required?
     process.event.emit("finish", current);
     if (onEnd !== undefined) {

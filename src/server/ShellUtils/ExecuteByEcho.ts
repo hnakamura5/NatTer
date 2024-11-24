@@ -15,17 +15,19 @@ import {
   detectCommandResponseAndExitCodeByEcho,
   extendCommandWithBoundaryDetectorByEcho,
 } from "./BoundaryDetectorByEcho";
-import { receiveCommandResponse } from "./ExecuteUtils";
+import { receiveCommandResponse } from "@/server/ShellUtils/ExecuteUtils";
 
 export function executeCommandAndReceiveResponseByEcho(
   process: Process,
   exactCommand: { newCommand: string; boundaryDetector: string },
+  isSilent?: boolean,
   onEnd?: (command: Command) => void
 ) {
   // TODO: prompt detection have to set the prompt before the command.
   receiveCommandResponse(
     process,
     detectCommandResponseAndExitCodeByEcho,
+    isSilent,
     onEnd
   );
   // Execute the command.
@@ -37,6 +39,7 @@ export function executeCommandByEcho(
   command: string,
   cid: CommandID,
   styledCommand?: string,
+  isSilent?: boolean,
   onEnd?: (command: Command) => void
 ): Command {
   // The command including the detector.
@@ -59,7 +62,12 @@ export function executeCommandByEcho(
     exactCommand.boundaryDetector,
     styledCommand
   );
-  executeCommandAndReceiveResponseByEcho(process, exactCommand, onEnd);
+  executeCommandAndReceiveResponseByEcho(
+    process,
+    exactCommand,
+    isSilent,
+    onEnd
+  );
   console.log(`Executed command ${command} in process ${process.id}`);
   return process.currentCommand;
 }

@@ -122,7 +122,7 @@ export async function getStdoutOutputPartInPlain(
     return result;
   }
   const sliceStart = commandIndex + command.exactCommand.length + 1;
-  return result.slice(sliceStart);
+  return result.slice(sliceStart).trim();
 }
 
 export function summarizeCommand(command: Command, length: number): string {
