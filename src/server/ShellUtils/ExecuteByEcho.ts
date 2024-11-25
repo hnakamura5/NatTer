@@ -61,7 +61,8 @@ export function executeCommandByEcho(
     process.currentDirectory,
     process.user,
     exactCommand.boundaryDetector,
-    styledCommand
+    styledCommand,
+    process.handle.getSize()
   );
   executeCommandAndReceiveResponseByEcho(
     process,

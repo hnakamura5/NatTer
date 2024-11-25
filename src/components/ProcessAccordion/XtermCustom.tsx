@@ -185,6 +185,8 @@ function XtermCustomFinished(props: XtermCustomProps) {
       console.log(
         `write finished terminal ${pid}-${cid} stdoutResponse: ${command.data?.stdoutResponse}`
       );
+      const size = command.data.terminalSize;
+      handleRef.current?.terminal.resize(size?.cols || 80, size?.rows || 24);
       handleRef.current?.terminal.write(command.data?.stdoutResponse || "");
     }
   }, [cid, pid, command.data?.stdoutResponse, command.data]);

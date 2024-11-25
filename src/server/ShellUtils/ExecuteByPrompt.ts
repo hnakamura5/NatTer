@@ -96,7 +96,8 @@ export function executeCommandByPrompt(
     process.currentDirectory,
     process.user,
     boundaryDetector,
-    styledCommand
+    styledCommand,
+    process.handle.getSize()
   );
   setPrompt(process, boundaryDetector).then(() => {
     // Execute the command and receive the response.

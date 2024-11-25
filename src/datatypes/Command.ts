@@ -31,8 +31,14 @@ export const CommandSchema = z.object({
   stdoutResponse: z.string(),
   boundaryDetector: z.string(),
   outputCompleted: z.boolean().optional(),
-  stdoutHTML : z.string().optional(),
-  stderrHTML : z.string().optional(),
+  stdoutHTML: z.string().optional(),
+  stderrHTML: z.string().optional(),
+  terminalSize: z
+    .object({
+      cols: z.number().int(),
+      rows: z.number().int(),
+    })
+    .optional(),
 });
 export type Command = z.infer<typeof CommandSchema>;
 
@@ -65,7 +71,8 @@ export function newCommand(
   currentDirectory: string,
   user: string,
   boundaryDetector: string,
-  styledCommand?: string
+  styledCommand?: string,
+  terminalSize?: { cols: number; rows: number }
 ): Command {
   const result = emptyCommand(pid, cid);
   result.command = command;
@@ -74,6 +81,7 @@ export function newCommand(
   result.user = user;
   result.boundaryDetector = boundaryDetector;
   result.styledCommand = styledCommand;
+  result.terminalSize = terminalSize;
   return result;
 }
 
@@ -84,4 +92,3 @@ export function summarizeCommand(command: Command, length: number): string {
   }
   return result.replace(/\n/g, " ");
 }
-
