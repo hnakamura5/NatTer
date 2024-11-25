@@ -18,8 +18,16 @@ import { useTheme } from "@/AppState";
 import { Theme } from "@/datatypes/Theme";
 import { ErrorBoundary } from "react-error-boundary";
 import { CommandID, ProcessID } from "@/datatypes/Command";
+import {
+  CommandHeader,
+  ResponseStyle,
+} from "@/components/ProcessAccordion/CommandResponseCommon";
 
 import { api } from "@/api";
+
+function pxToNumber(px: string) {
+  return parseInt(px.replace("px", ""));
+}
 
 type terminalHandle = {
   terminal: Terminal;
@@ -38,6 +46,7 @@ function newTerminal(theme: Theme): terminalHandle {
       foreground: theme.terminal.textColor,
     },
     fontFamily: theme.terminal.font,
+    fontSize: pxToNumber(theme.terminal.fontSize),
   });
   const fitAddon = new FitAddon();
   const serializeAddon = new SerializeAddon();
@@ -58,42 +67,11 @@ function newTerminal(theme: Theme): terminalHandle {
     search: searchAddon,
   };
 }
-const xtermMap = new Map<string, terminalHandle>();
-function getTerminal(
-  pid: ProcessID,
-  cid: CommandID,
-  theme: Theme
-): terminalHandle {
-  const key = `Xterm-${pid}-${cid}`;
-  console.log(`get terminal ${key}`);
-  let handle = xtermMap.get(key);
-  if (!handle) {
-    handle = newTerminal(theme);
-    xtermMap.set(key, handle);
-  }
-  return handle;
-}
-function disposeTerminal(pid: ProcessID, cid: CommandID) {
-  const key = `Xterm-${pid}-${cid}`;
-  const handle = xtermMap.get(key);
-  if (handle) {
-    handle.terminal.dispose();
-    xtermMap.delete(key);
-  }
-}
-
-const ResponseStyle = styled(Box)(({ theme }) => ({
-  width: "calc(100% + 15px)",
-  marginLeft: "-8px",
-  maxHeight: "calc(50vh - 50px)",
-  //overflow: "auto",
-}));
-
 interface XtermCustomProps {
   pid: ProcessID;
   cid: CommandID;
 }
-export default function XtermCustom(props: XtermCustomProps) {
+function XtermCustomAlive(props: XtermCustomProps) {
   const pid = props.pid;
   const cid = props.cid;
   const theme = useTheme();
@@ -168,6 +146,81 @@ export default function XtermCustom(props: XtermCustomProps) {
       </ResponseStyle>
     </ErrorBoundary>
   );
+}
+
+function XtermCustomFinished(props: XtermCustomProps) {
+  const theme = useTheme();
+  const { pid, cid } = props;
+  const termDivRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<terminalHandle | null>(null);
+  const command = api.shell.command.useQuery(
+    {
+      pid: pid,
+      cid: cid,
+    },
+    {
+      refetchInterval: 1000,
+      onError: (error) => {
+        console.error(`command fetch error: ${error}`);
+      },
+    }
+  );
+
+  useEffect(() => {
+    const handle = newTerminal(theme);
+    handleRef.current = handle;
+    const terminal = handle.terminal;
+    if (termDivRef.current) {
+      terminal.open(termDivRef.current);
+      console.log(`open finished terminal ${pid}-${cid}`);
+    }
+    return () => {
+      console.log(`dispose finished terminal ${pid}-${cid}`);
+      terminal.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (command.data) {
+      console.log(
+        `write finished terminal ${pid}-${cid} stdoutResponse: ${command.data?.stdoutResponse}`
+      );
+      handleRef.current?.terminal.write(command.data?.stdoutResponse || "");
+    }
+  }, [cid, pid, command.data?.stdoutResponse, command.data]);
+
+  if (!command.data) {
+    return <Box>Loading.</Box>;
+  }
+
+  return (
+    <ErrorBoundary fallbackRender={XtermCustomError}>
+      <ResponseStyle>
+        <CommandHeader command={command.data} />
+        <div ref={termDivRef} id={`XtermCustomFinished-${pid}-${cid}`} />
+      </ResponseStyle>
+    </ErrorBoundary>
+  );
+}
+
+export default function XtermCustom(props: XtermCustomProps) {
+  const { pid, cid } = props;
+  const outputCompleted = api.shell.outputCompleted.useQuery(
+    { pid: pid, cid: cid },
+    {
+      refetchInterval: 200,
+      onError: (error) => {
+        logger.logTrace(`outputCompleted fetch: ${error}`);
+      },
+    }
+  );
+  if (outputCompleted.data) {
+    // disposeTerminal(pid, cid);
+    // return <Box>Finished.</Box>;
+    return <XtermCustomFinished pid={pid} cid={cid} />;
+  } else {
+    return <XtermCustomAlive pid={pid} cid={cid} />;
+  }
 }
 
 function XtermCustomError() {

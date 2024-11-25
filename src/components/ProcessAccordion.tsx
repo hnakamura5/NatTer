@@ -15,7 +15,10 @@ import { EasyFocus } from "@/components/EasyFocus";
 import styled from "@emotion/styled";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
-import { CommandResponse } from "@/components/ProcessAccordion/CommandResponse";
+import {
+  CommandResponse,
+  FinishedCommandResponse as FinishedCommandResponseServer,
+} from "@/components/ProcessAccordion/CommandResponse";
 import { CommandSummary } from "./ProcessAccordion/CommandSummary";
 import XtermCustom from "./ProcessAccordion/XtermCustom";
 import Xterm from "./ProcessAccordion/Xterm";
@@ -84,7 +87,7 @@ function ProcessAccordionSummary(props: { cid: CommandID }) {
   );
 }
 
-function FinishedCommandResponse(props: { cid: CommandID }) {
+function FinishedCommandResponseByCR(props: { cid: CommandID }) {
   const pid = usePid();
   const command = api.shell.command.useQuery(
     {
@@ -97,6 +100,14 @@ function FinishedCommandResponse(props: { cid: CommandID }) {
     return <Box>Command not found.</Box>;
   }
   return <CommandResponse command={command.data} />;
+}
+
+function FinishedCommandResponse(props: { cid: CommandID }) {
+  if (false) {
+    return <FinishedCommandResponseByCR cid={props.cid} />;
+  } else {
+    return <FinishedCommandResponseServer cid={props.cid} />;
+  }
 }
 
 function ResponseSelector(props: { cid: CommandID }) {
@@ -120,7 +131,7 @@ function ResponseSelector(props: { cid: CommandID }) {
     } else {
       return <FinishedCommandResponse cid={cid} />;
     }
-  //}
+  // }
 }
 
 function ProcessAccordionDetail(props: {

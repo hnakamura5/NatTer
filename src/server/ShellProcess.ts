@@ -25,9 +25,7 @@ import { Process, newProcess, clockIncrement } from "@/server/types/Process";
 import { executeCommandByEcho } from "@/server/ShellUtils/ExecuteByEcho";
 import { executeCommandByPrompt } from "./ShellUtils/ExecuteByPrompt";
 import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
-import {
-  getStdoutOutputPartInPlain
-} from "@/server/ShellUtils/ExecuteUtils";
+import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
@@ -138,7 +136,14 @@ function executeCommand(
 ): Command {
   const cid = isSilent ? -1 : commandsOfProcessID[process.id].length;
   if (process.config.interact === "terminal") {
-    executeCommandByPrompt(process, command, cid, styledCommand, isSilent, onEnd);
+    executeCommandByPrompt(
+      process,
+      command,
+      cid,
+      styledCommand,
+      isSilent,
+      onEnd
+    );
   } else {
     executeCommandByEcho(process, command, cid, styledCommand, isSilent, onEnd);
   }
@@ -245,9 +250,20 @@ export const shellRouter = server.router({
       console.log(`onStdout subscription call: ${opts.input}`);
       const { pid, cid } = opts.input;
       const process = processHolder[pid];
+      let firstEmit = true;
       return observable<StdoutEvent>((emit) => {
         const onData = (data: StdoutEvent) => {
           if (data.cid === cid) {
+            if (firstEmit) {
+              // Emit the all existing stdout.
+              console.log(
+                `onStdout first emit: event:${data.stdout} all:${process.currentCommand.stdout}`
+              );
+              data.stdout = process.currentCommand.stdout;
+            } else {
+              console.log(`onStdout emit: event:${data.stdout}`);
+            }
+            firstEmit = false;
             emit.next(data);
           }
         };
@@ -348,6 +364,30 @@ export const shellRouter = server.router({
       //   `isFinished call ${pid} ${cid} ${commandsOfProcessID[pid][cid].isFinished}`
       // );
       return commandsOfProcessID[pid][cid].isFinished;
+    }),
+  outputCompleted: proc
+    .input(
+      z.object({
+        pid: ProcessIDScheme,
+        cid: CommandIDSchema,
+      })
+    )
+    .output(z.boolean())
+    .query(async (opts) => {
+      const { pid, cid } = opts.input;
+      return commandsOfProcessID[pid][cid].outputCompleted ?? false;
+    }),
+  stdoutResponse: proc
+    .input(
+      z.object({
+        pid: ProcessIDScheme,
+        cid: CommandIDSchema,
+      })
+    )
+    .output(z.string())
+    .query(async (opts) => {
+      const { pid, cid } = opts.input;
+      return commandsOfProcessID[pid][cid].stdoutResponse;
     }),
   name: proc
     .input(ProcessIDScheme)

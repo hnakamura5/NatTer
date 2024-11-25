@@ -14,8 +14,11 @@ import { ShellConfig } from "@/datatypes/Config";
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
 import { Terminal } from "@xterm/headless";
-import stripAnsiRaw from "strip-ansi";
+import stripAnsi from "strip-ansi";
 import { SerializeAddon } from "@xterm/addon-serialize";
+
+import DOMPurify from "dompurify";
+import { AnsiUp } from "@/datatypes/ansiUpCustom";
 
 const Cols = 512;
 const Rows = 64;
@@ -25,7 +28,8 @@ const xterm = new Terminal({
 });
 const serializeAddon = new SerializeAddon();
 xterm.loadAddon(serializeAddon);
-function stripAnsi(text: string) {
+
+function stripAnsiInTerminal(text: string) {
   xterm.clear();
   xterm.reset();
   xterm.resize(Cols, Rows);
@@ -39,10 +43,50 @@ function stripAnsi(text: string) {
     const interval = setInterval(() => {
       if (result) {
         clearInterval(interval);
-        resolve(stripAnsiRaw(result));
+        resolve(stripAnsi(result));
       }
     }, 100);
   });
+}
+
+async function ansiToHtmlInTerminal(cols: number, rows: number, text: string) {
+  const xterm = new Terminal({
+    allowProposedApi: true,
+  });
+  const serializeAddon = new SerializeAddon();
+  xterm.loadAddon(serializeAddon);
+  xterm.resize(cols, rows);
+  return new Promise<string>((resolve) => {
+    xterm.write(text, () => {
+      resolve(serializeAddon.serializeAsHTML());
+    });
+  });
+}
+
+const ansiUp = new AnsiUp();
+function ansiToHtmlNonTerminal(text: string) {
+  return ansiUp.ansi_to_html(text).replace(/\n/g, "<br>");
+}
+
+export async function commandToHtml(process: Process, command: Command) {
+  const interact = process.config.interact;
+  if (interact === "terminal") {
+    const { cols, rows } = process.handle.getSize() || {
+      cols: Cols,
+      rows: Rows,
+    };
+    const stdoutHTML = await ansiToHtmlInTerminal(
+      cols,
+      rows,
+      command.stdoutResponse
+    );
+    const stderrHTML = await ansiToHtmlInTerminal(cols, rows, command.stderr);
+    return { stdoutHTML, stderrHTML };
+  } else {
+    const stdoutHTML = ansiToHtmlNonTerminal(command.stdoutResponse);
+    const stderrHTML = ansiToHtmlNonTerminal(command.stderr);
+    return { stdoutHTML, stderrHTML };
+  }
 }
 
 // Convert ANSI to plain text and remove the command itself if included.
@@ -51,7 +95,7 @@ export async function getStdoutOutputPartInPlain(
   command: Command,
   includesCommandItSelf: boolean
 ) {
-  const result = (await stripAnsi(command.stdoutResponse)).trim();
+  const result = (await stripAnsiInTerminal(command.stdoutResponse)).trim();
   console.log(
     `getStdoutOutputPartInPlain: ${result}, includesCommandItSelf: ${includesCommandItSelf} exactCommand: ${command.exactCommand}`
   );
@@ -155,15 +199,17 @@ export async function receiveCommandResponse(
       return true;
     }
     console.log(`onStdout end.`);
+    addStdout(process.config, current, response);
+    clockIncrement(process);
     // Stdout handling. Emit the event, add to the command, and increment the clock.
+    // Note stdout is concatenated in the command before emitting the event.
+    // See onStdout in ShellProcess.ts.
     process.event.emit("stdout", {
       cid: current.cid,
       stdout: response,
       isFinished: current.isFinished,
       clock: process.clock,
     });
-    addStdout(process.config, current, response);
-    clockIncrement(process);
     // Check if the command is finished.
     const detected = detectCommandResponseAndExitCode(
       process.shellSpec,
@@ -187,6 +233,11 @@ export async function receiveCommandResponse(
     console.log(
       `detect stdoutResponse: ${current.stdoutResponse}, exitStatus: ${exitStatus}`
     );
+    commandToHtml(process, current).then(({ stdoutHTML, stderrHTML }) => {
+      current.stdoutHTML = stdoutHTML;
+      current.stderrHTML = stderrHTML;
+      current.outputCompleted = true;
+    });
     process.handle.clear(); // TODO: Is this required?
     process.event.emit("finish", current);
     if (onEnd !== undefined) {

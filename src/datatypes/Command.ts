@@ -30,6 +30,9 @@ export const CommandSchema = z.object({
   exitStatusIsOK: z.boolean().optional(),
   stdoutResponse: z.string(),
   boundaryDetector: z.string(),
+  outputCompleted: z.boolean().optional(),
+  stdoutHTML : z.string().optional(),
+  stderrHTML : z.string().optional(),
 });
 export type Command = z.infer<typeof CommandSchema>;
 
