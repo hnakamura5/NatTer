@@ -17,6 +17,9 @@ import { Terminal } from "@xterm/headless";
 import stripAnsiRaw from "strip-ansi";
 import { SerializeAddon } from "@xterm/addon-serialize";
 
+const Cols = 512;
+const Rows = 64;
+
 const xterm = new Terminal({
   allowProposedApi: true,
 });
@@ -25,7 +28,7 @@ xterm.loadAddon(serializeAddon);
 function stripAnsi(text: string) {
   xterm.clear();
   xterm.reset();
-  xterm.resize(512, 64); //[HN] TODO: set appropriate size.
+  xterm.resize(Cols, Rows);
   console.log(`stripAnsi: write ${text}`);
   let result: string | undefined = undefined;
   xterm.write(text, () => {
@@ -90,7 +93,7 @@ async function resizeAndWait(process: Process, cols: number, rows: number) {
       completed = true;
     }, 100);
   });
-  process.handle.resize(80, 24);
+  process.handle.resize(Cols, Rows);
   // wait 500 ms
   //await new Promise((resolve) => setTimeout(resolve, 500));
   let count = 0;
@@ -107,13 +110,13 @@ async function withCanonicalTerminalSizeTemporarily(
   onEnd?: (command: Command) => void
 ) {
   const size = process.handle.getSize();
-  if (size?.cols === 512 && size?.rows === 16) {
+  if (size?.cols === Cols && size?.rows === Rows) {
     return onEnd;
   }
   console.log(`cols: ${size?.cols}, rows: ${size?.rows}`);
   // TODO: Resizing causes the terminal puts many lines to the stdout.
   // TODO: e.g. \e[K (line clear) and previous commands.
-  await resizeAndWait(process, 512, 16);
+  await resizeAndWait(process, Cols, Rows);
   console.log(`Resize done.`);
   return (command: Command) => {
     if (size) {

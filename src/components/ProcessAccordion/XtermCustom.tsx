@@ -9,6 +9,9 @@ import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { Unicode11Addon } from "@xterm/addon-unicode11";
 import "@xterm/xterm/css/xterm.css";
 
+import { Box } from "@mui/system";
+import styled from "@emotion/styled";
+
 import { logger } from "@/datatypes/Logger";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/AppState";
@@ -78,6 +81,13 @@ function disposeTerminal(pid: ProcessID, cid: CommandID) {
     xtermMap.delete(key);
   }
 }
+
+const ResponseStyle = styled(Box)(({ theme }) => ({
+  width: "calc(100% + 15px)",
+  marginLeft: "-8px",
+  maxHeight: "calc(50vh - 50px)",
+  //overflow: "auto",
+}));
 
 interface XtermCustomProps {
   pid: ProcessID;
@@ -153,7 +163,9 @@ export default function XtermCustom(props: XtermCustomProps) {
 
   return (
     <ErrorBoundary fallbackRender={XtermCustomError}>
-      <div ref={termDivRef} id={`XtermCustom-${pid}-${cid}`} />
+      <ResponseStyle>
+        <div ref={termDivRef} id={`XtermCustom-${pid}-${cid}`} />
+      </ResponseStyle>
     </ErrorBoundary>
   );
 }
