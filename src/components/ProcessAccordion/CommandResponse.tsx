@@ -13,6 +13,10 @@ import {
   ResponseStyle,
 } from "@/components/ProcessAccordion/CommandResponseCommon";
 
+const ResponseStyleWithScroll = styled(ResponseStyle)({
+  overflow: "auto",
+});
+
 export function CommandResponse(props: { command: Command }) {
   const { command } = props;
   const theme = useTheme();
@@ -28,7 +32,7 @@ export function CommandResponse(props: { command: Command }) {
   );
 
   return (
-    <ResponseStyle>
+    <ResponseStyleWithScroll>
       <CommandHeader command={command} />
       <Box sx={{ overflow: "auto" }}>
         <Box sx={colorLine(theme.terminal.stdoutColor)}>
@@ -46,7 +50,7 @@ export function CommandResponse(props: { command: Command }) {
           />
         </Box>
       </Box>
-    </ResponseStyle>
+    </ResponseStyleWithScroll>
   );
 }
 
@@ -71,20 +75,21 @@ function RecordedCommandResponse(props: { cid: CommandID }) {
   }
 
   return (
-    <ResponseStyle>
+    <Box>
       <CommandHeader command={command.data} />
-      <Box sx={{ overflow: "auto" }}>
+      <ResponseStyleWithScroll>
         <Box sx={colorLine(theme.terminal.stdoutColor)}>
           <div
             dangerouslySetInnerHTML={{ __html: command.data.stdoutHTML || "" }}
           />
-          <Box sx={colorLine(theme.terminal.stderrColor)}></Box>
+        </Box>
+        <Box sx={colorLine(theme.terminal.stderrColor)}>
           <div
             dangerouslySetInnerHTML={{ __html: command.data.stderrHTML || "" }}
           />
         </Box>
-      </Box>
-    </ResponseStyle>
+      </ResponseStyleWithScroll>
+    </Box>
   );
 }
 

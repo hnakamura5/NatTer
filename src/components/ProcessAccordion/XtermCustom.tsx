@@ -24,6 +24,7 @@ import {
 } from "@/components/ProcessAccordion/CommandResponseCommon";
 
 import { api } from "@/api";
+import { set } from "zod";
 
 function pxToNumber(px: string) {
   return parseInt(px.replace("px", ""));
@@ -186,7 +187,7 @@ function XtermCustomFinished(props: XtermCustomProps) {
         `write finished terminal ${pid}-${cid} stdoutResponse: ${command.data?.stdoutResponse}`
       );
       const size = command.data.terminalSize;
-      handleRef.current?.terminal.resize(size?.cols || 80, size?.rows || 24);
+      //handleRef.current?.terminal.resize(size?.cols || 80, size?.rows || 24);
       handleRef.current?.terminal.write(command.data?.stdoutResponse || "");
     }
   }, [cid, pid, command.data?.stdoutResponse, command.data]);
@@ -197,8 +198,8 @@ function XtermCustomFinished(props: XtermCustomProps) {
 
   return (
     <ErrorBoundary fallbackRender={XtermCustomError}>
+      <CommandHeader command={command.data} />
       <ResponseStyle>
-        <CommandHeader command={command.data} />
         <div ref={termDivRef} id={`XtermCustomFinished-${pid}-${cid}`} />
       </ResponseStyle>
     </ErrorBoundary>

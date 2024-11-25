@@ -18,15 +18,16 @@ const TimeStyle = styled.span(({ theme }) => ({
   marginRight: "10px",
 }));
 
-export const ResponseStyle = styled(Box)(({ theme }) => ({
+export const ResponseAlign = styled(Box)(({ theme }) => ({
   width: "calc(100% + 15px)",
   marginLeft: "-8px",
+}));
+
+export const ResponseStyle = styled(ResponseAlign)(({ theme }) => ({
   maxHeight: "calc(50vh - 50px)",
   backgroundColor: theme.terminal.secondaryBackgroundColor,
   paddingBottom: "5px",
 }));
-
-
 
 export const colorLine = (color: string) => {
   return {
@@ -47,17 +48,18 @@ export function CommandHeader(props: { command: Command }) {
   const { command } = props;
   const theme = useTheme();
   return (
-    <Box sx={colorSection(theme.terminal.useCommandColor)}>
-      <span>
-        <TimeStyle>{command.startTime}</TimeStyle>
-        <CurrentDirStyle>{command.currentDirectory}</CurrentDirStyle>
-        <UserStyle>{command.user}</UserStyle>
-        <br />
+    <ResponseAlign>
+      <Box sx={colorSection(theme.terminal.useCommandColor)}>
         <span>
-          {command.styledCommand ? command.styledCommand : command.command}
+          <TimeStyle>{command.startTime}</TimeStyle>
+          <CurrentDirStyle>{command.currentDirectory}</CurrentDirStyle>
+          <UserStyle>{command.user}</UserStyle>
+          <br />
+          <span>
+            {command.styledCommand ? command.styledCommand : command.command}
+          </span>
         </span>
-      </span>
-    </Box>
+      </Box>
+    </ResponseAlign>
   );
 }
-
