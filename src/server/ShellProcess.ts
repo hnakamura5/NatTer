@@ -57,23 +57,25 @@ function currentSetter(process: Process) {
     if (process.shellSpec.directoryCommands !== undefined) {
       const currentDir = process.shellSpec.directoryCommands.getCurrent();
       const getUser = process.shellSpec.directoryCommands.getUser();
+      // Set current directory.
       executeCommand(process, currentDir, true, undefined, (command) => {
         console.log(`currentDirectory: ${command.stdoutResponse}`);
         getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
           (dir) => {
             console.log(`set currentDirectory: ${dir}`);
             process.currentDirectory = dir;
+            // Set user.
+            executeCommand(process, getUser, true, undefined, (command) => {
+              console.log(`User: ${command.stdoutResponse}`);
+              getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
+                (user) => {
+                  console.log(`set User: ${user}`);
+                  process.user = user;
+                }
+              );
+            });
           }
         );
-        executeCommand(process, getUser, true, undefined, (command) => {
-          console.log(`User: ${command.stdoutResponse}`);
-          getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
-            (user) => {
-              console.log(`set User: ${user}`);
-              process.user = user;
-            }
-          );
-        });
       });
     }
   };

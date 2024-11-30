@@ -39,7 +39,7 @@ const colorSection = (color: string) => {
   return {
     borderLeft: `4px solid ${color}`,
     paddingLeft: 1,
-    borderBottom: `2px solid ${color}`,
+    // borderBottom: `2px solid ${color}`, // Put bottom line to command?
     paddingBottom: `2px`,
   };
 };

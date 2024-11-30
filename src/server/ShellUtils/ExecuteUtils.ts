@@ -23,13 +23,12 @@ import { AnsiUp } from "@/datatypes/ansiUpCustom";
 const Cols = 512;
 const Rows = 64;
 
-const xterm = new Terminal({
-  allowProposedApi: true,
-});
-const serializeAddon = new SerializeAddon();
-xterm.loadAddon(serializeAddon);
-
 function stripAnsiInTerminal(text: string) {
+  const xterm = new Terminal({
+    allowProposedApi: true,
+  });
+  const serializeAddon = new SerializeAddon();
+  xterm.loadAddon(serializeAddon);
   xterm.clear();
   xterm.reset();
   xterm.resize(Cols, Rows);
@@ -90,20 +89,22 @@ export async function commandToHtml(process: Process, command: Command) {
 }
 
 // Convert ANSI to plain text and remove the command itself if included.
-// The caller must remove end boundaryDetector themselves.
+// The caller must remove end boundaryDetector by themselves.
 export async function getStdoutOutputPartInPlain(
   command: Command,
   includesCommandItSelf: boolean
 ) {
   const result = (await stripAnsiInTerminal(command.stdoutResponse)).trim();
   console.log(
-    `getStdoutOutputPartInPlain: ${result}, includesCommandItSelf: ${includesCommandItSelf} exactCommand: ${command.exactCommand}`
+    `getStdoutOutputPartInPlain: pid=${command.pid} result=${result}, includesCommandItSelf=${includesCommandItSelf} exactCommand=${command.exactCommand}`
   );
   if (!includesCommandItSelf) {
     return result;
   }
   const commandIndex = result.indexOf(command.exactCommand);
-  console.log(`getStdoutOutputPartInPlain: commandIndex: ${commandIndex}`);
+  console.log(
+    `getStdoutOutputPartInPlain: commandIndex: ${commandIndex} (-1 but OK)`
+  );
   if (commandIndex === -1) {
     return result;
   }
@@ -184,7 +185,7 @@ export async function receiveCommandResponse(
   onEnd?: (command: Command) => void
 ) {
   const current = process.currentCommand;
-  if (isSilent) {
+  if (isSilent && process.config.interact === "terminal") {
     onEnd = await withCanonicalTerminalSizeTemporarily(process, onEnd);
   }
   // stdout handling.

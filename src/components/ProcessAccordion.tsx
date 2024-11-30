@@ -4,7 +4,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
 import DomPurify from "dompurify";
 
-import { useTheme } from "@/AppState";
+import { useKeybindOfCommand, useTheme } from "@/AppState";
 import { api } from "@/api";
 import { Command } from "@/datatypes/Command";
 
@@ -25,6 +25,8 @@ import Xterm from "./ProcessAccordion/Xterm";
 import { usePid } from "@/SessionStates";
 import { CommandID, ProcessID } from "@/datatypes/Command";
 import { UseTRPCQueryOptions } from "@trpc/react-query/shared";
+
+import { useHotkeys } from "react-hotkeys-hook";
 
 const queryOption = {
   refetchInterval: 500,
@@ -125,12 +127,12 @@ function ResponseSelector(props: { cid: CommandID }) {
   //   console.log(`finished mode`);
   //   return <FinishedCommandResponse cid={cid} />;
   // } else {
-    if (interactMode.data == "terminal") {
-      //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
-      return <XtermCustom pid={pid} cid={cid} />;
-    } else {
-      return <FinishedCommandResponse cid={cid} />;
-    }
+  if (interactMode.data == "terminal") {
+    //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
+    return <XtermCustom pid={pid} cid={cid} />;
+  } else {
+    return <FinishedCommandResponse cid={cid} />;
+  }
   // }
 }
 
@@ -226,6 +228,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     }
   };
   // Focus control.
+  const boundaryRef = useRef<HTMLDivElement>(null);
   const handleGFM = GlobalFocusMap.useHandle();
   const isFinished = api.shell.isFinished.useQuery(
     {
@@ -247,6 +250,19 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   }, [handleGFM, props.isLast, isFinished.data]);
   const focalPoint = useRef<HTMLDivElement>(null);
 
+  // Keybindings
+  useKeybindOfCommand("ExpandToggle", () => {
+    console.log(`ExpandToggle: ${pid}-${cid}`);
+    if (boundaryRef.current?.contains(document.activeElement)) {
+      setExpanded(!expanded);
+      boundaryRef.current?.focus();
+    }
+  });
+  useKeybindOfCommand("ExpandToggleAll", () => {
+    console.log(`ExpandToggleAll: ${pid}-${cid}`);
+    setExpanded(!expanded);
+  });
+
   //TODO: console.log(`command: ${command.command}, id: ${props.listIndex}`);
   //TODO: console.log(`stderr: ${command.stderr}`);
   console.log(`ProcessAccordion: ${pid}-${cid}`);
@@ -259,7 +275,10 @@ function ProcessAccordion(props: ProcessAccordionProps) {
         console.log(stack);
       }}
     >
-      <FocusBoundary defaultBorderColor={theme.terminal.backgroundColor}>
+      <FocusBoundary
+        defaultBorderColor={theme.terminal.backgroundColor}
+        boundaryRef={boundaryRef}
+      >
         <ProcessKeyHandle cid={cid}>
           <EasyFocus.Land
             focusTarget={focalPoint}

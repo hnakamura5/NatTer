@@ -18,11 +18,13 @@ const FocusBoundaryStyle = styled(Box)(({ theme }) => ({
 export default function FocusBoundary(props: {
   children: React.ReactNode;
   defaultBorderColor: string;
+  boundaryRef?: React.RefObject<HTMLDivElement>;
 }) {
   const { children, defaultBorderColor, ...others } = props;
 
   return (
     <FocusBoundaryStyle
+      ref={props.boundaryRef}
       tabIndex={0}
       className="FocusBoundary"
       // To avoid re-rendering, we put it into sx prop, not in styled.
