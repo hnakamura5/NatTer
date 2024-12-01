@@ -8,7 +8,6 @@ import {
   Input as MuiInput,
   Icon,
 } from "@mui/material";
-import { PlayArrow, PlayCircle, Stop, Pause } from "@mui/icons-material";
 import styled from "@emotion/styled";
 import { useTheme } from "@/AppState";
 
@@ -24,113 +23,10 @@ import { logger } from "@/datatypes/Logger";
 import { InputText, usePid } from "@/SessionStates";
 import { useAtom } from "jotai";
 
-function Input(props: {
-  theme: Theme;
-  key: string;
-  submit: (command: string) => void;
-  inputBoxRef: React.RefObject<HTMLInputElement>;
-}) {
-  const theme = props.theme;
-  // const [text, setText] = useState<string>("");
-  const [text, setText] = useAtom(InputText);
+import { ControlButtons } from "@/components/InputBox/ControlButtons";
+import { Input } from "@/components/InputBox/TextInput";
 
-  // TODO: Input must be on top level of the component to avoid the focus problem.
-  // That is, we lose the focus when the component re-rendered (e.g.on input change).
-  // Even styled component causes this problem.
-  console.log("Input rendered");
 
-  return (
-    <MuiInputBase
-      inputRef={props.inputBoxRef}
-      style={{
-        width: `calc(100% - ${theme.system.hoverMenuWidth})`,
-        backgroundColor: theme.terminal.secondaryBackgroundColor,
-        color: theme.terminal.textColor,
-        fontFamily: theme.terminal.font,
-        fontSize: theme.terminal.fontSize,
-        marginLeft: "0px",
-        paddingLeft: "10px",
-      }}
-      defaultValue={text}
-      // autoFocus={true} // TODO: problem
-      onChange={(e) => {
-        setText(e.target.value);
-      }}
-      onKeyDown={(e) => {
-        if (e.ctrlKey && e.key === "Enter") {
-          if (e.altKey) {
-            // Run background
-            props.submit(text);
-            setText("");
-          } else {
-            // Run
-            props.submit(text);
-            setText("");
-          }
-        }
-      }}
-    />
-  );
-}
-
-function Button(props: {
-  icon: React.ReactNode;
-  color: string;
-  tooltip: string;
-  onClick: () => void;
-}) {
-  const theme = useTheme();
-  const iconWidth = "20px";
-  const IconButton = styled(MuiIconButton)({
-    color: theme.terminal.textColor,
-    backgroundColor: theme.terminal.backgroundColor,
-    width: iconWidth,
-    padding: "0px",
-    scale: 0.6,
-  });
-  return (
-    <Tooltip title={props.tooltip}>
-      <IconButton onClick={props.onClick}>
-        <span
-          style={{
-            color: props.color,
-          }}
-        >
-          {props.icon}
-        </span>
-      </IconButton>
-    </Tooltip>
-  );
-}
-
-function ControlButtons(props: { submit: (command: string) => void }) {
-  const theme = useTheme();
-  const IconBox = styled(Box)({
-    width: `calc(${theme.system.hoverMenuWidth} - 5px)`,
-  });
-  const [text, setText] = useAtom(InputText);
-  const run = useCallback(() => {
-    props.submit(text);
-    setText("");
-  }, [text, setText, props]);
-
-  return (
-    <IconBox>
-      <Button
-        icon={<PlayArrow />}
-        color={theme.terminal.runButtonColor}
-        tooltip="Run Command (Ctrl+Enter)"
-        onClick={run}
-      />
-      <Button
-        icon={<PlayCircle />}
-        color={theme.terminal.runBackgroundButtonColor}
-        tooltip="Run Command Background (Ctrl+Alt+Enter)"
-        onClick={run}
-      />
-    </IconBox>
-  );
-}
 
 interface InputBoxProps {}
 
@@ -184,7 +80,6 @@ function InputBox(props: InputBoxProps) {
               <Paper>
                 <ControlButtons submit={submit} />
                 <Input
-                  theme={theme}
                   key={`input-${pid}`}
                   inputBoxRef={inputBoxRef}
                   submit={submit}

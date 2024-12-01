@@ -3,9 +3,8 @@ import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
 import { KeybindCommands } from "@/datatypes/KeybindCommands";
 import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
 import { useKeybindList } from "@/AppState";
-import { keyOfCommand } from "@/datatypes/KeyBind";
 
-export type KeybindOfCommandScopeRef =
+type KeybindOfCommandScopeRef =
   MutableRefObject<RefCallback<HTMLElement> | null>;
 
 export function useKeybindOfCommandScopeRef(): KeybindOfCommandScopeRef {
@@ -24,12 +23,16 @@ export function useKeybindOfCommand(
   const keys = useKeybindList().get(command);
   const keyList = keys?.map((key) => key.key).join(", ") || [];
   for (const k of keys || []) {
-    console.log(`useKeybindOfCommand: name:${command} key: ${k.key} command: ${k.command}`);
+    console.log(
+      `useKeybindOfCommand: name:${command} key: ${k.key} command: ${k.command}`
+    );
   }
   // TODO: how to support args?
   const ref = useHotkeys(keyList || "", callback, {
     enabled: keys !== undefined,
     preventDefault: true,
+    enableOnContentEditable: true,
+    enableOnFormTags: true,
     ...options,
   });
   if (keybindRef !== undefined) {
@@ -52,7 +55,14 @@ export function KeybindScope(props: {
   const current = props.keybindRef.current;
   if (current !== null) {
     return (
-      <div ref={current} tabIndex={-1}>
+      <div
+        ref={current}
+        tabIndex={-1}
+        style={{ display: "contents" }}
+        onKeyDown={(e) => {
+          console.log(`KeybindScope: key: ${e.key}`);
+        }}
+      >
         {props.children}
       </div>
     );
