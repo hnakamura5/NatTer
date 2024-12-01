@@ -33,3 +33,16 @@ export function keyOfCommand(
 ): Keybind | undefined {
   return keybinds.find((keybind) => keybind.command === commandName);
 }
+
+export type KeybindListMap = Map<KeybindCommands, Keybind[]>;
+
+export function keybindListMap(keybinds: KeybindList): KeybindListMap {
+  const map = new Map<KeybindCommands, Keybind[]>();
+  keybinds.forEach((keybind) => {
+    if (!map.has(keybind.command)) {
+      map.set(keybind.command, []);
+    }
+    map.get(keybind.command)?.push(keybind);
+  });
+  return map;
+}

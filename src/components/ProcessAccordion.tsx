@@ -4,13 +4,18 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
 import DomPurify from "dompurify";
 
-import { useKeybindOfCommand, useTheme } from "@/AppState";
+import { useTheme } from "@/AppState";
 import { api } from "@/api";
 import { Command } from "@/datatypes/Command";
 
 import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "./FocusBoundary";
 import { EasyFocus } from "@/components/EasyFocus";
+import {
+  useKeybindOfCommand,
+  useKeybindOfCommandScopeRef,
+  KeybindScope,
+} from "@/components/KeybindScope";
 
 import styled from "@emotion/styled";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
@@ -19,8 +24,8 @@ import {
   CommandResponse,
   FinishedCommandResponse as FinishedCommandResponseServer,
 } from "@/components/ProcessAccordion/CommandResponse";
-import { CommandSummary } from "./ProcessAccordion/CommandSummary";
-import XtermCustom from "./ProcessAccordion/XtermCustom";
+import { CommandSummary } from "@/components/ProcessAccordion/CommandSummary";
+import XtermCustom from "@/components/ProcessAccordion/XtermCustom";
 import Xterm from "./ProcessAccordion/Xterm";
 import { usePid } from "@/SessionStates";
 import { CommandID, ProcessID } from "@/datatypes/Command";
@@ -198,6 +203,10 @@ function ProcessKeyHandle(props: {
   );
 }
 
+function IDString(pid: ProcessID, cid: CommandID) {
+  return `ProcessAccordion-${pid}-${cid}`;
+}
+
 interface ProcessAccordionProps {
   cid: CommandID;
   isLast?: boolean;
@@ -206,6 +215,7 @@ interface ProcessAccordionProps {
 function ProcessAccordion(props: ProcessAccordionProps) {
   const pid = usePid();
   const cid = props.cid;
+  const idStr = IDString(pid, cid);
   const theme = useTheme();
 
   // Scroll control.
@@ -230,6 +240,13 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   // Focus control.
   const boundaryRef = useRef<HTMLDivElement>(null);
   const handleGFM = GlobalFocusMap.useHandle();
+  // Register boundaryRef to GFM
+  useEffect(() => {
+    handleGFM.set(idStr, boundaryRef);
+    return () => {
+      handleGFM.delete(idStr);
+    };
+  }, [handleGFM, idStr]);
   const isFinished = api.shell.isFinished.useQuery(
     {
       pid: pid,
@@ -242,75 +259,95 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     if (
       props.isLast &&
       isFinished.data &&
-      handleGFM.isFocused(GlobalFocusMap.Key.LastCommand)
+      handleGFM.isFocused(GlobalFocusMap.GlobalKey.LastCommand)
     ) {
-      handleGFM.focus(GlobalFocusMap.Key.InputBox);
+      handleGFM.focus(GlobalFocusMap.GlobalKey.InputBox);
       bottom.current?.scrollIntoView({ behavior: "auto" });
     }
   }, [handleGFM, props.isLast, isFinished.data]);
   const focalPoint = useRef<HTMLDivElement>(null);
 
-  // Keybindings
-  useKeybindOfCommand("ExpandToggle", () => {
-    console.log(`ExpandToggle: ${pid}-${cid}`);
-    if (boundaryRef.current?.contains(document.activeElement)) {
-      setExpanded(!expanded);
-      boundaryRef.current?.focus();
-    }
-  });
-  useKeybindOfCommand("ExpandToggleAll", () => {
-    console.log(`ExpandToggleAll: ${pid}-${cid}`);
+  // Keybind definitions.
+  // Global keybinds
+  useKeybindOfCommand("ExpandToggleCommandAll", () => {
+    console.log(`ExpandToggleCommandAll: ${pid}-${cid}`);
     setExpanded(!expanded);
   });
+  // Scoped keybinds
+  const keybindRef = useKeybindOfCommandScopeRef();
+  useKeybindOfCommand(
+    "ExpandToggleCommand",
+    () => {
+      console.log(`ExpandToggleCommand: ${pid}-${cid}`);
+      setExpanded(!expanded);
+      boundaryRef.current?.focus();
+    },
+    keybindRef
+  );
+  useKeybindOfCommand(
+    "FocusCommandUp",
+    () => {
+      console.log(`FocusCommandUp: ${pid}-${cid}`);
+      handleGFM.focus(IDString(pid, cid - 1));
+    },
+    keybindRef
+  );
+  useKeybindOfCommand(
+    "FocusCommandDown",
+    () => {
+      console.log(`FocusCommandDown: ${pid}-${cid}`);
+      handleGFM.focus(IDString(pid, cid + 1));
+    },
+    keybindRef
+  );
 
   //TODO: console.log(`command: ${command.command}, id: ${props.listIndex}`);
   //TODO: console.log(`stderr: ${command.stderr}`);
-  console.log(`ProcessAccordion: ${pid}-${cid}`);
+  console.log(idStr);
 
   return (
     <ErrorBoundary
       fallbackRender={ProcessAccordionError}
       onError={(error, stack) => {
-        logger.logTrace(`ProcessAccordion error: ${error}`);
+        logger.logTrace(`${idStr} error: ${error}`);
         console.log(stack);
       }}
     >
-      <FocusBoundary
-        defaultBorderColor={theme.terminal.backgroundColor}
-        boundaryRef={boundaryRef}
-      >
-        <ProcessKeyHandle cid={cid}>
-          <EasyFocus.Land
-            focusTarget={focalPoint}
-            onBeforeFocus={() => setExpanded(true)}
-            key={`ProcessAccordion-${pid}-${cid}`}
-          >
-            <GlobalFocusMap.Target
-              focusKey={GlobalFocusMap.Key.LastCommand}
-              target={props.isLast ? focalPoint : undefined}
+      <KeybindScope keybindRef={keybindRef}>
+        <FocusBoundary
+          defaultBorderColor={theme.terminal.backgroundColor}
+          boundaryRef={boundaryRef}
+        >
+          <ProcessKeyHandle cid={cid}>
+            <EasyFocus.Land
+              focusTarget={focalPoint}
+              onBeforeFocus={() => setExpanded(true)}
+              key={idStr}
             >
-              <div ref={top} id={`ProcessAccordion-top-${pid}-${cid}`} />
-              <Accordion
-                expanded={expanded}
-                onChange={handleChange}
-                sx={{
-                  margin: "0px !important", //TODO: better way?
-                }}
-                slotProps={{
-                  transition: { timeout: 300 },
-                }}
+              <GlobalFocusMap.Target
+                focusKey={GlobalFocusMap.GlobalKey.LastCommand}
+                target={props.isLast ? focalPoint : undefined}
               >
-                <ProcessAccordionSummary cid={cid} />
-                <ProcessAccordionDetail cid={cid} focalPoint={focalPoint} />
-              </Accordion>
-              <div
-                ref={bottom}
-                id={`ProcessAccordion-bottom-${pid}-${props.cid}`}
-              />
-            </GlobalFocusMap.Target>
-          </EasyFocus.Land>
-        </ProcessKeyHandle>
-      </FocusBoundary>
+                <div ref={top} id={`${idStr}-top`} />
+                <Accordion
+                  expanded={expanded}
+                  onChange={handleChange}
+                  sx={{
+                    margin: "0px !important", //TODO: better way?
+                  }}
+                  slotProps={{
+                    transition: { timeout: 300 },
+                  }}
+                >
+                  <ProcessAccordionSummary cid={cid} />
+                  <ProcessAccordionDetail cid={cid} focalPoint={focalPoint} />
+                </Accordion>
+                <div ref={bottom} id={`${idStr}-bottom`} />
+              </GlobalFocusMap.Target>
+            </EasyFocus.Land>
+          </ProcessKeyHandle>
+        </FocusBoundary>
+      </KeybindScope>
     </ErrorBoundary>
   );
 }

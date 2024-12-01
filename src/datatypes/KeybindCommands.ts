@@ -1,8 +1,17 @@
 import { z } from "zod";
 
 export const KeybindCommandsSchema = z.enum([
-  "ExpandToggle",
-  "ExpandToggleAll",
+  "CommandCopyToClipboard",
+  "CommandHistoryUp",
+  "CommandHistoryDown",
+  "ExpandToggleCommand",
+  "ExpandToggleCommandAll",
+  "FocusCommandUp",
+  "FocusCommandDown",
+  "FocusInput",
+  "FocusFileExplorer",
+  "SearchCommands",
+  "SearchInCommand",
   "SendKill",
 ]);
 export type KeybindCommands = z.infer<typeof KeybindCommandsSchema>;

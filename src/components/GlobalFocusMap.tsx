@@ -38,10 +38,11 @@ const MapContext = React.createContext(new GlobalFocusMapHandle());
 
 export module GlobalFocusMap {
   // Define keys for managed focus targets.
-  export enum Key {
+  export enum GlobalKey {
     InputBox,
     LastCommand,
   }
+  export type Key = GlobalKey | string;
 
   export function useHandle() {
     return React.useContext(MapContext);

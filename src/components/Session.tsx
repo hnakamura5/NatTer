@@ -2,7 +2,7 @@ import { api } from "@/api";
 import ProcessAccordion from "@/components/ProcessAccordion";
 import { Box } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, RefObject } from "react";
 import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
@@ -21,7 +21,7 @@ function Session(props: SessionProps) {
   useEffect(() => {
     // Switch focus to the last command.
     // ProcessAccordion will switch focus to the input box if it is the last command.
-    handleGFM.focus(GFM.Key.LastCommand);
+    handleGFM.focus(GFM.GlobalKey.LastCommand);
   }, [handleGFM, length]);
 
   // Fetching commands.

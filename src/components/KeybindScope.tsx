@@ -1,0 +1,62 @@
+import { RefCallback, MutableRefObject } from "react";
+import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
+import { KeybindCommands } from "@/datatypes/KeybindCommands";
+import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
+import { useKeybindList } from "@/AppState";
+import { keyOfCommand } from "@/datatypes/KeyBind";
+
+export type KeybindOfCommandScopeRef =
+  MutableRefObject<RefCallback<HTMLElement> | null>;
+
+export function useKeybindOfCommandScopeRef(): KeybindOfCommandScopeRef {
+  return { current: null };
+}
+
+// Bind predefined key command to hotkey.
+// Use KeybindOfCommandScopeRef to chain the commands and bind to handle for scoping.
+// In default. prevent default bubbling.
+export function useKeybindOfCommand(
+  command: KeybindCommands,
+  callback: HotkeyCallback,
+  keybindRef?: KeybindOfCommandScopeRef,
+  options?: OptionsOrDependencyArray
+) {
+  const keys = useKeybindList().get(command);
+  const keyList = keys?.map((key) => key.key).join(", ") || [];
+  for (const k of keys || []) {
+    console.log(`useKeybindOfCommand: name:${command} key: ${k.key} command: ${k.command}`);
+  }
+  // TODO: how to support args?
+  const ref = useHotkeys(keyList || "", callback, {
+    enabled: keys !== undefined,
+    preventDefault: true,
+    ...options,
+  });
+  if (keybindRef !== undefined) {
+    const current = keybindRef.current;
+    if (current !== null) {
+      keybindRef.current = (instance: HTMLElement | null) => {
+        current(instance);
+        ref(instance);
+      };
+    } else {
+      keybindRef.current = ref;
+    }
+  }
+}
+
+export function KeybindScope(props: {
+  keybindRef: KeybindOfCommandScopeRef;
+  children: React.ReactNode;
+}) {
+  const current = props.keybindRef.current;
+  if (current !== null) {
+    return (
+      <div ref={current} tabIndex={-1}>
+        {props.children}
+      </div>
+    );
+  } else {
+    return <>{props.children}</>;
+  }
+}

@@ -178,7 +178,7 @@ function InputBox(props: InputBoxProps) {
         <FocusBoundary defaultBorderColor={theme.terminal.backgroundColor}>
           <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox-${pid}`}>
             <GlobalFocusMap.Target
-              focusKey={GlobalFocusMap.Key.InputBox}
+              focusKey={GlobalFocusMap.GlobalKey.InputBox}
               target={inputBoxRef}
             >
               <Paper>

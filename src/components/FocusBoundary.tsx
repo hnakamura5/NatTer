@@ -18,7 +18,7 @@ const FocusBoundaryStyle = styled(Box)(({ theme }) => ({
 export default function FocusBoundary(props: {
   children: React.ReactNode;
   defaultBorderColor: string;
-  boundaryRef?: React.RefObject<HTMLDivElement>;
+  boundaryRef?: React.Ref<HTMLElement>;
 }) {
   const { children, defaultBorderColor, ...others } = props;
 

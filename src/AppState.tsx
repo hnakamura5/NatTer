@@ -1,16 +1,23 @@
 import { api } from "@/api";
 import { Config } from "@/datatypes/Config";
 import { Theme, DefaultDarkTheme } from "@/datatypes/Theme";
-import { useState, useContext, createContext } from "react";
+import {
+  useState,
+  useContext,
+  createContext,
+  RefCallback,
+  RefObject,
+  MutableRefObject,
+} from "react";
 import {
   ThemeProvider as EmotionThemeProvider,
   useTheme as emotionUseTheme,
 } from "@emotion/react";
 import { createTheme } from "@mui/material";
-import { KeybindList, keyOfCommand } from "@/datatypes/KeyBind";
+import { KeybindListMap, keyOfCommand, keybindListMap } from "@/datatypes/KeyBind";
 import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
 import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
-import { KeybindCommands } from "./datatypes/KeybindCommands";
+import { KeybindCommands } from "@/datatypes/KeybindCommands";
 
 const ConfigContext = createContext<Config | undefined>(undefined);
 
@@ -73,45 +80,29 @@ export function useTheme() {
   return emotionUseTheme();
 }
 
-const KeybindContext = createContext<KeybindList | undefined>(undefined);
+const KeybindContext = createContext<KeybindListMap | undefined>(undefined);
 
-function useKeybinds() {
+export function useKeybindList() {
   const keybind = useContext(KeybindContext);
   if (keybind === undefined) {
-    throw new Error("useKeybind must be used within a KeybindProvider");
+    throw new Error("useKeybind must be used within a KeybindListProvider");
   }
   return keybind;
 }
 
-export function useKeybindOfCommand(
-  command: KeybindCommands,
-  callback: HotkeyCallback,
-  options?: OptionsOrDependencyArray
-) {
-  const keybinds = useKeybinds();
-  const key = keyOfCommand(keybinds, command);
-  // TODO: if options has enabled?
-  console.log(
-    `useKeybindOfCommand: name:${command}  key: ${key?.key} command:${key?.command}`
-  );
-  useHotkeys(key?.key || "", callback, {
-    enabled: key !== undefined,
-    ...options,
-  });
-}
-
-export function KeybindProvider(props: { children: React.ReactNode }) {
+function KeybindListProvider(props: { children: React.ReactNode }) {
   const keybind = api.config.readKeybind.useQuery(undefined, {
     onError: (error) => {
       console.error("Failed to load keybind: ", error);
     },
   });
-  console.log("KeybindProvider: ", keybind.data);
+  console.log("KeybindListProvider: ", keybind.data);
   if (!keybind.data) {
     return <div>Failed to load keybind</div>;
   }
+  const map = keybindListMap(keybind.data);
   return (
-    <KeybindContext.Provider value={keybind.data}>
+    <KeybindContext.Provider value={map}>
       {props.children}
     </KeybindContext.Provider>
   );
@@ -120,9 +111,9 @@ export function KeybindProvider(props: { children: React.ReactNode }) {
 export function AppStateProvider(props: { children: React.ReactNode }) {
   return (
     <ConfigProvider>
-      <KeybindProvider>
+      <KeybindListProvider>
         <ThemeProvider>{props.children}</ThemeProvider>
-      </KeybindProvider>
+      </KeybindListProvider>
     </ConfigProvider>
   );
 }
