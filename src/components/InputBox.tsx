@@ -25,8 +25,10 @@ import { useAtom } from "jotai";
 
 import { ControlButtons } from "@/components/InputBox/ControlButtons";
 import { Input } from "@/components/InputBox/TextInput";
-
-
+import {
+  useKeybindOfCommand,
+  useKeybindOfCommandScopeRef,
+} from "./KeybindScope";
 
 interface InputBoxProps {}
 
@@ -66,6 +68,27 @@ function InputBox(props: InputBoxProps) {
     [pid, execute]
   );
 
+  const handleGFM = GlobalFocusMap.useHandle();
+
+  // Keybinds
+  const keybindRef = useKeybindOfCommandScopeRef();
+  useKeybindOfCommand(
+    "FocusCommandUp",
+    () => {
+      console.log(`FocusCommandUp from Input`);
+      handleGFM.focus(GlobalFocusMap.GlobalKey.LastCommand);
+    },
+    keybindRef
+  );
+  useKeybindOfCommand(
+    "FocusFileView",
+    () => {
+      console.log(`FocusFileView from Input`);
+      handleGFM.focus(GlobalFocusMap.GlobalKey.FileView);
+    },
+    keybindRef
+  );
+
   console.log("InputBox rendered");
 
   return (
@@ -75,7 +98,7 @@ function InputBox(props: InputBoxProps) {
           <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox-${pid}`}>
             <GlobalFocusMap.Target
               focusKey={GlobalFocusMap.GlobalKey.InputBox}
-              target={inputBoxRef}
+              focusRef={inputBoxRef}
             >
               <Paper>
                 <ControlButtons submit={submit} />

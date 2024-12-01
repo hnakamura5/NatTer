@@ -18,15 +18,17 @@ import styled from "@emotion/styled";
 import { useTheme } from "@/AppState";
 
 import { Popper, PopperPlacementType } from "@mui/material";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 
 import { api } from "@/api";
 import { FileTree } from "@/components/HoverMenus/FileTree";
 import { usePid } from "@/SessionStates";
 import FocusBoundary from "@/components/FocusBoundary";
 import { UnderConstruction } from "@/components/UnderConstruction";
+import { GlobalFocusMap } from "./GlobalFocusMap";
+import { set } from "zod";
 
-function FileTreeWrapper() {
+function FileTreeWrapper(props: { focusRef: React.RefObject<HTMLElement> }) {
   const theme = useTheme();
   const pid = usePid();
   const currentDir = api.shell.current.useQuery(pid, {
@@ -40,7 +42,7 @@ function FileTreeWrapper() {
   }
   return (
     <FocusBoundary defaultBorderColor={theme.system.backgroundColor}>
-      <FileTree home={currentDir.data.directory} />
+      <FileTree home={currentDir.data.directory} focusRef={props.focusRef} />
     </FocusBoundary>
   );
 }
@@ -85,6 +87,8 @@ function HoverMenuItem(props: {
   icon: IconType;
   color: string;
   popup: React.ReactNode;
+  focusKey?: GlobalFocusMap.Key;
+  focusRef?: React.RefObject<HTMLElement>;
 }) {
   const theme = useTheme();
   const iconSize = theme.system.hoverMenuIconSize;
@@ -98,38 +102,64 @@ function HoverMenuItem(props: {
     setOpen((currentOpen) => !currentOpen);
   }, []);
 
+  useEffect(() => {
+    setAnchorEl(anchorRef.current);
+  }, [anchorRef]);
+
   return (
-    <ClickAwayListener
-      onClickAway={() => {
-        setOpen(false);
+    <GlobalFocusMap.Target
+      focusKey={props.focusKey}
+      focusRef={props.focusRef}
+      callBeforeFocus={() => {
+        if (!open) {
+          setOpen(true);
+        }
+        // TODO: Any better way to wait for the popup to be opened?
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(false);
+          }, 100);
+        });
       }}
     >
-      <div>
-        <Popper open={open} anchorEl={anchorEl} placement="right-start">
-          {props.popup}
-        </Popper>
-        <Item handleClick={handleClick} anchorRef={anchorRef}>
-          <props.icon sx={{ color: theme.system.defaultIconColor, fontSize: iconSize }} />
-        </Item>
-      </div>
-    </ClickAwayListener>
+      <ClickAwayListener
+        onClickAway={() => {
+          setOpen(false);
+        }}
+      >
+        <div>
+          <Popper open={open} anchorEl={anchorEl} placement="right-start">
+            {props.popup}
+          </Popper>
+          <Item handleClick={handleClick} anchorRef={anchorRef}>
+            <props.icon
+              sx={{ color: theme.system.defaultIconColor, fontSize: iconSize }}
+            />
+          </Item>
+        </div>
+      </ClickAwayListener>
+    </GlobalFocusMap.Target>
   );
 }
+const VerticalList = styled(List)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  marginLeft: "-5px",
+  backgroundColor: theme.system.secondaryBackgroundColor,
+}));
 
 function HoverMenusBar(props: HoverMenusBarProps) {
   const theme = useTheme();
-  const VerticalList = styled(List)({
-    display: "flex",
-    flexDirection: "column",
-    marginLeft: "-5px",
-    backgroundColor: theme.system.secondaryBackgroundColor,
-  });
+  const fileTreeRef = React.useRef<HTMLElement>(null);
+
   return (
     <VerticalList>
       <HoverMenuItem
         icon={FolderIcon}
         color={theme.terminal.directoryColor}
-        popup={<FileTreeWrapper />}
+        popup={<FileTreeWrapper focusRef={fileTreeRef} />}
+        focusKey={GlobalFocusMap.GlobalKey.FileView}
+        focusRef={fileTreeRef}
       />
       <HoverMenuItem
         icon={BookmarksIcon}

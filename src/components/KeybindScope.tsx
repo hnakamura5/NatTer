@@ -49,11 +49,13 @@ export function useKeybindOfCommand(
 }
 
 export function KeybindScope(props: {
-  keybindRef: KeybindOfCommandScopeRef;
+  keybindRef?: KeybindOfCommandScopeRef;
   children: React.ReactNode;
 }) {
-  const current = props.keybindRef.current;
-  if (current !== null) {
+  const current = props.keybindRef?.current;
+  if (!current) {
+    return <>{props.children}</>;
+  } else {
     return (
       <div
         ref={current}
@@ -66,7 +68,5 @@ export function KeybindScope(props: {
         {props.children}
       </div>
     );
-  } else {
-    return <>{props.children}</>;
   }
 }

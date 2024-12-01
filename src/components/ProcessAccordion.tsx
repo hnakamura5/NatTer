@@ -296,7 +296,11 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     "FocusCommandDown",
     () => {
       console.log(`FocusCommandDown: ${pid}-${cid}`);
-      handleGFM.focus(IDString(pid, cid + 1));
+      if (props.isLast) {
+        handleGFM.focus(GlobalFocusMap.GlobalKey.InputBox);
+      } else {
+        handleGFM.focus(IDString(pid, cid + 1));
+      }
     },
     keybindRef
   );
@@ -326,7 +330,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
             >
               <GlobalFocusMap.Target
                 focusKey={GlobalFocusMap.GlobalKey.LastCommand}
-                target={props.isLast ? focalPoint : undefined}
+                focusRef={props.isLast ? focalPoint : undefined}
               >
                 <div ref={top} id={`${idStr}-top`} />
                 <Accordion

@@ -13,6 +13,9 @@ import { useTheme } from "@/AppState";
 import { logger } from "@/datatypes/Logger";
 import { FaFolder as FolderIcon, FaFile as FileIcon } from "react-icons/fa";
 
+import React from "react";
+import { KeybindScope } from "../KeybindScope";
+
 function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <span style={{ verticalAlign: "-2px", fontSize: "0.8em", ...props.style }}>
@@ -110,7 +113,6 @@ function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
     },
   });
 
-
   if (!stat.data) {
     return (
       <TreeItem
@@ -151,6 +153,7 @@ function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
 
 export type FileTreeProps = {
   home: string;
+  focusRef?: React.Ref<unknown>;
 };
 
 export function FileTree(props: FileTreeProps) {
@@ -163,8 +166,12 @@ export function FileTree(props: FileTreeProps) {
   // logger.logTrace(`FileTree: current=${current}`);
 
   return (
-    <TreeView>
-      <FileTreeItem path={current} key={current} showTop={false} />
-    </TreeView>
+    <KeybindScope>
+      <div ref={props.focusRef} tabIndex={-1}>
+        <TreeView>
+          <FileTreeItem path={current} key={current} showTop={false} />
+        </TreeView>
+      </div>
+    </KeybindScope>
   );
 }

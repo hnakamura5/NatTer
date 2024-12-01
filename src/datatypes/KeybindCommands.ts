@@ -9,7 +9,7 @@ export const KeybindCommandsSchema = z.enum([
   "FocusCommandUp",
   "FocusCommandDown",
   "FocusInput",
-  "FocusFileExplorer",
+  "FocusFileView",
   "SearchCommands",
   "SearchInCommand",
   "SendKill",
