@@ -14,7 +14,7 @@ import {
   useTheme as emotionUseTheme,
 } from "@emotion/react";
 import { createTheme } from "@mui/material";
-import { KeybindListMap, keyOfCommand, keybindListMap } from "@/datatypes/KeyBind";
+import { KeybindListMap, addFixedKeybinds, keyOfCommand, keybindListMap } from "@/datatypes/KeyBind";
 import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
 import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
 import { KeybindCommands } from "@/datatypes/KeybindCommands";
@@ -86,7 +86,7 @@ function KeybindListProvider(props: { children: React.ReactNode }) {
   if (!keybind.data) {
     return <div>Failed to load keybind</div>;
   }
-  const map = keybindListMap(keybind.data);
+  const map = keybindListMap(addFixedKeybinds(keybind.data));
   return (
     <KeybindContext.Provider value={map}>
       {props.children}

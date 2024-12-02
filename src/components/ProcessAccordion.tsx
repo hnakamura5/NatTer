@@ -15,6 +15,7 @@ import {
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
   KeybindScope,
+  useFixedKeybindsBlocker,
 } from "@/components/KeybindScope";
 
 import styled from "@emotion/styled";
@@ -32,6 +33,7 @@ import { CommandID, ProcessID } from "@/datatypes/Command";
 import { UseTRPCQueryOptions } from "@trpc/react-query/shared";
 
 import { useHotkeys } from "react-hotkeys-hook";
+import { isFixedKeybindKey } from "@/datatypes/Keybind";
 
 const queryOption = {
   refetchInterval: 500,
@@ -163,7 +165,7 @@ function ProcessAccordionDetail(props: {
   );
 }
 
-function ProcessKeyHandle(props: {
+function ProcessKeySender(props: {
   cid: CommandID;
   children: React.ReactNode;
 }) {
@@ -180,11 +182,16 @@ function ProcessKeyHandle(props: {
   return (
     <div
       onKeyDown={(e) => {
-        console.log(`key: ${e.key}`);
+        console.log(`ProcessKeySender get key: ${e.key}`);
         // TODO: handle copy and so on.
         if (isFinished.data) {
           return;
         }
+        // Ignore fixed keybinds.
+        if (isFixedKeybindKey(e)) {
+          return;
+        }
+        console.log(`ProcessKeySender send key: ${e.key}`);
         sendKey.mutate(
           {
             pid: pid,
@@ -242,7 +249,9 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const handleGFM = GlobalFocusMap.useHandle();
   // Register boundaryRef to GFM
   useEffect(() => {
-    handleGFM.set(idStr, boundaryRef);
+    handleGFM.set(idStr, {
+      focusRef: boundaryRef,
+    });
     return () => {
       handleGFM.delete(idStr);
     };
@@ -317,12 +326,12 @@ function ProcessAccordion(props: ProcessAccordionProps) {
         console.log(stack);
       }}
     >
-      <KeybindScope keybindRef={keybindRef}>
-        <FocusBoundary
-          defaultBorderColor={theme.terminal.backgroundColor}
-          boundaryRef={boundaryRef}
-        >
-          <ProcessKeyHandle cid={cid}>
+      <ProcessKeySender cid={cid}>
+        <KeybindScope keybindRef={keybindRef}>
+          <FocusBoundary
+            defaultBorderColor={theme.terminal.backgroundColor}
+            boundaryRef={boundaryRef}
+          >
             <EasyFocus.Land
               focusTarget={focalPoint}
               onBeforeFocus={() => setExpanded(true)}
@@ -349,9 +358,9 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                 <div ref={bottom} id={`${idStr}-bottom`} />
               </GlobalFocusMap.Target>
             </EasyFocus.Land>
-          </ProcessKeyHandle>
-        </FocusBoundary>
-      </KeybindScope>
+          </FocusBoundary>
+        </KeybindScope>
+      </ProcessKeySender>
     </ErrorBoundary>
   );
 }

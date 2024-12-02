@@ -4,12 +4,12 @@ import { ConfigSchema, parseConfig } from "@/datatypes/Config";
 import {
   KeybindSchema,
   KeybindListSchema,
-  parseKeybindList,
-} from "@/datatypes/KeyBind";
+  parseUserKeybindList,
+  UserKeybindListSchema,
+} from "@/datatypes/Keybind";
 import fs from "node:fs/promises";
 import Electron from "electron";
 import { read, write } from "original-fs";
-import { KeybindList } from "@/datatypes/KeyBind";
 
 const proc = server.procedure;
 
@@ -44,11 +44,11 @@ export const configurationRouter = server.router({
           return false;
         });
     }),
-  readKeybind: proc.output(KeybindListSchema).query(async () => {
+  readKeybind: proc.output(UserKeybindListSchema).query(async () => {
     const keybindRead = fs.readFile(keybindFilePath, "utf-8");
     console.log("Reading keybind from: ", keybindFilePath);
     return keybindRead.then((keybind) => {
-      const parsed = parseKeybindList(keybind);
+      const parsed = parseUserKeybindList(keybind);
       if (parsed) {
         return parsed;
       }

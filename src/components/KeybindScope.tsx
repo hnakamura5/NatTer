@@ -18,7 +18,7 @@ export function useKeybindOfCommand(
   command: KeybindCommands,
   callback: HotkeyCallback,
   keybindRef?: KeybindOfCommandScopeRef,
-  options?: OptionsOrDependencyArray
+  options?: OptionsOrDependencyArray & { notStopPropagation?: boolean }
 ) {
   const keys = useKeybindList().get(command);
   const keyList = keys?.map((key) => key.key).join(", ") || [];
@@ -28,13 +28,22 @@ export function useKeybindOfCommand(
     );
   }
   // TODO: how to support args?
-  const ref = useHotkeys(keyList || "", callback, {
-    enabled: keys !== undefined,
-    preventDefault: true,
-    enableOnContentEditable: true,
-    enableOnFormTags: true,
-    ...options,
-  });
+  const ref = useHotkeys(
+    keyList || "",
+    (e, h) => {
+      callback(e, h);
+      if (!options?.notStopPropagation) {
+        e.stopPropagation();
+      }
+    },
+    {
+      enabled: keys !== undefined,
+      preventDefault: true,
+      enableOnContentEditable: true,
+      enableOnFormTags: true,
+      ...options,
+    }
+  );
   if (keybindRef !== undefined) {
     const current = keybindRef.current;
     if (current !== null) {
@@ -46,6 +55,27 @@ export function useKeybindOfCommand(
       keybindRef.current = ref;
     }
   }
+}
+
+export function useKeybindOfCommandBlocker(
+  command: KeybindCommands,
+  keybindRef?: KeybindOfCommandScopeRef
+) {
+  useKeybindOfCommand(command, () => {}, keybindRef, {
+    notStopPropagation: false, // Stop propagation. (default)
+  });
+}
+
+export function useFixedKeybindsBlocker(
+  keybindRef?: KeybindOfCommandScopeRef
+) {
+  useKeybindOfCommandBlocker("Copy", keybindRef);
+  useKeybindOfCommandBlocker("Paste", keybindRef);
+  useKeybindOfCommandBlocker("Cut", keybindRef);
+  useKeybindOfCommandBlocker("Undo", keybindRef);
+  useKeybindOfCommandBlocker("Redo", keybindRef);
+  useKeybindOfCommandBlocker("SelectAll", keybindRef);
+  useKeybindOfCommandBlocker("Save", keybindRef);
 }
 
 export function KeybindScope(props: {
