@@ -55,8 +55,6 @@ function DummyPopup() {
   );
 }
 
-interface HoverMenusBarProps {}
-
 function Item(props: {
   children: React.ReactNode;
   anchorRef: React.RefObject<HTMLDivElement>;
@@ -82,6 +80,8 @@ function Item(props: {
 }
 
 type IconType = typeof FolderIcon;
+
+interface HoverMenusBarProps {}
 
 function HoverMenuItem(props: {
   icon: IconType;
@@ -114,10 +114,13 @@ function HoverMenuItem(props: {
         if (!open) {
           setOpen(true);
         }
-        // TODO: Any better way to wait for the popup to be opened?
         return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve(false);
+          // Wait until the popup is opened, that is the focusRef is set.
+          const interval = setInterval(() => {
+            if (props.focusRef?.current) {
+              clearInterval(interval);
+              resolve(false);
+            }
           }, 100);
         });
       }}
