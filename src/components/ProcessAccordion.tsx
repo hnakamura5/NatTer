@@ -33,7 +33,10 @@ import { CommandID, ProcessID } from "@/datatypes/Command";
 import { UseTRPCQueryOptions } from "@trpc/react-query/shared";
 
 import { useHotkeys } from "react-hotkeys-hook";
-import { isFixedKeybindKey } from "@/datatypes/Keybind";
+import {
+  evaluateKeyboardEventToTerminalCode,
+  isFixedKeyboardEvent,
+} from "@/datatypes/Keybind";
 
 const queryOption = {
   refetchInterval: 500,
@@ -182,20 +185,26 @@ function ProcessKeySender(props: {
   return (
     <div
       onKeyDown={(e) => {
-        console.log(`ProcessKeySender get key: ${e.key}`);
-        // TODO: handle copy and so on.
+        console.log(
+          `ProcessKeySender get key: ${e.key}, code: ${e.code}, keyCode: ${e.keyCode}, which: ${e.which}, charCode: ${e.charCode}, ctrl: ${e.ctrlKey}, alt: ${e.altKey}, shift: ${e.shiftKey}, meta: ${e.metaKey}`
+        );
         if (isFinished.data) {
           return;
         }
         // Ignore fixed keybinds.
-        if (isFixedKeybindKey(e)) {
+        if (isFixedKeyboardEvent(e)) {
           return;
         }
-        console.log(`ProcessKeySender send key: ${e.key}`);
+        const evaluated = evaluateKeyboardEventToTerminalCode(e);
+        console.log(`ProcessKeySender evaluated key: ${evaluated}`);
+        if (evaluated === undefined || evaluated === "") {
+          return;
+        }
+        console.log(`ProcessKeySender send key: ${evaluated}`);
         sendKey.mutate(
           {
             pid: pid,
-            key: e.key,
+            key: evaluated,
           },
           {
             onError: (error) => {

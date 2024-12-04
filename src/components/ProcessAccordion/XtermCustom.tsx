@@ -190,6 +190,9 @@ function XtermCustomFinished(props: XtermCustomProps) {
       //handleRef.current?.terminal.resize(size?.cols || 80, size?.rows || 24);
       handleRef.current?.terminal.write(command.data?.stdoutResponse || "");
     }
+    handleRef.current?.terminal.onData((data) => {
+      console.log(`terminal onData: ${data}`);
+    });
   }, [cid, pid, command.data?.stdoutResponse, command.data]);
 
   if (!command.data) {

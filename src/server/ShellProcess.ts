@@ -164,7 +164,8 @@ function sendKey(process: Process, key: string) {
   console.log(`Send key ${key} to process ${process.id}`);
   clockIncrement(process);
   // [HN] TODO: filtering the key. e.g. NonConvert
-  // [HN]  process.handle.write(key);
+  // or convert to key code?
+  process.handle.write(key);
 }
 
 function stopProcess(process: Process) {
@@ -207,6 +208,7 @@ export const shellRouter = server.router({
           styledCommand: z.string().optional(),
         })
         .refine((value) => {
+          return true;
           return isCommandClosed(
             processHolder[value.pid].shellSpec,
             value.command

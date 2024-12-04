@@ -50,7 +50,7 @@ export function executeCommandByEcho(
     encoded.toString()
   );
   console.log(
-    `Execute command ${command} (exact: ${exactCommand.newCommand}) in process ${process.id} cid: ${cid}`
+    `Execute command ${command} Uint8: ${new TextEncoder().encode(command)} (exact: ${exactCommand.newCommand}) in process ${process.id} cid: ${cid}`
   );
   // Set new current command.
   process.currentCommand = newCommand(

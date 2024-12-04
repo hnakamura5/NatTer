@@ -20,7 +20,9 @@ export default defineConfig({
         vite: {
           build: {
             rollupOptions: {
-              external: ["node-pty"], // To avoid error "Unexpected character..."
+              external: [
+                "node-pty", // To avoid error "Unexpected character..."
+              ],
             },
           },
           resolve: {

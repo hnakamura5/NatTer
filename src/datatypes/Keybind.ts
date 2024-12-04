@@ -8,6 +8,10 @@ import {
 } from "@/datatypes/KeybindCommands";
 import { KeyboardEvent } from "react";
 
+// Use the xterm internal evaluation by copying the function from xterm.js.
+import { evaluateKeyboardEvent } from "@/datatypes/xtermCopySrc/Keyboard";
+
+
 export const UserKeybindSchema = z.object({
   key: z.string(),
   command: UserKeybindCommandsSchema,
@@ -75,7 +79,7 @@ export function addFixedKeybinds(keybinds: UserKeybindList): KeybindList {
 }
 
 // Check if the key is used for fixed keybinds.
-export function isFixedKeybindKey(e: KeyboardEvent) {
+export function isFixedKeyboardEvent(e: KeyboardEvent) {
   return (
     e.ctrlKey &&
     (e.key === "c" ||
@@ -86,6 +90,11 @@ export function isFixedKeybindKey(e: KeyboardEvent) {
       e.key === "a" ||
       e.key === "s")
   );
+}
+
+export function evaluateKeyboardEventToTerminalCode(e: KeyboardEvent) {
+  // TODO: isMac?
+  return evaluateKeyboardEvent(e, false, false, false).key;
 }
 
 export function keyOfCommand(
