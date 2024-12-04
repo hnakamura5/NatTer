@@ -22,8 +22,9 @@ import styled from "@emotion/styled";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
 import {
+  AliveCommandResponse,
   CommandResponse,
-  FinishedCommandResponse as FinishedCommandResponseServer,
+  FinishedCommandResponse,
 } from "@/components/ProcessAccordion/CommandResponse";
 import { CommandSummary } from "@/components/ProcessAccordion/CommandSummary";
 import XtermCustom from "@/components/ProcessAccordion/XtermCustom";
@@ -99,29 +100,6 @@ function ProcessAccordionSummary(props: { cid: CommandID }) {
   );
 }
 
-function FinishedCommandResponseByCR(props: { cid: CommandID }) {
-  const pid = usePid();
-  const command = api.shell.command.useQuery(
-    {
-      pid: pid,
-      cid: props.cid,
-    },
-    queryOption
-  );
-  if (!command.data) {
-    return <Box>Command not found.</Box>;
-  }
-  return <CommandResponse command={command.data} />;
-}
-
-function FinishedCommandResponse(props: { cid: CommandID }) {
-  if (false) {
-    return <FinishedCommandResponseByCR cid={props.cid} />;
-  } else {
-    return <FinishedCommandResponseServer cid={props.cid} />;
-  }
-}
-
 function ResponseSelector(props: { cid: CommandID }) {
   const pid = usePid();
   const cid = props.cid;
@@ -141,7 +119,11 @@ function ResponseSelector(props: { cid: CommandID }) {
     //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
     return <XtermCustom pid={pid} cid={cid} />;
   } else {
-    return <FinishedCommandResponse cid={cid} />;
+    if (isFinished.data) {
+      return <FinishedCommandResponse cid={cid} />;
+    } else {
+      return <AliveCommandResponse cid={cid} />;
+    }
   }
   // }
 }

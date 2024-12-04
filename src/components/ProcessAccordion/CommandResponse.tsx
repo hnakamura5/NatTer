@@ -13,6 +13,10 @@ import {
   ResponseStyle,
 } from "@/components/ProcessAccordion/CommandResponseCommon";
 
+import { logger } from "@/datatypes/Logger";
+import { useState } from "react";
+import { set } from "zod";
+
 const ResponseStyleWithScroll = styled(ResponseStyle)({
   overflow: "auto",
 });
@@ -95,6 +99,8 @@ function RecordedCommandResponse(props: { cid: CommandID }) {
 
 export function FinishedCommandResponse(props: { cid: CommandID }) {
   const pid = usePid();
+
+  console.log(`FinishedCommandResponse: pid-${pid} cid-${props.cid}`);
   const outputCompleted = api.shell.outputCompleted.useQuery(
     { pid: pid, cid: props.cid },
     {
@@ -108,4 +114,72 @@ export function FinishedCommandResponse(props: { cid: CommandID }) {
     return <RecordedCommandResponse cid={props.cid} />;
   }
   return <Box>Not recorded.</Box>;
+}
+
+export function AliveCommandResponse(props: { cid: CommandID }) {
+  const pid = usePid();
+  const cid = props.cid;
+  const theme = useTheme();
+
+  const [ansiUp, setAnsiUp] = useState(new AnsiUp());
+  const [stdoutHTML, setStdoutHTML] = useState("");
+  const [stderrHTML, setStderrHTML] = useState("");
+
+  console.log(`AliveCommandResponse: pid-${pid} cid-${cid}`);
+
+  const command = api.shell.command.useQuery(
+    {
+      pid: pid,
+      cid: props.cid,
+    },
+    {
+      refetchInterval: 1000,
+      onError: (error) => {
+        console.error(`command fetch error: ${error}`);
+      },
+    }
+  );
+
+  api.shell.onStdout.useSubscription(
+    { pid: pid, cid: cid },
+    {
+      onError(error) {
+        logger.logTrace(`stdout: ${error}`);
+      },
+      onData: (data) => {
+        logger.log(
+          `stdout onData: cid: ${data.cid} isFinished: ${data.isFinished}, stdout: ${data.stdout} in pid-${pid} cid-${cid}`
+        );
+        if (data.cid === cid && !data.isFinished) {
+          setStdoutHTML((prev) => {
+            return (
+              prev + ansiUp.ansi_to_html(data.stdout).replace(/\n/g, "<br />")
+            );
+          });
+        }
+      },
+    }
+  );
+
+  if (!command.data) {
+    return <Box>Loading...</Box>;
+  }
+
+  return (
+    <Box>
+      <CommandHeader command={command.data} />
+      <ResponseStyleWithScroll>
+        <Box sx={colorLine(theme.terminal.stdoutColor)}>
+          <div
+            dangerouslySetInnerHTML={{ __html: stdoutHTML || "" }}
+          />
+        </Box>
+        <Box sx={colorLine(theme.terminal.stderrColor)}>
+          <div
+            dangerouslySetInnerHTML={{ __html: command.data.stderrHTML || "" }}
+          />
+        </Box>
+      </ResponseStyleWithScroll>
+    </Box>
+  );
 }

@@ -58,7 +58,8 @@ export class ChildShellStream {
     if (this.usePty) {
       this.pty?.write(data);
     } else if (this.childProcess) {
-      this.childProcess?.stdin.write(data);
+      // TODO: is this correct? only for windows?
+      this.childProcess?.stdin.write(data.replace(/\r/g, "\n"));
     } else {
       throw new Error("Shell stream is not initialized");
     }
