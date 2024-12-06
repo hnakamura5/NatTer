@@ -17,6 +17,7 @@ class GlobalFocusMapHandle {
   private map = new Map<GlobalFocusMap.Key, FocusTarget>();
 
   set(key: GlobalFocusMap.Key, target: FocusTarget) {
+    console.log(`GlobalFocusMap.set: ${key} target: ${target.focusRef?.current}`);
     this.map.set(key, target);
   }
   get(key: GlobalFocusMap.Key) {
@@ -43,7 +44,13 @@ class GlobalFocusMapHandle {
           `GlobalFocusMap.focus: focusing ${key} ${target.focusRef.current}`
         );
         target.focusRef.current.focus();
+      } else {
+        console.log(
+          `GlobalFocusMap.focus: no focus target ${key} ${target.focusRef?.current}`
+        );
       }
+    } else {
+      console.log(`GlobalFocusMap.focus: no target entry for ${key}`);
     }
   }
   isFocused(key: GlobalFocusMap.Key) {
@@ -89,7 +96,8 @@ export module GlobalFocusMap {
   }) {
     const handle = useHandle();
     useEffect(() => {
-      if (!props.focusKey) {
+      console.log(`GlobalFocusMap.Target: ${props.focusKey} ${props.focusRef?.current}`);
+      if (props.focusKey === undefined) {
         return;
       }
       if (props.focusRef || props.callBeforeFocus) {

@@ -329,7 +329,11 @@ function ProcessAccordion(props: ProcessAccordionProps) {
               key={idStr}
             >
               <GlobalFocusMap.Target
-                focusKey={GlobalFocusMap.GlobalKey.LastCommand}
+                focusKey={
+                  props.isLast
+                    ? GlobalFocusMap.GlobalKey.LastCommand
+                    : undefined
+                }
                 focusRef={props.isLast ? focalPoint : undefined}
               >
                 <div ref={top} id={`${idStr}-top`} />
