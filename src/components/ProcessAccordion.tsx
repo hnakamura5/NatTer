@@ -38,6 +38,7 @@ import {
   evaluateKeyboardEventToTerminalCode,
   isFixedKeyboardEvent,
 } from "@/datatypes/Keybind";
+import { set } from "zod";
 
 const queryOption = {
   refetchInterval: 500,
@@ -222,8 +223,10 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   const [scrollIntoView, setScrollIntoView] = useState<boolean>(false);
   useEffect(() => {
     if (scrollIntoView) {
-      bottom.current?.scrollIntoView({ behavior: "auto" });
-      top.current?.scrollIntoView({ behavior: "auto" });
+      setTimeout(() => {
+        bottom.current?.scrollIntoView({ behavior: "auto" });
+        top.current?.scrollIntoView({ behavior: "auto" });
+      }, 500); // TODO: Adhoc time?
       setScrollIntoView(false);
     }
   }, [scrollIntoView]);
@@ -254,6 +257,13 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     },
     queryOption
   );
+  const isComplete = api.shell.outputCompleted.useQuery(
+    {
+      pid: pid,
+      cid: cid,
+    },
+    queryOption
+  );
   // On finish of the last command, focus back to the input box.
   useEffect(() => {
     if (
@@ -264,7 +274,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       handleGFM.focus(GlobalFocusMap.GlobalKey.InputBox);
       bottom.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, [handleGFM, props.isLast, isFinished.data]);
+  }, [handleGFM, props.isLast, isFinished.data, isComplete.data]);
   const focalPoint = useRef<HTMLDivElement>(null);
 
   // Keybind definitions.
@@ -279,7 +289,11 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     "ExpandToggleCommand",
     () => {
       console.log(`ExpandToggleCommand: ${pid}-${cid}`);
-      setExpanded(!expanded);
+      const currentExpanded = expanded;
+      setExpanded(!currentExpanded);
+      if (!currentExpanded) {
+        setScrollIntoView(true);
+      }
       boundaryRef.current?.focus();
     },
     keybindRef
