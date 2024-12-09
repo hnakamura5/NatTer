@@ -44,20 +44,6 @@ https://mui.com/material-ui/material-icons/
 npm install @mui/icons-material @mui/material @emotion/styled @emotion/react
 ```
 
-## Chat UI
-
-https://github.com/chatscope/chat-ui-kit-react
-https://chatscope.io/docs/
-```sh
-npm install @chatscope/chat-ui-kit-react
-```
-
-## File Manager
-
-https://www.npmjs.com/package/@syncfusion/ej2-react-filemanager
-```sh
-npm install @syncfusion/ej2-react-filemanager
-```
 ## tRPC
 
 electron-trpc
@@ -65,5 +51,12 @@ electron-trpc
 @trpc/server
 @trpc/react-query
 
-@tanstack/react-query は@trpcの要求のため "^4.18.0",
-にする必要がある。
+@tanstack/react-query must be"^4.18.0" because of the requirement of @trpc.
+
+## node-pty
+
+https://github.com/microsoft/node-pty
+
+Hard to install.
+
+TODO: Write this.
