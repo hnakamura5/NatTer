@@ -1,0 +1,50 @@
+{
+  // Configuration for windows.
+  "theme": "dark",
+  "shells": [
+    {
+      "name": "PowerShell",
+      "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "args": [],
+      "kind": "powershell",
+      "encoding": "shift-jis",
+      "interact": "command",
+    },
+    {
+      "name": "PowerShell Terminal",
+      "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "args": [],
+      "kind": "powershell",
+      "encoding": "shift-jis",
+      "interact":"terminal",
+    },
+    {
+      "name": "WSL Bash",
+      "executable": "C:\\Windows\\system32\\wsl.exe",
+      "args": ["-e", "/usr/bin/bash", "-l"],
+      "kind": "bash",
+      "encoding": "utf-8",
+      "interact": "command",
+    },
+    {
+      "name": "WSL Bash Terminal",
+      "executable": "C:\\Windows\\system32\\wsl.exe",
+      "args": ["-e", "/usr/bin/bash", "-l"],
+      "kind": "bash",
+      "encoding": "utf-8",
+      "interact":"terminal",
+    },
+    {
+      "name": "Cmd",
+      "executable": "cmd",
+      "args": [],
+      "kind": "cmd",
+      "encoding": "shift-jis",
+      "interact": "command",
+    }
+  ],
+  "defaultShell": "PowerShell",
+  //"defaultShell": "PowerShell Terminal",
+  //"defaultShell": "WSL Bash",
+  //"defaultShell": "Cmd",
+}

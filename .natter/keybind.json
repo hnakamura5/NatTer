@@ -1,0 +1,39 @@
+[
+  {
+    "key": "Ctrl+Shift+C",
+    "command": "SendKill",
+    "args": [],
+  },
+  {
+    "key": "Ctrl+E",
+    "command": "ExpandToggleCommand",
+    "args": [],
+    "scope": "Command",
+  },
+  {
+    "key": "Ctrl+Shift+E",
+    "command": "ExpandToggleCommandAll",
+    "args": [],
+    "scope": "Command",
+  },
+  {
+    "key": "Ctrl+U",
+    "command": "FocusCommandUp",
+  },
+  {
+    "key": "Ctrl+Shift+U",
+    "command": "FocusCommandDown",
+  },
+  {
+    "key": "Alt+P",
+    "command": "CommandHistoryUp",
+  },
+  {
+    "key": "Alt+N",
+    "command": "CommandHistoryDown",
+  },
+  {
+    "key": "Ctrl+Shift+F",
+    "command": "FocusFileView"
+  }
+]
