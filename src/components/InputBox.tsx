@@ -56,7 +56,7 @@ function InputBox(props: InputBoxProps) {
   const execute = api.shell.execute.useMutation();
   const submit = useCallback(
     (command: string) => {
-      logger.log(`Input submit: ${command} Uint8: ${new TextEncoder().encode(command)}`);
+      const encoded = new TextEncoder().encode(command);
       execute.mutate(
         { pid: pid, command: command },
         {

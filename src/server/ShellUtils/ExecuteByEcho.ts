@@ -1,8 +1,6 @@
 import {
   Process,
   clockIncrement,
-  decodeFromShellEncoding,
-  encodeToShellEncoding,
 } from "@/server/types/Process";
 import {
   Command,
@@ -44,14 +42,11 @@ export function executeCommandByEcho(
   onEnd?: (command: Command) => void
 ): Command {
   // The command including the detector.
-  const encoded = encodeToShellEncoding(process, command);
   const exactCommand = extendCommandWithBoundaryDetectorByEcho(
     process.shellSpec,
-    encoded.toString()
+    command
   );
-  console.log(
-    `Execute command ${command} Uint8: ${new TextEncoder().encode(command)} (exact: ${exactCommand.newCommand}) in process ${process.id} cid: ${cid}`
-  );
+  console.log(`Execute command ${command}`);
   // Set new current command.
   process.currentCommand = newCommand(
     process.id,

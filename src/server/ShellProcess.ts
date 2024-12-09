@@ -91,7 +91,9 @@ function startProcess(config: ShellConfig): ProcessID {
   if (processHolder.length > 100) {
     throw new Error("Too many processes. This is for debugging.");
   }
-  const childShell = spawnShell(config.interact, executable, args);
+  const childShell = spawnShell(config.interact, executable, args, {
+    encoding: encoding,
+  });
   const pid = processHolder.length;
   console.log(`Start process call ${pid} with ${config.executable}`);
   const process = newProcess(
@@ -165,7 +167,7 @@ function sendKey(process: Process, key: string) {
   clockIncrement(process);
   // [HN] TODO: filtering the key. e.g. NonConvert
   // or convert to key code?
-  process.handle.write(key);
+  process.handle.write(Buffer.from(key));
 }
 
 function stopProcess(process: Process) {
@@ -218,6 +220,7 @@ export const shellRouter = server.router({
     .output(CommandSchema)
     .mutation(async (opts) => {
       const { pid, command, isSilent, styledCommand } = opts.input;
+      console.log(`executeのAPIが呼ばれた ${pid} ${command}`);
       const process = processHolder[pid];
       return executeCommand(
         process,

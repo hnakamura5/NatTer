@@ -1,8 +1,6 @@
 import {
   Process,
   clockIncrement,
-  decodeFromShellEncoding,
-  encodeToShellEncoding,
 } from "@/server/types/Process";
 import {
   Command,
@@ -129,7 +127,7 @@ async function resizeAndWait(process: Process, cols: number, rows: number) {
   let interval: NodeJS.Timeout | undefined = undefined;
   process.handle.onStdout((data: Buffer) => {
     // Dispose the rewriting of stdout by resize.
-    const response = decodeFromShellEncoding(process, data);
+    const response = data.toString();
     console.log(`onStdout by resize: ${response}`);
     if (interval) {
       clearInterval(interval);
@@ -193,8 +191,7 @@ export async function receiveCommandResponse(
     // console.log(
     //   `Received data in command ${current.command} in process ${process.id} data: ${data} len: ${data.length}`
     // );
-    const response = decodeFromShellEncoding(process, data);
-    console.log(`onStdout: ${response}`);
+    const response = data.toString();
     if (current.isFinished) {
       console.log(`onStdout for finished end.`);
       return true;
@@ -254,7 +251,7 @@ export async function receiveCommandResponse(
     if (current.isFinished) {
       return;
     }
-    const response = decodeFromShellEncoding(process, data);
+    const response = data.toString();
     //console.log(`stderr: ${response}`);
     current.stderr = current.stderr.concat(response);
     process.event.emit("stderr", response);

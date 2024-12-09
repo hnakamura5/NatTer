@@ -41,6 +41,19 @@ export function newProcess(
   };
 }
 
+function adjustEncoding(encoding: string): string {
+  const lower = encoding.toLowerCase();
+  if (
+    lower === "shift_jis" ||
+    lower === "shift-jis" ||
+    lower === "shiftjis" ||
+    lower === "sjis"
+  ) {
+    return "windows-31j";
+  }
+  return encoding;
+}
+
 export function clockIncrement(process: Process) {
   process.clock += 1;
   process.currentCommand.clock = process.clock;
@@ -54,7 +67,7 @@ export function decodeFromShellEncoding(
   if (process.config.encoding === undefined) {
     return data.toString();
   }
-  return iconv.decode(data, process.config.encoding);
+  return iconv.decode(data, adjustEncoding(process.config.encoding));
 }
 
 export function encodeToShellEncoding(
@@ -64,5 +77,11 @@ export function encodeToShellEncoding(
   if (process.config.encoding === undefined) {
     return Buffer.from(command);
   }
+  const encoding = adjustEncoding(process.config.encoding);
+  console.log(
+    `encodeToShellEncoding: ${command} to ${encoding} isSupported:${iconv.encodingExists(
+      encoding
+    )}`
+  );
   return iconv.encode(command, process.config.encoding);
 }

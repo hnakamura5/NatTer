@@ -1,9 +1,4 @@
-import {
-  Process,
-  clockIncrement,
-  decodeFromShellEncoding,
-  encodeToShellEncoding,
-} from "@/server/types/Process";
+import { Process, clockIncrement } from "@/server/types/Process";
 import {
   Command,
   CommandID,
@@ -50,7 +45,7 @@ async function setPrompt(process: Process, boundaryDetector: string) {
     if (finished) {
       return;
     }
-    stdout = stdout.concat(decodeFromShellEncoding(process, data));
+    stdout = stdout.concat(data.toString());
     if (setPromptIsFinished(process, boundaryDetector, stdout)) {
       finished = true;
     }
@@ -79,12 +74,11 @@ export function executeCommandByPrompt(
   onEnd?: (command: Command) => void
 ) {
   // The command including the detector
-  const encoded = encodeToShellEncoding(process, command);
   const boundaryDetector = defaultRandomBoundaryDetector(
     process.config.interact === "terminal",
     process.shellSpec
   );
-  const exactCommand = encoded.toString();
+  const exactCommand = command.toString();
   console.log(
     `Execute command by prompt ${command} (exact: ${exactCommand}) in process ${process.id} cid: ${cid}`
   );

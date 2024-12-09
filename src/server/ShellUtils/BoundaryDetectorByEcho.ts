@@ -27,6 +27,19 @@ function endEchoCommand(
   return `echo ${quote}${boundaryDetector}${shellSpec.exitCodeVariable}${boundaryDetector}${quote}`;
 }
 
+function lastNonEmptyIsDelimiter(command: Buffer, delimiter: string) {
+  const lastDelimiter = command.lastIndexOf(delimiter);
+  if (lastDelimiter === -1) {
+    return false;
+  }
+  for (let i = lastDelimiter + delimiter.length; i < command.length; i++) {
+    // If there is a non-whitespace character after the last delimiter.
+    if (!command[i].toString().match(/\s/)) {
+      return false;
+    }
+  }
+}
+
 export function extendCommandWithBoundaryDetectorByEcho(
   shellSpec: ShellSpecification,
   command: string
@@ -37,7 +50,12 @@ export function extendCommandWithBoundaryDetectorByEcho(
   const delimiter = needDelimiter ? shellSpec.delimiter : "";
   const startEcho = startEchoCommand(shellSpec, boundaryDetector);
   const endEcho = endEchoCommand(shellSpec, boundaryDetector);
-  const newCommand = `${startEcho}${shellSpec.delimiter} ${command}${delimiter} ${endEcho}`;
+  const newCommand = `${startEcho}${delimiter} ${command} ${delimiter}${endEcho}`;
+  // const newCommand = Buffer.concat([
+  //   Buffer.from(startEcho + delimiter + " "),
+  //   command,
+  //   Buffer.from(delimiter + " " + endEcho),
+  // ]);
   return {
     // Sandwich the exit status with the end detector.
     newCommand: newCommand,

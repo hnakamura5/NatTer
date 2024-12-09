@@ -15,3 +15,10 @@ class Logger {
 }
 
 export const logger = new Logger();
+
+function stringToHexLog(str: string) {
+  const encoded = new TextEncoder().encode(str);
+  return Array.from(encoded)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join(" ");
+}

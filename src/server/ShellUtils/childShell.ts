@@ -4,11 +4,23 @@ import { spawn, ChildProcessWithoutNullStreams } from "child_process";
 import * as pty from "node-pty";
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
 
+import * as iconv from "iconv-lite";
+import stream from "stream";
+
+iconv.enableStreamingAPI(stream);
+
+type ChileShellStreamOptions = {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  encoding?: string; // UTF-8 by default
+};
+
 export class ChildShellStream {
   private pty?: pty.IPty;
   private childProcess?: ChildProcessWithoutNullStreams;
   private usePty;
   private onStdoutCallBacks: ((data: Buffer) => void)[] = [];
+  private onStderrCallBacks: ((data: Buffer) => void)[] = [];
   private onExitCallBacks: ((
     code: number,
     signal?: number | undefined
@@ -18,10 +30,7 @@ export class ChildShellStream {
     private shellInterface: ShellInteractKind,
     command: string,
     args?: string[],
-    options?: {
-      cwd: string;
-      env: NodeJS.ProcessEnv;
-    }
+    private options?: ChileShellStreamOptions
   ) {
     this.usePty = this.shellInterface === "terminal";
     if (this.usePty) {
@@ -51,6 +60,27 @@ export class ChildShellStream {
         cwd: options?.cwd,
         env: options?.env,
       });
+      // pipe stdout and stderr to decoder.
+      this.childProcess?.stdout
+        .pipe(iconv.decodeStream(options?.encoding || "utf8"))
+        .on("data", (data) => {
+          for (const callback of this.onStdoutCallBacks) {
+            callback(data);
+          }
+        });
+      this.childProcess?.stderr
+        .pipe(iconv.decodeStream(options?.encoding || "utf8"))
+        .on("data", (data) => {
+          for (const callback of this.onStderrCallBacks) {
+            callback(data);
+          }
+        });
+      // TODO: onExit type differs
+      // this.childProcess?.on("exit", (code, signal) => {
+      //   for (const callback of this.onExitCallBacks) {
+      //     callback(code, signal);
+      //   }
+      // });
     }
   }
 
@@ -59,7 +89,12 @@ export class ChildShellStream {
       this.pty?.write(data);
     } else if (this.childProcess) {
       // TODO: is this correct? only for windows?
-      this.childProcess?.stdin.write(data.replace(/\r/g, "\n"));
+      if (this.options?.encoding) {
+        const encoded = iconv.encode(data, this.options.encoding);
+        this.childProcess?.stdin.write(encoded);
+      } else {
+        this.childProcess?.stdin.write(data.replace(/\r/g, "\n"));
+      }
     } else {
       throw new Error("Shell stream is not initialized");
     }
@@ -71,7 +106,13 @@ export class ChildShellStream {
       // TODO: snap the size for silent command.
       this.pty?.write(command + "\r");
     } else if (this.childProcess) {
-      this.childProcess?.stdin.write(command + "\n");
+      if (this.options?.encoding) {
+        const encoded = iconv.encode(command + "\n", this.options.encoding);
+        console.log(`childShell writing encoded: ${encoded}`);
+        this.childProcess?.stdin.write(encoded);
+      } else {
+        this.childProcess?.stdin.write(command + "\n");
+      }
     } else {
       throw new Error("Shell stream is not initialized");
     }
@@ -147,8 +188,7 @@ export class ChildShellStream {
     if (this.usePty) {
       this.onStdoutCallBacks = [callback];
     } else if (this.childProcess) {
-      this.childProcess?.stdout.removeAllListeners("data");
-      this.childProcess?.stdout?.on("data", callback);
+      this.onStdoutCallBacks = [callback];
     } else {
       throw new Error("Shell stream is not initialized");
     }
@@ -158,8 +198,7 @@ export class ChildShellStream {
     if (this.usePty) {
       // node-pty does not support stderr
     } else if (this.childProcess) {
-      this.childProcess?.stderr.removeAllListeners("data");
-      this.childProcess?.stderr?.on("data", callback);
+      this.onStderrCallBacks = [callback];
     } else {
       throw new Error("Shell stream is not initialized");
     }
@@ -169,8 +208,7 @@ export class ChildShellStream {
     if (this.usePty) {
       this.onExitCallBacks = [callback];
     } else if (this.childProcess) {
-      this.childProcess?.removeAllListeners("exit");
-      this.childProcess?.on("exit", callback);
+      this.onExitCallBacks = [callback];
     } else {
       throw new Error("Shell stream is not initialized");
     }
@@ -181,10 +219,7 @@ export function spawnShell(
   shellInterface: ShellInteractKind,
   command: string,
   args?: string[],
-  options?: {
-    cwd: string;
-    env: NodeJS.ProcessEnv;
-  }
+  options?: ChileShellStreamOptions
 ) {
   try {
     return new ChildShellStream(shellInterface, command, args, options);
