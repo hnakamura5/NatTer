@@ -27,5 +27,12 @@ Currently, only developed on Windows11. Maybe you can run on Linux.
 ```sh
 npm run dev
 ```
+to run instantly,
 
-Now only works in dev mode.
+```sh
+npm run build
+```
+to build the installer in release directory.
+
+Note you need administrator shell to build the installer.
+See the bug of electron-builder, https://github.com/electron-userland/electron-builder/issues/8149

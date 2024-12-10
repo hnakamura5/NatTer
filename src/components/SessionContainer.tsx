@@ -8,7 +8,8 @@ import { Provider as JotaiProvider } from "jotai";
 import styled from "@emotion/styled";
 import CurrentBar from "@/components/CurrentBar";
 
-import { api, ProcessID } from "@/api";
+import { api } from "@/api";
+import { ProcessID } from "@/datatypes/Command";
 import { pidContext, usePid } from "@/SessionStates";
 import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";

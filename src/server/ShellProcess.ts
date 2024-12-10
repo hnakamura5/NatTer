@@ -167,7 +167,7 @@ function sendKey(process: Process, key: string) {
   clockIncrement(process);
   // [HN] TODO: filtering the key. e.g. NonConvert
   // or convert to key code?
-  process.handle.write(Buffer.from(key));
+  process.handle.write(key);
 }
 
 function stopProcess(process: Process) {

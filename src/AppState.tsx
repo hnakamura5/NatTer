@@ -14,7 +14,12 @@ import {
   useTheme as emotionUseTheme,
 } from "@emotion/react";
 import { createTheme } from "@mui/material";
-import { KeybindListMap, addFixedKeybinds, keyOfCommand, keybindListMap } from "@/datatypes/KeyBind";
+import {
+  KeybindListMap,
+  addFixedKeybinds,
+  keyOfCommand,
+  keybindListMap,
+} from "@/datatypes/Keybind";
 import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
 import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
 import { KeybindCommands } from "@/datatypes/KeybindCommands";

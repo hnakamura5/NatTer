@@ -167,7 +167,7 @@ export function FileTree(props: FileTreeProps) {
 
   return (
     <KeybindScope>
-      <div ref={props.focusRef} tabIndex={-1}>
+      <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
         <TreeView>
           <FileTreeItem path={current} key={current} showTop={false} />
         </TreeView>
