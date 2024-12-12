@@ -28,7 +28,7 @@ function Session(props: SessionProps) {
   const numCommands = api.shell.numCommands.useQuery(pid, {
     refetchInterval: 200,
     onError: (error) => {
-      logger.logTrace(`commands fetch: ${error}`);
+      console.log(`num commands fetch: ${error}`);
     },
   });
   console.log(`numCommands in pid-${pid}: ${numCommands.data}`);

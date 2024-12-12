@@ -44,6 +44,9 @@ function createWindow() {
 
   // Test active push message to Renderer-process.
   win.webContents.on("did-finish-load", () => {
+    // if (VITE_DEV_SERVER_URL) {
+    //   win?.webContents.openDevTools();
+    // }
     win?.webContents.openDevTools();
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
@@ -55,6 +58,7 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
+  console.log(`createIPCHandler`);
   createIPCHandler({ router, windows: [win] });
   console.log(`home: ${app.getPath("home")}`);
 }

@@ -40,9 +40,9 @@ function CurrentBar(props: CurrentBarProps) {
   });
 
   const current = api.shell.current.useQuery(pid, {
-    refetchInterval: 200,
+    refetchInterval: 500,
     onError: (error) => {
-      logger.logTrace(`currentDir fetch: ${error}`);
+      logger.logTrace(`currentDir fetch error: ${error}`);
     },
   });
 
