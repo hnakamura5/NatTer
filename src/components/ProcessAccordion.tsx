@@ -40,6 +40,9 @@ import {
 } from "@/datatypes/Keybind";
 import { set } from "zod";
 
+import * as log from "electron-log/renderer";
+
+
 const queryOption = {
   refetchInterval: 500,
   /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -288,7 +291,8 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   useKeybindOfCommand(
     "ExpandToggleCommand",
     () => {
-      console.log(`ExpandToggleCommand: ${pid}-${cid}`);
+      // console.log(`ExpandToggleCommand: ${pid}-${cid}`);
+      log.debug(`ExpandToggleCommand: ${pid}-${cid}`);
       const currentExpanded = expanded;
       setExpanded(!currentExpanded);
       if (!currentExpanded) {

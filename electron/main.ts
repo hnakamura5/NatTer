@@ -5,6 +5,10 @@ import path from "node:path";
 import { createIPCHandler } from "electron-trpc/main";
 import { router } from "@/server/tRPCRouter";
 import { shutdown } from "@/server/ShellProcess";
+import * as log from "electron-log/main";
+
+// TODO: set options tothe logger
+log.initialize();
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
