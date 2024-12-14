@@ -11,6 +11,8 @@ import { pathOf } from "@/server/ShellUtils/pathAbstractionUtil";
 import { chmod, chown } from "original-fs";
 import { logger } from "@/datatypes/Logger";
 
+import * as log from "electron-log/main";
+
 const proc = server.procedure;
 
 function pathCanonicalize(filePath: string): string {
@@ -54,7 +56,7 @@ export const fileSystemRouter = server.router({
           };
         });
       } catch (err) {
-        logger.logTrace(`Failed to stat ${filePath}: ${err}`);
+        log.error(`Failed to stat ${filePath}: ${err}`);
         return undefined;
       }
     }),

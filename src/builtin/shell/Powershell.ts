@@ -24,7 +24,6 @@ export const PowerShellSpecification: ShellSpecification = {
   },
 
   isExitCodeOK: (exitCode) => {
-    console.log(`exitCode: ${exitCode}`);
     return exitCode === "True" || exitCode === "0";
   },
 

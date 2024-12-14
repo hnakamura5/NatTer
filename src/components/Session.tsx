@@ -7,6 +7,8 @@ import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
 
+import * as log from "electron-log/renderer";
+
 interface SessionProps {}
 
 function Session(props: SessionProps) {
@@ -28,10 +30,10 @@ function Session(props: SessionProps) {
   const numCommands = api.shell.numCommands.useQuery(pid, {
     refetchInterval: 200,
     onError: (error) => {
-      console.log(`num commands fetch: ${error}`);
+      log.error(`num commands fetch: ${error}`);
     },
   });
-  console.log(`numCommands in pid-${pid}: ${numCommands.data}`);
+  log.debug(`numCommands in pid-${pid}: ${numCommands.data}`);
   if (!numCommands.data) {
     return <Box>Loading...</Box>;
   }

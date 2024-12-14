@@ -7,8 +7,7 @@ import { router } from "@/server/tRPCRouter";
 import { shutdown } from "@/server/ShellProcess";
 import * as log from "electron-log/main";
 
-// TODO: set options tothe logger
-log.initialize();
+
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -34,6 +33,18 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   : RENDERER_DIST;
 
 let win: BrowserWindow | null;
+
+// TODO: set options to the logger
+// Logger setup.
+log.initialize();
+if (VITE_DEV_SERVER_URL == undefined) {
+  log.transports.file.level = "verbose";
+}
+
+process.on("uncaughtException", (error) => {
+  log.error(` terminate by exception: ${error}`);
+  app.quit();
+});
 
 function createWindow() {
   win = new BrowserWindow({
@@ -62,9 +73,9 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
-  console.log(`createIPCHandler`);
+  log.debug(`createIPCHandler`);
   createIPCHandler({ router, windows: [win] });
-  console.log(`home: ${app.getPath("home")}`);
+  log.debug(`home: ${app.getPath("home")}`);
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -87,7 +98,7 @@ app.on("activate", () => {
 
 app.on("quit", () => {
   shutdown();
-  console.log("app quit");
+  log.debug("app quit");
 });
 
 app.whenReady().then(createWindow);

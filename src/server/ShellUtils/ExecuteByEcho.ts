@@ -15,6 +15,8 @@ import {
 } from "./BoundaryDetectorByEcho";
 import { receiveCommandResponse } from "@/server/ShellUtils/ExecuteUtils";
 
+import * as log from "electron-log/main";
+
 export function executeCommandAndReceiveResponseByEcho(
   process: Process,
   exactCommand: { newCommand: string; boundaryDetector: string },
@@ -46,7 +48,7 @@ export function executeCommandByEcho(
     process.shellSpec,
     command
   );
-  console.log(`Execute command ${command}`);
+  log.debug(`Execute command ${command}`);
   // Set new current command.
   process.currentCommand = newCommand(
     process.id,
@@ -65,6 +67,6 @@ export function executeCommandByEcho(
     isSilent,
     onEnd
   );
-  console.log(`Executed command ${command} in process ${process.id}`);
+  log.debug(`Executed command ${command} in process ${process.id}`);
   return process.currentCommand;
 }

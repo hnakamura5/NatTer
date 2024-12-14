@@ -9,6 +9,8 @@ import { ProcessID } from "@/datatypes/Command";
 import { EventEmitter, on } from "node:events";
 import * as iconv from "iconv-lite";
 
+import * as log from "electron-log/main";
+
 export type Process = {
   id: ProcessID;
   handle: ChildShellStream;
@@ -78,7 +80,7 @@ export function encodeToShellEncoding(
     return Buffer.from(command);
   }
   const encoding = adjustEncoding(process.config.encoding);
-  console.log(
+  log.debug(
     `encodeToShellEncoding: ${command} to ${encoding} isSupported:${iconv.encodingExists(
       encoding
     )}`

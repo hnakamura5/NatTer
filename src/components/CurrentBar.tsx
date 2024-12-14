@@ -9,6 +9,8 @@ import { FaUserEdit } from "react-icons/fa";
 import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
 
+import * as log from "electron-log/renderer";
+
 function IconText(props: { icon: React.ReactNode; text?: string }) {
   return (
     <span>
@@ -42,7 +44,7 @@ function CurrentBar(props: CurrentBarProps) {
   const current = api.shell.current.useQuery(pid, {
     refetchInterval: 500,
     onError: (error) => {
-      logger.logTrace(`currentDir fetch error: ${error}`);
+      log.error(`currentDir fetch error: ${error}`);
     },
   });
 

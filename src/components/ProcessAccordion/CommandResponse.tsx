@@ -15,7 +15,8 @@ import {
 
 import { logger } from "@/datatypes/Logger";
 import { useState } from "react";
-import { set } from "zod";
+
+import * as log from "electron-log/renderer";
 
 const ResponseStyleWithScroll = styled(ResponseStyle)({
   overflow: "auto",
@@ -100,13 +101,13 @@ function RecordedCommandResponse(props: { cid: CommandID }) {
 export function FinishedCommandResponse(props: { cid: CommandID }) {
   const pid = usePid();
 
-  console.log(`FinishedCommandResponse: pid-${pid} cid-${props.cid}`);
+  log.debug(`FinishedCommandResponse: pid-${pid} cid-${props.cid}`);
   const outputCompleted = api.shell.outputCompleted.useQuery(
     { pid: pid, cid: props.cid },
     {
       refetchInterval: 1000,
       onError: (error) => {
-        console.error(`outputCompleted fetch error: ${error}`);
+        log.error(`outputCompleted fetch error: ${error}`);
       },
     }
   );
@@ -125,7 +126,7 @@ export function AliveCommandResponse(props: { cid: CommandID }) {
   const [stdoutHTML, setStdoutHTML] = useState("");
   const [stderrHTML, setStderrHTML] = useState("");
 
-  console.log(`AliveCommandResponse: pid-${pid} cid-${cid}`);
+  log.debug(`AliveCommandResponse: pid-${pid} cid-${cid}`);
 
   const command = api.shell.command.useQuery(
     {
@@ -144,10 +145,10 @@ export function AliveCommandResponse(props: { cid: CommandID }) {
     { pid: pid, cid: cid },
     {
       onError(error) {
-        logger.logTrace(`stdout: ${error}`);
+        log.error(`stdout: ${error}`);
       },
       onData: (data) => {
-        logger.log(
+        log.debug(
           `stdout onData: cid: ${data.cid} isFinished: ${data.isFinished}, stdout: ${data.stdout} in pid-${pid} cid-${cid}`
         );
         if (data.cid === cid && !data.isFinished) {
@@ -170,9 +171,7 @@ export function AliveCommandResponse(props: { cid: CommandID }) {
       <CommandHeader command={command.data} />
       <ResponseStyleWithScroll>
         <Box sx={colorLine(theme.terminal.stdoutColor)}>
-          <div
-            dangerouslySetInnerHTML={{ __html: stdoutHTML || "" }}
-          />
+          <div dangerouslySetInnerHTML={{ __html: stdoutHTML || "" }} />
         </Box>
         <Box sx={colorLine(theme.terminal.stderrColor)}>
           <div

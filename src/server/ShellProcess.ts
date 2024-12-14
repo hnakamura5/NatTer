@@ -28,6 +28,8 @@ import { executeCommandByPrompt } from "./ShellUtils/ExecuteByPrompt";
 import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
 import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
+import * as log from "electron-log/main";
+
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
 ProcessSpecs.set(BashSpecification.name, BashSpecification);
@@ -92,17 +94,17 @@ function currentSetter(process: Process) {
       const getUser = process.shellSpec.directoryCommands.getUser();
       // Set current directory.
       executeCommand(process, currentDir, true, undefined, (command) => {
-        console.log(`currentDirectory: ${command.stdoutResponse}`);
+        log.debug(`currentDirectory: ${command.stdoutResponse}`);
         getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
           (dir) => {
-            console.log(`set currentDirectory: ${dir}`);
+            log.debug(`set currentDirectory: ${dir}`);
             process.currentDirectory = dir;
             // Set user.
             executeCommand(process, getUser, true, undefined, (command) => {
-              console.log(`User: ${command.stdoutResponse}`);
+              log.debug(`User: ${command.stdoutResponse}`);
               getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
                 (user) => {
-                  console.log(`set User: ${user}`);
+                  log.debug(`set User: ${user}`);
                   process.user = user;
                 }
               );
@@ -128,7 +130,7 @@ function startProcess(config: ShellConfig): ProcessID {
     encoding: encoding,
   });
   const pid = getNextProcessID();
-  console.log(`Start process call ${pid} with ${config.executable}`);
+  log.debug(`Start process call ${pid} with ${config.executable}`);
   const process = newProcess(
     pid,
     childShell,
@@ -137,20 +139,20 @@ function startProcess(config: ShellConfig): ProcessID {
     emptyCommand(pid, -1)
   );
   addProcess(process);
-  console.log(`Started process ${pid} with ${config.executable}`);
+  log.debug(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
   const executer =
     config.interact === "terminal"
       ? executeCommandByPrompt
       : executeCommandByEcho;
   executer(process, ``, getNumCommands(pid), undefined, false, (command) => {
-    console.log(`First command ${command.exactCommand}`);
+    log.debug(`First command ${command.exactCommand}`);
     // Memorize the shell execution command.
     command.command = `"${config.executable}" ${config.args?.join(" ")}`;
     addCommand(pid, command);
     currentSetter(process)();
   });
-  console.log(
+  log.debug(
     `Started process ${pid} with command "${process.currentCommand.exactCommand}" detector ${process.currentCommand.boundaryDetector}`
   );
   return pid;
@@ -185,10 +187,10 @@ function executeCommand(
 function sendKey(process: Process, key: string) {
   // TODO: handle the key code to appropriate code?
   if (process.currentCommand.isFinished) {
-    console.log(`Send key ${key} to process ${process.id} finished command.`);
+    log.debug(`Send key ${key} to process ${process.id} finished command.`);
     return;
   }
-  console.log(`Send key ${key} to process ${process.id}`);
+  log.debug(`Send key ${key} to process ${process.id}`);
   clockIncrement(process);
   // [HN] TODO: filtering the key. e.g. NonConvert
   // or convert to key code?
@@ -196,17 +198,17 @@ function sendKey(process: Process, key: string) {
 }
 
 function stopProcess(process: Process) {
-  console.log(`Stop process call ${process.id}`);
+  log.debug(`Stop process call ${process.id}`);
   clockIncrement(process);
   process.handle.kill();
 }
 
 export function shutdown() {
   processHolder.forEach((process) => {
-    console.log(`Shutdown process ${process.id}`);
+    log.debug(`Shutdown process ${process.id}`);
     process.handle.kill();
   });
-  console.log(`Shutdown all processes.`);
+  log.debug(`Shutdown all processes.`);
 }
 
 const proc = server.procedure;
@@ -245,7 +247,7 @@ export const shellRouter = server.router({
     .output(CommandSchema)
     .mutation(async (opts) => {
       const { pid, command, isSilent, styledCommand } = opts.input;
-      console.log(`executeのAPIが呼ばれた ${pid} ${command}`);
+      log.debug(`executeのAPIが呼ばれた ${pid} ${command}`);
       const process = getProcess(pid);
       return executeCommand(
         process,
@@ -279,7 +281,7 @@ export const shellRouter = server.router({
       })
     )
     .subscription(async (opts) => {
-      console.log(`onStdout subscription call: ${opts.input}`);
+      log.debug(`onStdout subscription call: ${opts.input}`);
       const { pid, cid } = opts.input;
       const process = getProcess(pid);
       let firstEmit = true;
@@ -288,12 +290,12 @@ export const shellRouter = server.router({
           if (data.cid === cid) {
             if (firstEmit) {
               // Emit the all existing stdout.
-              console.log(
+              log.debug(
                 `onStdout first emit: event:${data.stdout} all:${process.currentCommand.stdout}`
               );
               data.stdout = process.currentCommand.stdout;
             } else {
-              console.log(`onStdout emit: event:${data.stdout}`);
+              log.debug(`onStdout emit: event:${data.stdout}`);
             }
             firstEmit = false;
             emit.next(data);
@@ -349,11 +351,6 @@ export const shellRouter = server.router({
     .input(ProcessIDScheme)
     .output(z.object({ directory: z.string(), user: z.string() }))
     .query(async (pid) => {
-      console.log(
-        `current API call ${pid.input} return ${
-          getProcess(pid.input).currentDirectory
-        }, ${getProcess(pid.input).user}`
-      );
       return {
         directory: getProcess(pid.input).currentDirectory,
         user: getProcess(pid.input).user,
@@ -369,7 +366,6 @@ export const shellRouter = server.router({
     .input(ProcessIDScheme)
     .output(z.number().int())
     .query(async (pid) => {
-      console.log(`numCommands call ${pid.input}`);
       return getNumCommands(pid.input);
     }),
   command: proc
@@ -388,7 +384,7 @@ export const shellRouter = server.router({
     .input(
       z.object({
         pid: ProcessIDScheme.refine((value) => {
-          //console.log(`isFinished call pid refine ${value}`);
+          //log.debug(`isFinished call pid refine ${value}`);
           return value < getNextProcessID();
         }),
         cid: CommandIDSchema,
@@ -397,7 +393,7 @@ export const shellRouter = server.router({
     .output(z.boolean())
     .query(async (opts) => {
       const { pid, cid } = opts.input;
-      // console.log(
+      // log.debug(
       //   `isFinished call ${pid} ${cid} ${commandsOfProcessID[pid][cid].isFinished}`
       // );
       return getCommand(pid, cid).isFinished;

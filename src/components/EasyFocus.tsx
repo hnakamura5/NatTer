@@ -1,6 +1,6 @@
 import { logger } from "@/datatypes/Logger";
 import React, { useEffect } from "react";
-import { set } from "zod";
+import * as log from "electron-log/renderer";
 
 type FocusTagType = { input: string; rest: string } | undefined;
 
@@ -54,7 +54,7 @@ class Manager {
   }
 
   jump() {
-    console.log(`jump: langs: ${this.lands.length}`);
+    log.debug(`EasyFocus jump: langs: ${this.lands.length}`);
     if (this.jumping) {
       return;
     }
@@ -109,7 +109,7 @@ class Manager {
   private updateTag() {
     const target = this.tagToLand.get(this.input);
     if (target) {
-      console.log(`finished jump to ${this.input}`);
+      log.debug(`EasyFocus finished jump to ${this.input}`);
       this.finishJump();
       for (const [ref, setJumpTag, _] of this.lands) {
         setJumpTag(undefined);
@@ -131,7 +131,7 @@ class Manager {
       return;
     }
     this.input = this.input + key;
-    console.log(`inputKey: ${key}, input: ${this.input}`);
+    log.debug(`EasyFocus inputKey: ${key}, input: ${this.input}`);
     this.updateTag();
   }
 
@@ -159,7 +159,7 @@ class Manager {
 
   exitJump() {
     if (this.jumping) {
-      console.log(`exitJump`);
+      log.debug(`EasyFocus exitJump`);
       this.finishJump();
     }
   }
@@ -216,8 +216,8 @@ function JumpProvider(props: {
   manager.setInvokeFocus(setJumpTo, setJumping);
   useEffect(() => {
     if (jumpTo) {
-      console.log(
-        `JumpProvider jumpTo: focus current=${
+      log.debug(
+        `EasyFocus JumpProvider jumpTo: focus current=${
           jumpTo?.current || "none"
         } provider=${props.providerRef.current || "none"}`
       );
@@ -229,13 +229,15 @@ function JumpProvider(props: {
         // - input the typed key into input elements on focusing.
         // FIXME: Known issue: still the key input is spilled into the input
         //        when it has global autofocus attribute.
-        console.log(
-          `JumpProvider useEffect: focus timeout target=${target || "none"}`
+        log.debug(
+          `EasyFocus JumpProvider useEffect: focus timeout target=${
+            target || "none"
+          }`
         );
         target?.focus();
       }, 100);
     } else if (jumping) {
-      console.log(`JumpProvider useEffect: retrieve focus to provider`);
+      log.debug(`EasyFocus JumpProvider useEffect: retrieve focus to provider`);
       // Retrieve the focus to the provider on starting the jump action.
       props.providerRef.current?.focus();
     }
@@ -339,7 +341,9 @@ export module EasyFocus {
       if (!isVisible) {
         return;
       }
-      logger.logTrace(`EasyFocus.Land: register key=${props.name} ref=${props.focusTarget}`);
+      log.debug(
+        `EasyFocus.Land: register key=${props.name} ref=${props.focusTarget}`
+      );
       manager.addLand(props.focusTarget, setJumpTag, props.onBeforeFocus);
       return () => manager.removeLand(props.focusTarget);
     }, [ref, isVisible]);

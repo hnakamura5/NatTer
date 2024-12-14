@@ -7,6 +7,8 @@ import { ShellInteractKind } from "@/datatypes/ShellInteract";
 import * as iconv from "iconv-lite";
 import stream from "stream";
 
+import * as log from "electron-log/main";
+
 iconv.enableStreamingAPI(stream);
 
 type ChileShellStreamOptions = {
@@ -35,7 +37,7 @@ export class ChildShellStream {
     this.usePty = this.shellInterface === "terminal";
     if (this.usePty) {
       // Use node-pty
-      console.log(`Spawning shell: ${command} ${args}`);
+      log.debug(`Spawning shell: ${command} ${args}`);
       command = command.replace(/"/g, "");
       this.pty = pty.spawn(command, args || [], {
         cwd: options?.cwd,
@@ -101,14 +103,14 @@ export class ChildShellStream {
   }
 
   execute(command: string) {
-    console.log(`childShell executing command: ${command}`);
+    log.debug(`childShell executing command: ${command}`);
     if (this.usePty) {
       // TODO: snap the size for silent command.
       this.pty?.write(command + "\r");
     } else if (this.childProcess) {
       if (this.options?.encoding) {
         const encoded = iconv.encode(command + "\n", this.options.encoding);
-        console.log(`childShell writing encoded: ${encoded}`);
+        log.debug(`childShell writing encoded: ${encoded}`);
         this.childProcess?.stdin.write(encoded);
       } else {
         this.childProcess?.stdin.write(command + "\n");
@@ -224,7 +226,7 @@ export function spawnShell(
   try {
     return new ChildShellStream(shellInterface, command, args, options);
   } catch (e) {
-    console.log("Failed to spawn shell: ", e);
+    log.debug("Failed to spawn shell: ", e);
     throw e;
   }
 }

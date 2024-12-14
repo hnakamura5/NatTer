@@ -4,6 +4,8 @@ import { KeybindCommands } from "@/datatypes/KeybindCommands";
 import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
 import { useKeybindList } from "@/AppState";
 
+import * as log from "electron-log/renderer";
+
 type KeybindOfCommandScopeRef =
   MutableRefObject<RefCallback<HTMLElement> | null>;
 
@@ -23,7 +25,7 @@ export function useKeybindOfCommand(
   const keys = useKeybindList().get(command);
   const keyList = keys?.map((key) => key.key).join(", ") || [];
   for (const k of keys || []) {
-    console.log(
+    log.debug(
       `useKeybindOfCommand: name:${command} key: ${k.key} command: ${k.command}`
     );
   }
@@ -66,9 +68,7 @@ export function useKeybindOfCommandBlocker(
   });
 }
 
-export function useFixedKeybindsBlocker(
-  keybindRef?: KeybindOfCommandScopeRef
-) {
+export function useFixedKeybindsBlocker(keybindRef?: KeybindOfCommandScopeRef) {
   useKeybindOfCommandBlocker("Copy", keybindRef);
   useKeybindOfCommandBlocker("Paste", keybindRef);
   useKeybindOfCommandBlocker("Cut", keybindRef);
@@ -92,7 +92,7 @@ export function KeybindScope(props: {
         tabIndex={-1}
         style={{ display: "contents" }}
         onKeyDown={(e) => {
-          console.log(`KeybindScope: key: ${e.key}`);
+          log.debug(`KeybindScope: key: ${e.key}`);
         }}
       >
         {props.children}

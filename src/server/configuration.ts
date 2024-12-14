@@ -9,7 +9,8 @@ import {
 } from "@/datatypes/Keybind";
 import fs from "node:fs/promises";
 import Electron from "electron";
-import { read, write } from "original-fs";
+
+import * as log from "electron-log/renderer";
 
 const proc = server.procedure;
 
@@ -19,7 +20,7 @@ const keybindFilePath = Electron.app.getPath("home") + "/.NatTer/keybind.json";
 export const configurationRouter = server.router({
   readConfig: proc.output(ConfigSchema).query(async () => {
     const configRead = fs.readFile(configFilePath, "utf-8");
-    console.log("Reading config from: ", configFilePath);
+    log.debug("Reading config from: ", configFilePath);
     return configRead.then((config) => {
       const parsed = parseConfig(config);
       if (parsed) {
@@ -46,7 +47,7 @@ export const configurationRouter = server.router({
     }),
   readKeybind: proc.output(UserKeybindListSchema).query(async () => {
     const keybindRead = fs.readFile(keybindFilePath, "utf-8");
-    console.log("Reading keybind from: ", keybindFilePath);
+    log.debug("Reading keybind from: ", keybindFilePath);
     return keybindRead.then((keybind) => {
       const parsed = parseUserKeybindList(keybind);
       if (parsed) {

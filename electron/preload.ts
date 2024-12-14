@@ -2,7 +2,6 @@ import { ipcRenderer, contextBridge } from 'electron'
 import { exposeElectronTRPC } from 'electron-trpc/main';
 
 process.once('loaded', () => {
-  console.log('preload.ts: process.once("loaded") exposeElectronTRPC()');
   exposeElectronTRPC();
 });
 

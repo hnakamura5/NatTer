@@ -2,7 +2,7 @@ import Session from "@/components/Session";
 import HoverMenusBar from "@/components/HoverMenusBar";
 import InputBox from "@/components/InputBox";
 import { Box } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Provider as JotaiProvider } from "jotai";
 
 import styled from "@emotion/styled";
@@ -15,10 +15,10 @@ import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
 import { useConfig, useTheme } from "@/AppState";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
-import { FileTree } from "@/components/HoverMenus/FileTree";
 
-import { logger } from "@/datatypes/Logger";
 import { Config, ShellConfig } from "@/datatypes/Config";
+
+import * as log from "electron-log/renderer";
 
 const VerticalBox = styled(Box)({
   display: "flex",
@@ -67,10 +67,6 @@ function SessionContainer(props: SessionContainerProps) {
   const stopper = api.shell.stop.useMutation();
 
   const defaultShell = getDefaultShell(config);
-  console.log(
-    `defaultShell: ${defaultShell.name} ${defaultShell.executable} ${defaultShell.args}
-     ${defaultShell.kind} ${defaultShell.encoding}`
-  );
 
   // Start the shell process.
   // TODO: This is a temporary solution. We should start out of this component.
@@ -78,11 +74,11 @@ function SessionContainer(props: SessionContainerProps) {
     starter
       .mutateAsync(defaultShell, {
         onError: (error) => {
-          logger.logTrace(`start fetch error: ${error}`);
+          log.error(`start fetch error: ${error}`);
         },
       })
       .then((result) => {
-        logger.logTrace(`start fetch set pid: ${result}`);
+        log.debug(`start fetch set pid: ${result}`);
         setPid(result);
       });
     return () => {

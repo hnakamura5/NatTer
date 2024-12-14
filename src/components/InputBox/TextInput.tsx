@@ -23,8 +23,9 @@ import {
   KeybindScope,
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
-} from "../KeybindScope";
-import { set } from "zod";
+} from "@/components/KeybindScope";
+
+import * as log from "electron-log/renderer";
 
 export function Input(props: {
   key: string;
@@ -52,10 +53,10 @@ export function Input(props: {
   );
   // If the command history is changed, update the text.
   useEffect(() => {
-    console.log(`Command history changed to ${commandHistory} ${command.data}`);
+    log.debug(`Command history changed to ${commandHistory} ${command.data}`);
     if (commandHistory) {
       if (command.data) {
-        console.log(`Set history command: ${command.data.command}`);
+        log.debug(`Set history command: ${command.data.command}`);
         setText(command.data.command);
       }
     }
@@ -66,7 +67,7 @@ export function Input(props: {
   useKeybindOfCommand(
     "CommandHistoryUp",
     () => {
-      console.log(
+      log.debug(
         `CommandHistoryUp history:${commandHistory} num:${numCommands}`
       );
       if (numCommands) {
@@ -85,7 +86,7 @@ export function Input(props: {
   useKeybindOfCommand(
     "CommandHistoryDown",
     () => {
-      console.log(
+      log.debug(
         `CommandHistoryDown history:${commandHistory} num:${numCommands}`
       );
       if (numCommands) {
@@ -104,7 +105,7 @@ export function Input(props: {
   // TODO: Input must be on top level of the component to avoid the focus problem.
   // That is, we lose the focus when the component re-rendered (e.g.on input change).
   // Even styled component causes this problem.
-  console.log(`Input rendered text:${text} (history: ${commandHistory})`);
+  log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
 
   return (
     <ErrorBoundary fallback={<InputBoxError />}>

@@ -13,13 +13,15 @@ import {
 } from "@/server/ShellUtils/BoundaryDetectorUtils";
 import { receiveCommandResponse } from "@/server/ShellUtils/ExecuteUtils";
 
+import * as log from "electron-log/main";
+
 function setPromptIsFinished(
   process: Process,
   boundaryDetector: string,
   stdout: string
 ) {
   let target = stdout;
-  console.log(`setPromptIsFinished: stdout = ${stdout}`);
+  log.debug(`setPromptIsFinished: stdout = ${stdout}`);
   if (isCommandEchoBackToStdout(process.shellSpec, process.config.interact)) {
     for (let i = 0; i < 2; i++) {
       const index = target.indexOf(boundaryDetector); // Of prompt set command.
@@ -30,7 +32,7 @@ function setPromptIsFinished(
     }
   }
   const result = target.indexOf(boundaryDetector);
-  console.log(`setPromptIsFinished: target = ${target}, result = ${result}`);
+  log.debug(`setPromptIsFinished: target = ${target}, result = ${result}`);
   return result !== -1;
 }
 
@@ -52,7 +54,7 @@ async function setPrompt(process: Process, boundaryDetector: string) {
   });
   const promptText = `${boundaryDetector}${process.shellSpec.exitCodeVariable}${boundaryDetector}`;
   const setCommand = process.shellSpec.promptCommands.set(promptText);
-  console.log(`setPrompt: ${setCommand}`);
+  log.debug(`setPrompt: ${setCommand}`);
   process.handle.execute(setCommand);
   return new Promise<void>((resolve) => {
     // Wait until finished is set to true.
@@ -79,7 +81,7 @@ export function executeCommandByPrompt(
     process.shellSpec
   );
   const exactCommand = command.toString();
-  console.log(
+  log.debug(
     `Execute command by prompt ${command} (exact: ${exactCommand}) in process ${process.id} cid: ${cid}`
   );
   process.currentCommand = newCommand(

@@ -8,6 +8,8 @@ import {
 import { detectCommandResponseAndExitCodeFunctionType } from "@/server/ShellUtils/ExecuteUtils";
 import stripAnsi from "strip-ansi";
 
+import * as log from "electron-log/main";
+
 // Implement detection algorithm using prompt.
 // This is suitable for terminal shells with prompt.
 
@@ -36,7 +38,7 @@ export const detectCommandResponseAndExitCodeByPrompt: detectCommandResponseAndE
   ) => {
     // Find the first boundary detector, that is the next prompt.
     const first = stdout.indexOf(boundaryDetector);
-    console.log(`detectCommandResponseAndExitCodeByPrompt first: ${first}`);
+    log.debug(`detectCommandResponseAndExitCodeByPrompt first: ${first}`);
     if (first === -1) {
       return undefined;
     }
@@ -44,7 +46,7 @@ export const detectCommandResponseAndExitCodeByPrompt: detectCommandResponseAndE
       boundaryDetector,
       first + boundaryDetector.length
     );
-    console.log(`detectCommandResponseAndExitCodeByPrompt second: ${second}`);
+    log.debug(`detectCommandResponseAndExitCodeByPrompt second: ${second}`);
     if (second === -1) {
       return undefined;
     }

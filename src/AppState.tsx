@@ -24,6 +24,8 @@ import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
 import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
 import { KeybindCommands } from "@/datatypes/KeybindCommands";
 
+import * as log from "electron-log/renderer";
+
 const ConfigContext = createContext<Config | undefined>(undefined);
 
 export function useConfig() {
@@ -40,7 +42,7 @@ function ConfigProvider(props: { children: React.ReactNode }) {
       console.error("Failed to load config: ", error);
     },
   });
-  console.log("ConfigProvider: ", config.data);
+  log.debug("ConfigProvider: ", config.data);
   if (!config.data) {
     return <div>Failed to load config</div>;
   }
@@ -87,7 +89,7 @@ function KeybindListProvider(props: { children: React.ReactNode }) {
       console.error("Failed to load keybind: ", error);
     },
   });
-  console.log("KeybindListProvider: ", keybind.data);
+  log.debug("KeybindListProvider: ", keybind.data);
   if (!keybind.data) {
     return <div>Failed to load keybind</div>;
   }

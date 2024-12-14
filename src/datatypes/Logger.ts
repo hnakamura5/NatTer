@@ -14,6 +14,10 @@ class Logger {
   }
 }
 
+export function trace() {
+  return new Error().stack;
+}
+
 export const logger = new Logger();
 
 function stringToHexLog(str: string) {

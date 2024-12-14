@@ -12,6 +12,8 @@ import { Theme } from "@/datatypes/Theme";
 import { useTheme } from "@/AppState";
 import { CommandID, ProcessID } from "@/datatypes/Command";
 
+import * as log from "electron-log/renderer";
+
 let count = 0;
 
 function newTerminal(theme: Theme) {
@@ -34,7 +36,7 @@ function newTerminal(theme: Theme) {
   terminal.loadAddon(new Unicode11Addon());
   terminal.unicode.activeVersion = "11";
   terminal.resize(512, 64); //[HN] TODO: set appropriate size.
-  console.log(`new terminal handle ${count++}`);
+  log.debug(`new terminal handle ${count++}`);
   return {
     terminal: terminal,
     fit: fitAddon,
@@ -59,20 +61,20 @@ export default function Xterm(props: XtermProps) {
   useEffect(() => {
     const handle = newTerminal(theme);
     if (!handle) {
-      console.log(`no handle ${pid}-${cid}`);
+      log.debug(`no handle ${pid}-${cid}`);
       return;
     }
     const terminal = handle.terminal;
     if (termDivRef.current) {
       terminal.open(termDivRef.current);
-      console.log(`open terminal ${pid}-${cid}`);
+      log.debug(`open terminal ${pid}-${cid}`);
     }
     //handle.fit.fit();
 
     terminal.write(`pid: ${pid} cid: ${cid}\r\n`);
 
     return () => {
-      console.log(`dispose terminal ${pid}-${cid}`);
+      log.debug(`dispose terminal ${pid}-${cid}`);
       terminal.dispose();
     };
   }, []);

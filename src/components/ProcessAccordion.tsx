@@ -42,12 +42,11 @@ import { set } from "zod";
 
 import * as log from "electron-log/renderer";
 
-
 const queryOption = {
   refetchInterval: 500,
   /* eslint-disable @typescript-eslint/no-explicit-any */
   onError(e: any) {
-    logger.logTrace(`ProcessAccordion: error ${e}`);
+    log.error(`ProcessAccordion: error ${e}`);
   },
 };
 
@@ -116,7 +115,7 @@ function ResponseSelector(props: { cid: CommandID }) {
   );
   const interactMode = api.shell.interactMode.useQuery(pid);
   // if (isFinished.data) {
-  //   console.log(`finished mode`);
+  //   log.debug(`finished mode`);
   //   return <FinishedCommandResponse cid={cid} />;
   // } else {
   if (interactMode.data == "terminal") {
@@ -171,7 +170,7 @@ function ProcessKeySender(props: {
   return (
     <div
       onKeyDown={(e) => {
-        console.log(
+        log.debug(
           `ProcessKeySender get key: ${e.key}, code: ${e.code}, keyCode: ${e.keyCode}, which: ${e.which}, charCode: ${e.charCode}, ctrl: ${e.ctrlKey}, alt: ${e.altKey}, shift: ${e.shiftKey}, meta: ${e.metaKey}`
         );
         if (isFinished.data) {
@@ -182,11 +181,11 @@ function ProcessKeySender(props: {
           return;
         }
         const evaluated = evaluateKeyboardEventToTerminalCode(e);
-        console.log(`ProcessKeySender evaluated key: ${evaluated}`);
+        log.debug(`ProcessKeySender evaluated key: ${evaluated}`);
         if (evaluated === undefined || evaluated === "") {
           return;
         }
-        console.log(`ProcessKeySender send key: ${evaluated}`);
+        log.debug(`ProcessKeySender send key: ${evaluated}`);
         sendKey.mutate(
           {
             pid: pid,
@@ -194,7 +193,7 @@ function ProcessKeySender(props: {
           },
           {
             onError: (error) => {
-              logger.logTrace(`failed to send key: ${error}`);
+              log.error(`failed to send key: ${error}`);
             },
           }
         );
@@ -283,7 +282,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   // Keybind definitions.
   // Global keybinds
   useKeybindOfCommand("ExpandToggleCommandAll", () => {
-    console.log(`ExpandToggleCommandAll: ${pid}-${cid}`);
+    log.debug(`ExpandToggleCommandAll: ${pid}-${cid}`);
     setExpanded(!expanded);
   });
   // Scoped keybinds
@@ -291,7 +290,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   useKeybindOfCommand(
     "ExpandToggleCommand",
     () => {
-      // console.log(`ExpandToggleCommand: ${pid}-${cid}`);
+      // log.debug(`ExpandToggleCommand: ${pid}-${cid}`);
       log.debug(`ExpandToggleCommand: ${pid}-${cid}`);
       const currentExpanded = expanded;
       setExpanded(!currentExpanded);
@@ -305,7 +304,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   useKeybindOfCommand(
     "FocusCommandUp",
     () => {
-      console.log(`FocusCommandUp: ${pid}-${cid}`);
+      log.debug(`FocusCommandUp: ${pid}-${cid}`);
       handleGFM.focus(IDString(pid, cid - 1));
     },
     keybindRef
@@ -313,7 +312,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
   useKeybindOfCommand(
     "FocusCommandDown",
     () => {
-      console.log(`FocusCommandDown: ${pid}-${cid}`);
+      log.debug(`FocusCommandDown: ${pid}-${cid}`);
       if (props.isLast) {
         handleGFM.focus(GlobalFocusMap.GlobalKey.InputBox);
       } else {
@@ -323,16 +322,15 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     keybindRef
   );
 
-  //TODO: console.log(`command: ${command.command}, id: ${props.listIndex}`);
-  //TODO: console.log(`stderr: ${command.stderr}`);
-  console.log(idStr);
+  //TODO: log.debug(`command: ${command.command}, id: ${props.listIndex}`);
+  //TODO: log.debug(`stderr: ${command.stderr}`);
+  // log.debug(idStr);
 
   return (
     <ErrorBoundary
       fallbackRender={ProcessAccordionError}
       onError={(error, stack) => {
-        logger.logTrace(`${idStr} error: ${error}`);
-        console.log(stack);
+        log.error(`${idStr} error: ${error}, stack: ${stack}`);
       }}
     >
       <ProcessKeySender cid={cid}>

@@ -7,6 +7,8 @@ import {
   createContext,
 } from "react";
 
+import * as log from "electron-log/renderer";
+
 type FocusTarget = {
   focusRef?: RefObject<HTMLElement>;
   callBeforeFocus?: (focusRef?: RefObject<HTMLElement>) => Promise<boolean>;
@@ -17,7 +19,7 @@ class GlobalFocusMapHandle {
   private map = new Map<GlobalFocusMap.Key, FocusTarget>();
 
   set(key: GlobalFocusMap.Key, target: FocusTarget) {
-    // console.log(`GlobalFocusMap.set: ${key} target: ${target.focusRef?.current}`);
+    // log.debug(`GlobalFocusMap.set: ${key} target: ${target.focusRef?.current}`);
     this.map.set(key, target);
   }
   get(key: GlobalFocusMap.Key) {
@@ -28,29 +30,29 @@ class GlobalFocusMapHandle {
   }
   focus(key: GlobalFocusMap.Key) {
     const target = this.map.get(key);
-    // console.log(`GlobalFocusMap.focus: ${key}`);
+    // log.debug(`GlobalFocusMap.focus: ${key}`);
     if (target) {
       if (target.callBeforeFocus) {
         target.callBeforeFocus(target.focusRef).then((prevent) => {
           if (!prevent && target.focusRef?.current) {
-            // console.log(
+            // log.debug(
             //   `GlobalFocusMap.focus: focusing ${key} ${target.focusRef.current}`
             // );
             target.focusRef.current.focus();
           }
         });
       } else if (target.focusRef?.current) {
-        // console.log(
+        // log.debug(
         //   `GlobalFocusMap.focus: focusing ${key} ${target.focusRef.current}`
         // );
         target.focusRef.current.focus();
       } else {
-        console.log(
+        log.debug(
           `GlobalFocusMap.focus: no focus target ${key} ${target.focusRef?.current}`
         );
       }
     } else {
-      console.log(`GlobalFocusMap.focus: no target entry for ${key}`);
+      log.debug(`GlobalFocusMap.focus: no target entry for ${key}`);
     }
   }
   isFocused(key: GlobalFocusMap.Key) {
@@ -96,7 +98,7 @@ export module GlobalFocusMap {
   }) {
     const handle = useHandle();
     useEffect(() => {
-      // console.log(`GlobalFocusMap.Target: ${props.focusKey} ${props.focusRef?.current}`);
+      // log.debug(`GlobalFocusMap.Target: ${props.focusKey} ${props.focusRef?.current}`);
       if (props.focusKey === undefined) {
         return;
       }

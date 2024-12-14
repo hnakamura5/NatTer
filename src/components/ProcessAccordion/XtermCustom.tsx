@@ -24,7 +24,8 @@ import {
 } from "@/components/ProcessAccordion/CommandResponseCommon";
 
 import { api } from "@/api";
-import { set } from "zod";
+
+import * as log from "electron-log/renderer";
 
 function pxToNumber(px: string) {
   return parseInt(px.replace("px", ""));
@@ -60,7 +61,7 @@ function newTerminal(theme: Theme): terminalHandle {
   terminal.loadAddon(new Unicode11Addon());
   terminal.unicode.activeVersion = "11";
   terminal.resize(512, 64); //[HN] TODO: set appropriate size.
-  console.log(`new terminal ${count++}`);
+  log.debug(`new terminal ${count++}`);
   return {
     terminal: terminal,
     fit: fitAddon,
@@ -86,7 +87,7 @@ function XtermCustomAlive(props: XtermCustomProps) {
   useEffect(() => {
     const handle = newTerminal(theme);
     if (!handle) {
-      console.log(`no handle ${pid}-${cid}`);
+      log.debug(`no handle ${pid}-${cid}`);
       return;
     }
     handleRef.current = handle;
@@ -95,9 +96,9 @@ function XtermCustomAlive(props: XtermCustomProps) {
     }
     const terminal = handle.terminal;
     const fit = handle.fit;
-    console.log(`open terminal ${pid}-${cid}`);
+    log.debug(`open terminal ${pid}-${cid}`);
     terminal.open(termDivRef.current);
-    console.log(
+    log.debug(
       `write terminal ${pid}-${cid} area:${
         handle.terminal.textarea?.value
       } serial:${handle.serialize.serialize()}`
@@ -110,15 +111,15 @@ function XtermCustomAlive(props: XtermCustomProps) {
       }
     };
     handle.terminal.onData((data) => {
-      console.log(`terminal onData: ${data}`);
+      log.debug(`terminal onData: ${data}`);
       sendKey.mutate({ pid: pid, key: data });
     });
     handle.terminal.onResize((size) => {
-      console.log(`terminal onResize: ${size}`);
+      log.debug(`terminal onResize: ${size}`);
       resize.mutate({ pid: pid, cols: size.cols, rows: size.rows });
     });
     return () => {
-      console.log(`dispose terminal ${pid}-${cid}`);
+      log.debug(`dispose terminal ${pid}-${cid}`);
       terminal.dispose();
     };
   }, []);
@@ -127,10 +128,10 @@ function XtermCustomAlive(props: XtermCustomProps) {
     { pid: pid, cid: cid },
     {
       onError(error) {
-        logger.logTrace(`stdout: ${error}`);
+        log.error(`stdout: ${error}`);
       },
       onData: (data) => {
-        logger.log(
+        log.debug(
           `stdout onData: cid: ${data.cid} isFinished: ${data.isFinished}, stdout: ${data.stdout} in pid-${pid} cid-${cid}`
         );
         if (data.cid === cid && !data.isFinished) {
@@ -173,17 +174,17 @@ function XtermCustomFinished(props: XtermCustomProps) {
     const terminal = handle.terminal;
     if (termDivRef.current) {
       terminal.open(termDivRef.current);
-      console.log(`open finished terminal ${pid}-${cid}`);
+      log.debug(`open finished terminal ${pid}-${cid}`);
     }
     return () => {
-      console.log(`dispose finished terminal ${pid}-${cid}`);
+      log.debug(`dispose finished terminal ${pid}-${cid}`);
       terminal.dispose();
     };
   }, []);
 
   useEffect(() => {
     if (command.data) {
-      console.log(
+      log.debug(
         `write finished terminal ${pid}-${cid} stdoutResponse: ${command.data?.stdoutResponse}`
       );
       const size = command.data.terminalSize;
@@ -191,7 +192,7 @@ function XtermCustomFinished(props: XtermCustomProps) {
       handleRef.current?.terminal.write(command.data?.stdoutResponse || "");
     }
     handleRef.current?.terminal.onData((data) => {
-      console.log(`terminal onData: ${data}`);
+      log.debug(`terminal onData: ${data}`);
     });
   }, [cid, pid, command.data?.stdoutResponse, command.data]);
 
@@ -216,7 +217,7 @@ export default function XtermCustom(props: XtermCustomProps) {
     {
       refetchInterval: 200,
       onError: (error) => {
-        logger.logTrace(`outputCompleted fetch: ${error}`);
+        log.error(`outputCompleted fetch: ${error}`);
       },
     }
   );

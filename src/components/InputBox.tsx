@@ -28,7 +28,9 @@ import { Input } from "@/components/InputBox/TextInput";
 import {
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
-} from "./KeybindScope";
+} from "@/components/KeybindScope";
+
+import * as log from "electron-log/renderer";
 
 interface InputBoxProps {}
 
@@ -61,7 +63,7 @@ function InputBox(props: InputBoxProps) {
         { pid: pid, command: command },
         {
           onError: (error) => {
-            logger.logTrace(`failed to execute: ${error}`);
+            log.error(`failed to execute: ${error}`);
           },
         }
       );
@@ -76,7 +78,7 @@ function InputBox(props: InputBoxProps) {
   useKeybindOfCommand(
     "FocusCommandUp",
     () => {
-      console.log(`FocusCommandUp from Input`);
+      log.debug(`FocusCommandUp from Input`);
       handleGFM.focus(GlobalFocusMap.GlobalKey.LastCommand);
     },
     keybindRef
@@ -84,13 +86,13 @@ function InputBox(props: InputBoxProps) {
   useKeybindOfCommand(
     "FocusFileView",
     () => {
-      console.log(`FocusFileView from Input`);
+      log.debug(`FocusFileView from Input`);
       handleGFM.focus(GlobalFocusMap.GlobalKey.FileView);
     },
     keybindRef
   );
 
-  console.log("InputBox rendered");
+  log.debug("InputBox rendered");
 
   return (
     <ErrorBoundary fallbackRender={InputBoxError}>

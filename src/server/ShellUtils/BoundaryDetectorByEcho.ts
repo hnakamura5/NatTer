@@ -8,6 +8,8 @@ import { detectCommandResponseAndExitCodeFunctionType } from "@/server/ShellUtil
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 import stripAnsi from "strip-ansi";
 
+import * as log from "electron-log/main";
+
 // Implement detection algorithm using echo command.
 // This is suitable for non-terminal shells.
 
@@ -68,7 +70,7 @@ function detectByEchoWithoutCommandItself(
   target: string
 ) {
   const first = target.indexOf(boundaryDetector);
-  console.log(`detectByEchoWithoutCommandItself first: ${first}`);
+  log.debug(`detectByEchoWithoutCommandItself first: ${first}`);
   if (first === -1) {
     return undefined;
   }
@@ -76,7 +78,7 @@ function detectByEchoWithoutCommandItself(
     boundaryDetector,
     first + boundaryDetector.length
   );
-  console.log(`detectByEchoWithoutCommandItself second: ${second}`);
+  log.debug(`detectByEchoWithoutCommandItself second: ${second}`);
   if (second === -1) {
     return undefined;
   }
@@ -84,7 +86,7 @@ function detectByEchoWithoutCommandItself(
     boundaryDetector,
     second + boundaryDetector.length
   );
-  console.log(`detectByEchoWithoutCommandItself third: ${third}`);
+  log.debug(`detectByEchoWithoutCommandItself third: ${third}`);
   if (third === -1) {
     return undefined;
   }
@@ -123,20 +125,20 @@ export const detectCommandResponseAndExitCodeByEcho: detectCommandResponseAndExi
     stdout: string,
     boundaryDetector: string
   ) => {
-    console.log(`detectCommandResponseAndExitCodeByEcho stdout: ${stdout}`);
-    console.log(
+    log.debug(`detectCommandResponseAndExitCodeByEcho stdout: ${stdout}`);
+    log.debug(
       `detectCommandResponseAndExitCodeByEcho end. (len: ${stdout.length})`
     );
     let target: string | undefined = stdout;
     if (isCommandEchoBackToStdout(shellSpec, interact)) {
       target = skipCommandWithEchoItself(shellSpec, stdout, boundaryDetector);
     }
-    console.log(`skipCommandWithEchoItself target: ${target}`);
+    log.debug(`skipCommandWithEchoItself target: ${target}`);
     if (target === undefined) {
       return undefined;
     }
     const result = detectByEchoWithoutCommandItself(boundaryDetector, target);
-    console.log(
+    log.debug(
       `detectByEchoWithoutCommandItself result: ${result?.response}, ${result?.exitStatus}`
     );
     return result;

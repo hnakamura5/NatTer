@@ -18,6 +18,8 @@ import { SerializeAddon } from "@xterm/addon-serialize";
 import DOMPurify from "dompurify";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 
+import * as log from "electron-log/main";
+
 const Cols = 512;
 const Rows = 64;
 
@@ -30,11 +32,11 @@ function stripAnsiInTerminal(text: string) {
   xterm.clear();
   xterm.reset();
   xterm.resize(Cols, Rows);
-  console.log(`stripAnsi: write ${text}`);
+  log.debug(`stripAnsi: write ${text}`);
   let result: string | undefined = undefined;
   xterm.write(text, () => {
     result = serializeAddon.serialize();
-    console.log(`stripAnsi: write done serial: ${result}`);
+    log.debug(`stripAnsi: write done serial: ${result}`);
   });
   return new Promise<string>((resolve) => {
     const interval = setInterval(() => {
@@ -93,14 +95,14 @@ export async function getStdoutOutputPartInPlain(
   includesCommandItSelf: boolean
 ) {
   const result = (await stripAnsiInTerminal(command.stdoutResponse)).trim();
-  console.log(
+  log.debug(
     `getStdoutOutputPartInPlain: pid=${command.pid} result=${result}, includesCommandItSelf=${includesCommandItSelf} exactCommand=${command.exactCommand}`
   );
   if (!includesCommandItSelf) {
     return result;
   }
   const commandIndex = result.indexOf(command.exactCommand);
-  console.log(
+  log.debug(
     `getStdoutOutputPartInPlain: commandIndex: ${commandIndex} (-1 but OK)`
   );
   if (commandIndex === -1) {
@@ -128,7 +130,7 @@ async function resizeAndWait(process: Process, cols: number, rows: number) {
   process.handle.onStdout((data: Buffer) => {
     // Dispose the rewriting of stdout by resize.
     const response = data.toString();
-    console.log(`onStdout by resize: ${response}`);
+    log.debug(`onStdout by resize: ${response}`);
     if (interval) {
       clearInterval(interval);
     }
@@ -156,11 +158,11 @@ async function withCanonicalTerminalSizeTemporarily(
   if (size?.cols === Cols && size?.rows === Rows) {
     return onEnd;
   }
-  console.log(`cols: ${size?.cols}, rows: ${size?.rows}`);
+  log.debug(`cols: ${size?.cols}, rows: ${size?.rows}`);
   // TODO: Resizing causes the terminal puts many lines to the stdout.
   // TODO: e.g. \e[K (line clear) and previous commands.
   await resizeAndWait(process, Cols, Rows);
-  console.log(`Resize done.`);
+  log.debug(`Resize done.`);
   return (command: Command) => {
     if (size) {
       resizeAndWait(process, size.cols, size.rows).then(() => {
@@ -188,15 +190,15 @@ export async function receiveCommandResponse(
   }
   // stdout handling.
   process.handle.onStdout((data: Buffer) => {
-    // console.log(
+    // log.debug(
     //   `Received data in command ${current.command} in process ${process.id} data: ${data} len: ${data.length}`
     // );
     const response = data.toString();
     if (current.isFinished) {
-      console.log(`onStdout for finished end.`);
+      log.debug(`onStdout for finished end.`);
       return true;
     }
-    console.log(`onStdout end.`);
+    log.debug(`onStdout end.`);
     addStdout(process.config, current, response);
     clockIncrement(process);
     // Stdout handling. Emit the event, add to the command, and increment the clock.
@@ -224,11 +226,11 @@ export async function receiveCommandResponse(
     current.isFinished = true;
     current.exitStatus = exitStatus;
     current.exitStatusIsOK = process.shellSpec.isExitCodeOK(exitStatus);
-    console.log(
+    log.debug(
       `Finished ${process.id}-${current.cid} ${current.command} by status ${current.exitStatus} in process ${process.id}`
     );
     current.stdoutResponse = detected.response;
-    console.log(
+    log.debug(
       `detect stdoutResponse: ${current.stdoutResponse}, exitStatus: ${exitStatus}`
     );
     commandToHtml(process, current).then(({ stdoutHTML, stderrHTML }) => {
@@ -239,7 +241,7 @@ export async function receiveCommandResponse(
     process.handle.clear(); // TODO: Is this required?
     process.event.emit("finish", current);
     if (onEnd !== undefined) {
-      console.log(
+      log.debug(
         `Call onEnd in process ${process.id} for command ${current.exactCommand}`
       );
       onEnd(current);
@@ -252,7 +254,7 @@ export async function receiveCommandResponse(
       return;
     }
     const response = data.toString();
-    //console.log(`stderr: ${response}`);
+    //log.debug(`stderr: ${response}`);
     current.stderr = current.stderr.concat(response);
     process.event.emit("stderr", response);
     clockIncrement(process);

@@ -16,6 +16,8 @@ import { FaFolder as FolderIcon, FaFile as FileIcon } from "react-icons/fa";
 import React from "react";
 import { KeybindScope } from "../KeybindScope";
 
+import * as log from "electron-log/renderer";
+
 function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <span style={{ verticalAlign: "-2px", fontSize: "0.8em", ...props.style }}>
@@ -40,7 +42,7 @@ function FileLabel(props: { stat: FileStat }) {
 
   const parsed = api.fs.parsePath.useQuery(props.stat.fullPath, {
     onError: () => {
-      logger.logTrace(`Failed to parse ${props.stat.fullPath}`);
+      log.error(`Failed to parse ${props.stat.fullPath}`);
     },
   });
   if (!parsed.data) {
@@ -59,7 +61,7 @@ function DirectoryLabel(props: { stat: FileStat }) {
 
   const parsed = api.fs.parsePath.useQuery(props.stat.fullPath, {
     onError: () => {
-      logger.logTrace(`Failed to parse ${props.stat.fullPath}`);
+      log.error(`Failed to parse ${props.stat.fullPath}`);
     },
   });
   if (!parsed.data) {
@@ -96,20 +98,20 @@ function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
     margin: `-${ListMargin} 0px -${ListMargin} 0px`,
     padding: "0px 0px 0px 5px", // top right bottom left
   });
-  //logger.logTrace(`FileTreeItem: ${props.path}`);
+  //log.error(`FileTreeItem: ${props.path}`);
   const stat = api.fs.stat.useQuery(props.path, {
     onError: () => {
-      logger.logTrace(`Failed to stat ${props.path}`);
+      log.error(`Failed to stat ${props.path}`);
     },
   });
   const list = api.fs.list.useQuery(props.path, {
     onError: () => {
-      logger.logTrace(`Failed to list ${props.path}`);
+      log.error(`Failed to list ${props.path}`);
     },
   });
   const sep = api.fs.sep.useQuery(undefined, {
     onError: () => {
-      logger.logTrace(`Failed to get sep`);
+      log.error(`Failed to get sep`);
     },
   });
 
@@ -163,7 +165,7 @@ export function FileTree(props: FileTreeProps) {
   if (current !== props.home) {
     setCurrent(props.home);
   }
-  // logger.logTrace(`FileTree: current=${current}`);
+  // log.error(`FileTree: current=${current}`);
 
   return (
     <KeybindScope>
