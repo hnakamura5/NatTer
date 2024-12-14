@@ -1,3 +1,66 @@
+import * as logMain from "electron-log/main";
+import * as logRenderer from "electron-log/renderer";
+
+// Generic access to the logger, wrapping both main and renderer loggers.
+
+function isRenderer() {
+  return process.type === "renderer";
+}
+
+export const log = {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  error: (...params: any[]) => {
+    if (isRenderer()) {
+      logRenderer.error(...params);
+    } else {
+      logMain.error(...params);
+    }
+  },
+  warn: (...params: any[]) => {
+    if (isRenderer()) {
+      logRenderer.warn(...params);
+    } else {
+      logMain.warn(...params);
+    }
+  },
+  info: (...params: any[]) => {
+    if (isRenderer()) {
+      logRenderer.info(...params);
+    } else {
+      logMain.info(...params);
+    }
+  },
+  verbose: (...params: any[]) => {
+    if (isRenderer()) {
+      logRenderer.verbose(...params);
+    } else {
+      logMain.verbose(...params);
+    }
+  },
+  debug: (...params: any[]) => {
+    if (isRenderer()) {
+      logRenderer.debug(...params);
+    } else {
+      logMain.debug(...params);
+    }
+  },
+  debugTrace: (...params: any[]) => {
+    const traceStack = new Error().stack;
+    if (isRenderer()) {
+      logRenderer.debug(...params, traceStack);
+    } else {
+      logMain.debug(...params, traceStack);
+    }
+  },
+  silly: (...params: any[]) => {
+    if (isRenderer()) {
+      logRenderer.silly(...params);
+    } else {
+      logMain.silly(...params);
+    }
+  },
+};
+
 class Logger {
   log(message: string) {
     console.log(message);
