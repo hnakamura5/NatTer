@@ -1,6 +1,10 @@
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
 
+function stringToList(s: string): string[] {
+  return s.split("");
+}
+
 export function defaultRandomBoundaryDetector(
   usePty: boolean,
   shellSpec: ShellSpecification
@@ -14,7 +18,9 @@ export function defaultRandomBoundaryDetector(
     Additional = ["@", "%", "~"]; // TODO: temporary.
   }
 
-  let set = shellSpec.boundaryDetectorCharset;
+  let set = shellSpec.boundaryDetectorCharset
+    ? stringToList(shellSpec.boundaryDetectorCharset.boundary)
+    : undefined;
   if (set === undefined) {
     set = Additional;
   }
@@ -63,5 +69,5 @@ export function isCommandEchoBackToStdout(
   if (interact === "terminal") {
     return true;
   }
-  return !shellSpec.commandNotEchoBack(interact);
+  return !shellSpec.commandNotEchoBack;
 }
