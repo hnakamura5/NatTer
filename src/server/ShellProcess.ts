@@ -36,7 +36,7 @@ const ProcessSpecs = new Map<string, ShellSpecification>();
 
 export function setupShellProcess() {
   log.debug(`ShellProcess setup.`);
-  readShellSpecs().then((specs) => {
+  return readShellSpecs().then((specs) => {
     specs.forEach((spec) => {
       log.debug(`Read shell spec: `, spec);
       ProcessSpecs.set(spec.name, spec);

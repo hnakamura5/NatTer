@@ -34,7 +34,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 let win: BrowserWindow | null;
 
 // TODO: Stop logging to file now.
-log.transports.file.level = false
+log.transports.file.level = false;
 // Logger setup.
 // TODO: set options to the logger
 log.initialize();
@@ -42,12 +42,7 @@ if (VITE_DEV_SERVER_URL == undefined) {
   log.transports.file.level = "verbose";
 }
 // TODO: main and renderer is upside down?
-log.transports.console.format ="[{level}:{processType}] > {text}";
-
-process.on("uncaughtException", (error) => {
-  log.error(`Terminate by uncaught exception: ${error}`);
-  app.quit();
-});
+log.transports.console.format = "[{level}:{processType}] > {text}";
 
 function createWindow() {
   win = new BrowserWindow({
@@ -100,8 +95,9 @@ app.on("activate", () => {
   }
 });
 
-app.on("ready", () => {
-  setupShellProcess();
+process.on("uncaughtException", (error) => {
+  log.error(`Terminate by uncaught exception: ${error}`);
+  app.quit();
 });
 
 app.on("quit", () => {
@@ -109,4 +105,8 @@ app.on("quit", () => {
   log.debug("app quit");
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  // Main process initializers here.
+  await setupShellProcess();
+  createWindow();
+});
