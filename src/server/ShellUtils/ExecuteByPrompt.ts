@@ -14,6 +14,7 @@ import {
 import { receiveCommandResponse } from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
+import { setPromptCommand } from "@/datatypes/ShellSpecification";
 
 function setPromptIsFinished(
   process: Process,
@@ -53,9 +54,9 @@ async function setPrompt(process: Process, boundaryDetector: string) {
     }
   });
   const promptText = `${boundaryDetector}${process.shellSpec.exitCodeVariable}${boundaryDetector}`;
-  const setCommand = process.shellSpec.promptCommands.set(promptText);
+  const setCommand = setPromptCommand(process.shellSpec, promptText);
   log.debug(`setPrompt: ${setCommand}`);
-  process.handle.execute(setCommand);
+  process.handle.execute(setCommand!);
   return new Promise<void>((resolve) => {
     // Wait until finished is set to true.
     const interval = setInterval(() => {

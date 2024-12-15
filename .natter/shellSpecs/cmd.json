@@ -1,0 +1,61 @@
+{
+  // Specification for the bash shell
+  "name": "cmd",
+  "pathKind": "win32",
+  "supportedInteractions": ["command", "terminal"],
+  "escapes": [
+    "^"
+  ],
+  "scope": [
+    {
+      "opener": "{",
+      "closer": "}",
+      "isRegionComment": false
+    },
+    {
+      "opener": "(",
+      "closer": ")",
+      "isRegionComment": false
+    },
+    {
+      "opener": "[",
+      "closer": "]",
+      "isRegionComment": false
+    },
+  ],
+  "stringScope": [
+    {
+      "quote": "'",
+      "containsEscape": false
+    },
+    {
+      "quote": "\"",
+      "containsEscape": false
+    },
+  ],
+  "lineComments": [
+    "REM "
+  ],
+  "lineContinuations": [
+    "^"
+  ],
+  // In cmd, the quotation itself is included in the string
+  "quoteLivesInString": true,
+  "delimiter": "&",
+  "exitCodeVariable": "%ERRORLEVEL%",
+  "exitCodeOK": "0",
+  "directoryCommands": {
+    "getCurrent": "cd",
+    "changeCurrent": "cd \"${directory}\"",
+    "list": "dir \"${directory}\"",
+    "getUser": "whoami",
+  },
+  "promptCommands": {
+    "get": "echo %PROMPT%",
+    "set": "PROMPT=\"${prompt}\"",
+  },
+  "boundaryDetectorCharSet": {
+    "boundary": "@#",
+    "placer": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  },
+}

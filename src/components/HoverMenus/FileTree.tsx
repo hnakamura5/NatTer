@@ -10,7 +10,6 @@ import { FileStat } from "@/datatypes/PathAbstraction";
 import { api } from "@/api";
 import { useTheme } from "@/AppState";
 
-import { logger } from "@/datatypes/Logger";
 import { FaFolder as FolderIcon, FaFile as FileIcon } from "react-icons/fa";
 
 import React from "react";

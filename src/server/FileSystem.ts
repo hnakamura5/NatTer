@@ -9,7 +9,6 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { pathOf } from "@/server/ShellUtils/pathAbstractionUtil";
 import { chmod, chown } from "original-fs";
-import { logger } from "@/datatypes/Logger";
 
 import { log } from "@/datatypes/Logger";
 

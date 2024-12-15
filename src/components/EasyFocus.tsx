@@ -1,4 +1,3 @@
-import { logger } from "@/datatypes/Logger";
 import React, { useEffect } from "react";
 import { log } from "@/datatypes/Logger";
 

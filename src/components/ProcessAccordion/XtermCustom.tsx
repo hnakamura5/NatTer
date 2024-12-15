@@ -12,7 +12,6 @@ import "@xterm/xterm/css/xterm.css";
 import { Box } from "@mui/system";
 import styled from "@emotion/styled";
 
-import { logger } from "@/datatypes/Logger";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/AppState";
 import { Theme } from "@/datatypes/Theme";

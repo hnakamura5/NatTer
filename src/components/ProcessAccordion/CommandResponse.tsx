@@ -13,7 +13,6 @@ import {
   ResponseStyle,
 } from "@/components/ProcessAccordion/CommandResponseCommon";
 
-import { logger } from "@/datatypes/Logger";
 import { useState } from "react";
 
 import { log } from "@/datatypes/Logger";

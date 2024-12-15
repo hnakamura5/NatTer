@@ -1,7 +1,4 @@
-import {
-  Process,
-  clockIncrement,
-} from "@/server/types/Process";
+import { Process, clockIncrement } from "@/server/types/Process";
 import {
   Command,
   CommandID,
@@ -9,7 +6,10 @@ import {
   newCommand,
 } from "@/datatypes/Command";
 import { ShellConfig } from "@/datatypes/Config";
-import { ShellSpecification } from "@/datatypes/ShellSpecification";
+import {
+  ShellSpecification,
+  isExitCodeOK,
+} from "@/datatypes/ShellSpecification";
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
 import { Terminal } from "@xterm/headless";
 import stripAnsi from "strip-ansi";
@@ -225,7 +225,7 @@ export async function receiveCommandResponse(
     const exitStatus = detected.exitStatus;
     current.isFinished = true;
     current.exitStatus = exitStatus;
-    current.exitStatusIsOK = process.shellSpec.isExitCodeOK(exitStatus);
+    current.exitStatusIsOK = isExitCodeOK(process.shellSpec, exitStatus);
     log.debug(
       `Finished ${process.id}-${current.cid} ${current.command} by status ${current.exitStatus} in process ${process.id}`
     );

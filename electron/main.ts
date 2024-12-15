@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { createIPCHandler } from "electron-trpc/main";
 import { router } from "@/server/tRPCRouter";
-import { shutdown } from "@/server/ShellProcess";
+import { setupShellProcess, shutdownShellProcess } from "@/server/ShellProcess";
 
 import * as log from "electron-log/main";
 
@@ -45,7 +45,7 @@ if (VITE_DEV_SERVER_URL == undefined) {
 log.transports.console.format ="[{level}:{processType}] > {text}";
 
 process.on("uncaughtException", (error) => {
-  log.error(` terminate by exception: ${error}`);
+  log.error(`Terminate by uncaught exception: ${error}`);
   app.quit();
 });
 
@@ -78,6 +78,7 @@ function createWindow() {
   }
   log.debug(`createIPCHandler`);
   createIPCHandler({ router, windows: [win] });
+  log.debug(`exe: ${app.getPath("module")}`);
   log.debug(`home: ${app.getPath("home")}`);
 }
 
@@ -99,8 +100,12 @@ app.on("activate", () => {
   }
 });
 
+app.on("ready", () => {
+  setupShellProcess();
+});
+
 app.on("quit", () => {
-  shutdown();
+  shutdownShellProcess();
   log.debug("app quit");
 });
 

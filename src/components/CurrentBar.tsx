@@ -6,7 +6,6 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { FaFolderOpen as FolderIcon } from "react-icons/fa";
 import { FaUserEdit } from "react-icons/fa";
-import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
 
 import { log } from "@/datatypes/Logger";

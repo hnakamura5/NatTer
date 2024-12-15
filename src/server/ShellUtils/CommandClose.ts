@@ -57,9 +57,6 @@ export function isCommandClosed(
   shell: ShellSpecification,
   command: string
 ): boolean {
-  if (shell.isCommandClosedOverride) {
-    return shell.isCommandClosedOverride(command);
-  }
   // Do not allow empty command.
   if (command.length === 0) {
     return false;

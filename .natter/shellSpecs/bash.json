@@ -1,0 +1,55 @@
+{
+  // Specification for the bash shell
+  "name": "bash",
+  "pathKind": "posix",
+  "supportedInteractions": ["command", "terminal"],
+  "escapes": ["\\"],
+  "scope": [
+    {
+      "opener": "{",
+      "closer": "}",
+      "isRegionComment": false
+    },
+    {
+      "opener": "(",
+      "closer": ")",
+      "isRegionComment": false
+    },
+    {
+      "opener": "[",
+      "closer": "]",
+      "isRegionComment": false
+    }
+  ],
+  "stringScope": [
+    {
+      "quote": "'",
+      "containsEscape": true
+    },
+    {
+      "quote": "\"",
+      "containsEscape": true
+    }
+  ],
+  "lineComments": ["#"],
+  "lineContinuations": ["\\"],
+  "delimiter": ";",
+  "exitCodeVariable": "$?",
+  "exitCodeOK": "0",
+  "directoryCommands": {
+    "getCurrent": "pwd",
+    "changeCurrent": "cd \"${directory}\"",
+    "list": "ls -lA \"${directory}\"",
+    "getUser": "whoami"
+  },
+  "promptCommands": {
+    "get": "echo $PS1",
+    "set": "PS1=\"${prompt}\""
+  },
+  "boundaryDetectorCharSet": {
+    "boundary": "@#",
+    "placer": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  },
+  // bash does not echo user input back to the console unless using tty
+  "commandNotEchoBack": true
+}

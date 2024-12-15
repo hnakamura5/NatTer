@@ -15,7 +15,6 @@ import { ErrorBoundary } from "react-error-boundary";
 import React, { useEffect, useState } from "react";
 import { EasyFocus } from "@/components/EasyFocus";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
-import { logger } from "@/datatypes/Logger";
 import { InputText, usePid } from "@/SessionStates";
 import { useAtom } from "jotai";
 import { CommandID } from "@/datatypes/Command";

@@ -1,0 +1,62 @@
+{
+  // Specification for the PowerShell shell
+  "name": "powershell",
+  "pathKind": "win32",
+  "supportedInteractions": [
+    "command",
+    "terminal"
+  ],
+  "escapes": [
+    "`"
+  ],
+  "scope": [
+    {
+      "opener": "{",
+      "closer": "}",
+      "isRegionComment": false
+    },
+    {
+      "opener": "(",
+      "closer": ")",
+      "isRegionComment": false
+    },
+    {
+      "opener": "[",
+      "closer": "]",
+      "isRegionComment": false
+    },
+  ],
+  "stringScope": [
+    {
+      "quote": "'",
+      "containsEscape": true
+    },
+    {
+      "quote": "\"",
+      "containsEscape": false
+    },
+  ],
+  "lineComments": [
+    "#"
+  ],
+  "lineContinuations": [
+    "`"
+  ],
+  "delimiter": ";",
+  "exitCodeVariable": "$?",
+  "exitCodeOK": "True",
+  "directoryCommands": {
+    "getCurrent": "Convert-Path .",
+    "changeCurrent": "cd \"${path}\"",
+    "list": "ls \"${path}\"",
+    "getUser": "whoami",
+  },
+  "promptCommands": {
+    "get": "prompt",
+    "set": "function prompt{ return \"${prompt}\"; }",
+  },
+  "boundaryDetectorCharSet": {
+    "boundary": "@#",
+    "placer": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  },
+}

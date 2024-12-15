@@ -2,6 +2,9 @@ import { spawnShell } from "@/server/ShellUtils/childShell";
 import {
   ShellSpecification,
   ShellSpecificationSchema,
+  getCurrentCommand,
+  getUserCommand,
+  shellSpecListToMap,
 } from "@/datatypes/ShellSpecification";
 import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
 import { isCommandClosed } from "@/server/ShellUtils/CommandClose";
@@ -17,9 +20,6 @@ import {
 } from "@/datatypes/Command";
 
 import { server } from "@/server/tRPCServer";
-import { PowerShellSpecification } from "@/builtin/shell/Powershell";
-import { BashSpecification } from "@/builtin/shell/Bash";
-import { CmdSpecification } from "@/builtin/shell/Cmd";
 import { observable } from "@trpc/server/observable";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import { Process, newProcess, clockIncrement } from "@/server/types/Process";
@@ -29,11 +29,29 @@ import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
 import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
+import { readShellSpecs } from "./configuration";
+import { read } from "original-fs";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
-ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);
-ProcessSpecs.set(BashSpecification.name, BashSpecification);
-ProcessSpecs.set(CmdSpecification.name, CmdSpecification);
+
+export function setupShellProcess() {
+  log.debug(`ShellProcess setup.`);
+  readShellSpecs().then((specs) => {
+    specs.forEach((spec) => {
+      log.debug(`Read shell spec: `, spec);
+      ProcessSpecs.set(spec.name, spec);
+    });
+  });
+}
+
+export function shutdownShellProcess() {
+  log.debug(`ShellProcess shutdown.`);
+  processHolder.forEach((process) => {
+    log.debug(`Shutdown process ${process.id}`);
+    process.handle.kill();
+  });
+  log.debug(`Shutdown all processes.`);
+}
 
 const processHolder: Process[] = [];
 function getProcess(pid: ProcessID): Process {
@@ -47,26 +65,26 @@ function getNextProcessID(): ProcessID {
 }
 
 const commandsOfProcessID: Command[][] = [];
-function enplaceCommandList(pid: ProcessID) {
+function emplaceCommandList(pid: ProcessID) {
   const currentLength = commandsOfProcessID.length;
   for (let i = currentLength; i < pid; i++) {
     commandsOfProcessID.push([]);
   }
 }
 function getCommand(pid: ProcessID, cid: CommandID): Command {
-  enplaceCommandList(pid);
+  emplaceCommandList(pid);
   return commandsOfProcessID[pid - 1][cid];
 }
 function getNumCommands(pid: ProcessID): number {
-  enplaceCommandList(pid);
+  emplaceCommandList(pid);
   return commandsOfProcessID[pid - 1].length;
 }
 function addCommand(pid: ProcessID, command: Command) {
-  enplaceCommandList(pid);
+  emplaceCommandList(pid);
   commandsOfProcessID[pid - 1].push(command);
 }
 function getCommands(pid: ProcessID): Command[] {
-  enplaceCommandList(pid);
+  emplaceCommandList(pid);
   return commandsOfProcessID[pid - 1];
 }
 
@@ -89,30 +107,29 @@ function currentSetter(process: Process) {
     process.config.interact
   );
   return () => {
-    if (process.shellSpec.directoryCommands !== undefined) {
-      const currentDir = process.shellSpec.directoryCommands.getCurrent();
-      const getUser = process.shellSpec.directoryCommands.getUser();
-      // Set current directory.
-      executeCommand(process, currentDir, true, undefined, (command) => {
-        log.debug(`currentDirectory: ${command.stdoutResponse}`);
-        getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
-          (dir) => {
-            log.debug(`set currentDirectory: ${dir}`);
-            process.currentDirectory = dir;
-            // Set user.
-            executeCommand(process, getUser, true, undefined, (command) => {
-              log.debug(`User: ${command.stdoutResponse}`);
-              getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
-                (user) => {
-                  log.debug(`set User: ${user}`);
-                  process.user = user;
-                }
-              );
-            });
-          }
-        );
-      });
+    const currentDir = getCurrentCommand(process.shellSpec);
+    const getUser = getUserCommand(process.shellSpec);
+    // Set current directory.
+    if (currentDir === undefined || getUser === undefined) {
+      return;
     }
+    executeCommand(process, currentDir, true, undefined, (command) => {
+      log.debug(`currentDirectory: ${command.stdoutResponse}`);
+      getStdoutOutputPartInPlain(command, includesCommandItSelf).then((dir) => {
+        log.debug(`set currentDirectory: ${dir}`);
+        process.currentDirectory = dir;
+        // Set user.
+        executeCommand(process, getUser, true, undefined, (command) => {
+          log.debug(`User: ${command.stdoutResponse}`);
+          getStdoutOutputPartInPlain(command, includesCommandItSelf).then(
+            (user) => {
+              log.debug(`set User: ${user}`);
+              process.user = user;
+            }
+          );
+        });
+      });
+    });
   };
 }
 
@@ -201,14 +218,6 @@ function stopProcess(process: Process) {
   log.debug(`Stop process call ${process.id}`);
   clockIncrement(process);
   process.handle.kill();
-}
-
-export function shutdown() {
-  processHolder.forEach((process) => {
-    log.debug(`Shutdown process ${process.id}`);
-    process.handle.kill();
-  });
-  log.debug(`Shutdown all processes.`);
 }
 
 const proc = server.procedure;

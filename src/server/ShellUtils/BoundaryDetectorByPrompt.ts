@@ -1,5 +1,8 @@
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
-import { ShellSpecification } from "@/datatypes/ShellSpecification";
+import {
+  ShellSpecification,
+  setPromptCommand,
+} from "@/datatypes/ShellSpecification";
 import {
   defaultRandomBoundaryDetector,
   getCommandWithDelimiterSandwichOnDemand,
@@ -18,7 +21,7 @@ export function extendCommandWithBoundaryDetectorByPrompt(
   command: string,
   boundaryDetector: string
 ) {
-  const prompt = shellSpec.promptCommands?.set(boundaryDetector) ?? "";
+  const prompt = setPromptCommand(shellSpec, boundaryDetector) ?? "";
   const newCommand = `${prompt}${getCommandWithDelimiterSandwichOnDemand(
     shellSpec,
     command

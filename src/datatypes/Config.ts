@@ -9,6 +9,10 @@ export const ShellConfigSchema = z.object({
   kind: z.enum(["bash", "cmd", "powershell"]),
   encoding: z.string().optional(),
   interact: ShellInteractKindSchema,
+  virtualPath: z.object({
+    encodeToVirtual: z.string(),
+    decodeToOS: z.string(),
+  }).optional(),
 });
 
 export type ShellConfig = z.infer<typeof ShellConfigSchema>;

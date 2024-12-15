@@ -16,23 +16,39 @@
       "args": [],
       "kind": "powershell",
       "encoding": "shift-jis",
-      "interact":"terminal",
+      "interact": "terminal",
     },
     {
       "name": "WSL Bash",
       "executable": "C:\\Windows\\system32\\wsl.exe",
-      "args": ["-e", "/usr/bin/bash", "-l"],
+      "args": [
+        "-e",
+        "/usr/bin/bash",
+        "-l"
+      ],
       "kind": "bash",
       "encoding": "utf-8",
       "interact": "command",
+      "virtualPath": {
+        "encodeToVirtual": "wslpath -u \"${path}\"", // Convert Windows path to WSL path
+        "decodeToOS": "wslpath -w \"${path}\"", // Convert WSL path to Windows path
+      },
     },
     {
       "name": "WSL Bash Terminal",
       "executable": "C:\\Windows\\system32\\wsl.exe",
-      "args": ["-e", "/usr/bin/bash", "-l"],
+      "args": [
+        "-e",
+        "/usr/bin/bash",
+        "-l"
+      ],
       "kind": "bash",
       "encoding": "utf-8",
-      "interact":"terminal",
+      "interact": "terminal",
+      "virtualPath": {
+        "encodeToVirtual": "wslpath -u \"${path}\"", // Convert Windows path to WSL path
+        "decodeToOS": "wslpath -w \"${path}\"", // Convert WSL path to Windows path
+      },
     },
     {
       "name": "Cmd",

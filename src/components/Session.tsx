@@ -4,7 +4,6 @@ import { Box } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
 import React, { useEffect, useRef, useState, RefObject } from "react";
 import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
-import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
 
 import { log } from "@/datatypes/Logger";

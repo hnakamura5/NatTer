@@ -19,7 +19,6 @@ import React from "react";
 import { EasyFocus } from "@/components/EasyFocus";
 import { Theme } from "@/datatypes/Theme";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
-import { logger } from "@/datatypes/Logger";
 import { InputText, usePid } from "@/SessionStates";
 import { useAtom } from "jotai";
 

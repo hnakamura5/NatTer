@@ -20,14 +20,11 @@ import {
   keyOfCommand,
   keybindListMap,
 } from "@/datatypes/Keybind";
-import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
-import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
-import { KeybindCommands } from "@/datatypes/KeybindCommands";
 
 import { log } from "@/datatypes/Logger";
+import { ShellSpecification } from "./datatypes/ShellSpecification";
 
 const ConfigContext = createContext<Config | undefined>(undefined);
-
 export function useConfig() {
   const config = useContext(ConfigContext);
   if (config === undefined) {
