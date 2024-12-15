@@ -8,9 +8,6 @@ import { shutdown } from "@/server/ShellProcess";
 
 import * as log from "electron-log/main";
 
-// TODO: Stop logging to file now.
-log.transports.file.level = false
-
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -36,8 +33,10 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 
 let win: BrowserWindow | null;
 
-// TODO: set options to the logger
+// TODO: Stop logging to file now.
+log.transports.file.level = false
 // Logger setup.
+// TODO: set options to the logger
 log.initialize();
 if (VITE_DEV_SERVER_URL == undefined) {
   log.transports.file.level = "verbose";
