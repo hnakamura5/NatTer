@@ -17,28 +17,29 @@ function IconText(props: { icon: React.ReactNode; text?: string }) {
     </span>
   );
 }
+const CurrentBarStyle = styled(Box)(({ theme }) => ({
+  color: theme.terminal.textColor,
+  backgroundColor: theme.system.secondaryBackgroundColor,
+  fontFamily: theme.terminal.font,
+  fontSize: theme.terminal.fontSize,
+  textAlign: "left",
+  padding: "3px 0px 0px 5px", // top right bottom left
+}));
+
+const CurrentDirStyle = styled.span(({ theme }) => ({
+  color: theme.terminal.directoryColor,
+}));
+
+const UserStyle = styled.span(({ theme }) => ({
+  color: theme.terminal.userColor,
+  float: "right",
+  marginRight: "5px",
+}));
 
 interface CurrentBarProps {}
 
 function CurrentBar(props: CurrentBarProps) {
-  const theme = useTheme();
   const pid = usePid();
-  const CurrentBarStyle = styled(Box)({
-    color: theme.terminal.textColor,
-    backgroundColor: theme.system.secondaryBackgroundColor,
-    fontFamily: theme.terminal.font,
-    fontSize: theme.terminal.fontSize,
-    textAlign: "left",
-    padding: "3px 0px 0px 5px", // top right bottom left
-  });
-  const CurrentDirStyle = styled.span({
-    color: theme.terminal.directoryColor,
-  });
-  const UserStyle = styled.span({
-    color: theme.terminal.userColor,
-    float: "right",
-    marginRight: "5px",
-  });
 
   const current = api.shell.current.useQuery(pid, {
     refetchInterval: 500,

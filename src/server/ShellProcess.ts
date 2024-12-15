@@ -4,7 +4,6 @@ import {
   ShellSpecificationSchema,
   getCurrentCommand,
   getUserCommand,
-  shellSpecListToMap,
 } from "@/datatypes/ShellSpecification";
 import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
 import { isCommandClosed } from "@/server/ShellUtils/CommandClose";
@@ -30,7 +29,6 @@ import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
 import { readShellSpecs } from "./configuration";
-import { read } from "original-fs";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 
@@ -209,8 +207,6 @@ function sendKey(process: Process, key: string) {
   }
   log.debug(`Send key ${key} to process ${process.id}`);
   clockIncrement(process);
-  // [HN] TODO: filtering the key. e.g. NonConvert
-  // or convert to key code?
   process.handle.write(key);
 }
 

@@ -17,7 +17,6 @@ import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "@/components/FocusBoundary";
 import React from "react";
 import { EasyFocus } from "@/components/EasyFocus";
-import { Theme } from "@/datatypes/Theme";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { InputText, usePid } from "@/SessionStates";
 import { useAtom } from "jotai";

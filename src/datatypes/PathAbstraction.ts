@@ -1,4 +1,4 @@
-import { coerce, z } from "zod";
+import { z } from "zod";
 
 // TODO: Add "url" to kind
 export const PathKindSchema = z.enum(["posix", "win32"]);

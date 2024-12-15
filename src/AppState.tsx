@@ -22,7 +22,6 @@ import {
 } from "@/datatypes/Keybind";
 
 import { log } from "@/datatypes/Logger";
-import { ShellSpecification } from "./datatypes/ShellSpecification";
 
 const ConfigContext = createContext<Config | undefined>(undefined);
 export function useConfig() {

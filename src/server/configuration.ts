@@ -2,7 +2,6 @@ import { server } from "@/server/tRPCServer";
 import { z } from "zod";
 import { Config, ConfigSchema, parseConfig } from "@/datatypes/Config";
 import {
-  KeybindSchema,
   KeybindListSchema,
   parseUserKeybindList,
   UserKeybindListSchema,

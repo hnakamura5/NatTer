@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { createContext, useContext } from "react";
 
 const ThemeSchema = z.object({
   terminal: z.object({

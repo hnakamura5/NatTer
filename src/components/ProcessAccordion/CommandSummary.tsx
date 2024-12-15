@@ -4,7 +4,6 @@ import { Box } from "@mui/system";
 
 import styled from "@emotion/styled";
 import { Theme } from "@/datatypes/Theme";
-import { logger } from "@/datatypes/Logger";
 
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import LoopICon from "@mui/icons-material/Loop";
