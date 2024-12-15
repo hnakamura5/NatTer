@@ -4,7 +4,7 @@ import { KeybindCommands } from "@/datatypes/KeybindCommands";
 import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
 import { useKeybindList } from "@/AppState";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 type KeybindOfCommandScopeRef =
   MutableRefObject<RefCallback<HTMLElement> | null>;

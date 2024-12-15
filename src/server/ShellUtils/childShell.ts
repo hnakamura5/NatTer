@@ -7,7 +7,7 @@ import { ShellInteractKind } from "@/datatypes/ShellInteract";
 import * as iconv from "iconv-lite";
 import stream from "stream";
 
-import * as log from "electron-log/main";
+import { log } from "@/datatypes/Logger";
 
 iconv.enableStreamingAPI(stream);
 

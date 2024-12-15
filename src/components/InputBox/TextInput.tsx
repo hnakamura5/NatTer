@@ -25,7 +25,7 @@ import {
   useKeybindOfCommandScopeRef,
 } from "@/components/KeybindScope";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 export function Input(props: {
   key: string;

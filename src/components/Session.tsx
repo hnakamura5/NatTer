@@ -7,7 +7,7 @@ import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
 import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 interface SessionProps {}
 

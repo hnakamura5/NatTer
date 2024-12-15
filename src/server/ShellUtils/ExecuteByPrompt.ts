@@ -13,7 +13,7 @@ import {
 } from "@/server/ShellUtils/BoundaryDetectorUtils";
 import { receiveCommandResponse } from "@/server/ShellUtils/ExecuteUtils";
 
-import * as log from "electron-log/main";
+import { log } from "@/datatypes/Logger";
 
 function setPromptIsFinished(
   process: Process,

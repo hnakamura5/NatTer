@@ -18,7 +18,7 @@ import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 
 import { Config, ShellConfig } from "@/datatypes/Config";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 const VerticalBox = styled(Box)({
   display: "flex",

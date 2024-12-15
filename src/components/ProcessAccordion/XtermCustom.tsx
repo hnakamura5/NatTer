@@ -25,7 +25,7 @@ import {
 
 import { api } from "@/api";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 function pxToNumber(px: string) {
   return parseInt(px.replace("px", ""));

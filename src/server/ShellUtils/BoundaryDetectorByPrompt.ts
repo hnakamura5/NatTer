@@ -8,7 +8,7 @@ import {
 import { detectCommandResponseAndExitCodeFunctionType } from "@/server/ShellUtils/ExecuteUtils";
 import stripAnsi from "strip-ansi";
 
-import * as log from "electron-log/main";
+import { log } from "@/datatypes/Logger";
 
 // Implement detection algorithm using prompt.
 // This is suitable for terminal shells with prompt.

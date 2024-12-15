@@ -18,7 +18,7 @@ import { SerializeAddon } from "@xterm/addon-serialize";
 import DOMPurify from "dompurify";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 
-import * as log from "electron-log/main";
+import { log } from "@/datatypes/Logger";
 
 const Cols = 512;
 const Rows = 64;

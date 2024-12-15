@@ -9,7 +9,7 @@ import { FaUserEdit } from "react-icons/fa";
 import { logger } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 function IconText(props: { icon: React.ReactNode; text?: string }) {
   return (

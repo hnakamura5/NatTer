@@ -9,7 +9,7 @@ import { ProcessID } from "@/datatypes/Command";
 import { EventEmitter, on } from "node:events";
 import * as iconv from "iconv-lite";
 
-import * as log from "electron-log/main";
+import { log } from "@/datatypes/Logger";
 
 export type Process = {
   id: ProcessID;

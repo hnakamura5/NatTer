@@ -1,6 +1,6 @@
 import { logger } from "@/datatypes/Logger";
 import React, { useEffect } from "react";
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 type FocusTagType = { input: string; rest: string } | undefined;
 

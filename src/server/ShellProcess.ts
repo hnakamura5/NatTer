@@ -28,7 +28,7 @@ import { executeCommandByPrompt } from "./ShellUtils/ExecuteByPrompt";
 import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
 import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
-import * as log from "electron-log/main";
+import { log } from "@/datatypes/Logger";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 ProcessSpecs.set(PowerShellSpecification.name, PowerShellSpecification);

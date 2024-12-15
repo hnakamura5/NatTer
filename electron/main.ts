@@ -5,9 +5,11 @@ import path from "node:path";
 import { createIPCHandler } from "electron-trpc/main";
 import { router } from "@/server/tRPCRouter";
 import { shutdown } from "@/server/ShellProcess";
+
 import * as log from "electron-log/main";
 
-
+// TODO: Stop logging to file now.
+log.transports.file.level = false
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -40,6 +42,8 @@ log.initialize();
 if (VITE_DEV_SERVER_URL == undefined) {
   log.transports.file.level = "verbose";
 }
+// TODO: main and renderer is upside down?
+log.transports.console.format ="[{level}:{processType}] > {text}";
 
 process.on("uncaughtException", (error) => {
   log.error(` terminate by exception: ${error}`);

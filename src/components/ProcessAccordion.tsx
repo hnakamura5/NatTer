@@ -20,7 +20,6 @@ import {
 
 import styled from "@emotion/styled";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
-import { logger } from "@/datatypes/Logger";
 import {
   AliveCommandResponse,
   CommandResponse,
@@ -40,7 +39,8 @@ import {
 } from "@/datatypes/Keybind";
 import { set } from "zod";
 
-import * as log from "electron-log/renderer";
+// import { log } from "@/datatypes/Logger";
+import { log } from "@/datatypes/Logger";
 
 const queryOption = {
   refetchInterval: 500,

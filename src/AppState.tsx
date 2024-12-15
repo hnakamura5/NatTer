@@ -24,7 +24,7 @@ import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
 import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
 import { KeybindCommands } from "@/datatypes/KeybindCommands";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 const ConfigContext = createContext<Config | undefined>(undefined);
 

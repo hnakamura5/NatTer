@@ -7,7 +7,7 @@ import {
   createContext,
 } from "react";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 type FocusTarget = {
   focusRef?: RefObject<HTMLElement>;

@@ -16,7 +16,7 @@ import { FaFolder as FolderIcon, FaFile as FileIcon } from "react-icons/fa";
 import React from "react";
 import { KeybindScope } from "../KeybindScope";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
   return (

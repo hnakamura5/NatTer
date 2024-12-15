@@ -10,7 +10,7 @@ import {
 import fs from "node:fs/promises";
 import Electron from "electron";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 const proc = server.procedure;
 

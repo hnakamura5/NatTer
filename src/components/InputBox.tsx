@@ -30,7 +30,7 @@ import {
   useKeybindOfCommandScopeRef,
 } from "@/components/KeybindScope";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 interface InputBoxProps {}
 

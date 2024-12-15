@@ -16,7 +16,7 @@ import {
 import { logger } from "@/datatypes/Logger";
 import { useState } from "react";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 const ResponseStyleWithScroll = styled(ResponseStyle)({
   overflow: "auto",

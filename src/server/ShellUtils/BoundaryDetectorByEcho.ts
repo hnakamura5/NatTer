@@ -8,7 +8,7 @@ import { detectCommandResponseAndExitCodeFunctionType } from "@/server/ShellUtil
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 import stripAnsi from "strip-ansi";
 
-import * as log from "electron-log/main";
+import { log } from "@/datatypes/Logger";
 
 // Implement detection algorithm using echo command.
 // This is suitable for non-terminal shells.

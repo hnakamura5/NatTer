@@ -12,7 +12,7 @@ import { Theme } from "@/datatypes/Theme";
 import { useTheme } from "@/AppState";
 import { CommandID, ProcessID } from "@/datatypes/Command";
 
-import * as log from "electron-log/renderer";
+import { log } from "@/datatypes/Logger";
 
 let count = 0;
 

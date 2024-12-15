@@ -11,7 +11,7 @@ import { pathOf } from "@/server/ShellUtils/pathAbstractionUtil";
 import { chmod, chown } from "original-fs";
 import { logger } from "@/datatypes/Logger";
 
-import * as log from "electron-log/main";
+import { log } from "@/datatypes/Logger";
 
 const proc = server.procedure;
 
