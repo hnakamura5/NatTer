@@ -27,6 +27,7 @@ export type FileManagerProps = {
 
 export function FileManager(props: FileManagerProps) {
   const [current, setCurrent] = useState<string>(props.home);
+  const [expanded, setExpanded] = useState<string[]>([]);
   if (current !== props.home) {
     setCurrent(props.home);
   }
@@ -34,8 +35,17 @@ export function FileManager(props: FileManagerProps) {
   return (
     <KeybindScope>
       <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
-        <TreeView>
-          <FileTreeItem path={current} key={current} showTop={false} />
+        <TreeView
+          onExpandedItemsChange={(e, items) => {
+            setExpanded(items);
+          }}
+        >
+          <FileTreeItem
+            path={current}
+            key={current}
+            showTop={false}
+            expanded={expanded}
+          />
         </TreeView>
       </div>
     </KeybindScope>

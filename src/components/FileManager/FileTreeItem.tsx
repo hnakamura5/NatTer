@@ -60,9 +60,7 @@ function FileLabel(props: { stat: FileStat }) {
   );
 }
 
-function DirectoryLabel(props: { stat: FileStat }) {
-  const theme = useTheme();
-
+function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
   const parsed = api.fs.parsePath.useQuery(props.stat.fullPath, {
     onError: () => {
       log.error(`Failed to parse ${props.stat.fullPath}`);
@@ -72,6 +70,14 @@ function DirectoryLabel(props: { stat: FileStat }) {
     return <Label>Loading...</Label>;
   }
   const directoryName = parsed.data.base;
+  if (props.isExpanded) {
+    return (
+      <>
+        <IconOpenFolder name={directoryName} style={IconAdjustStyle} />
+        <Label>{directoryName}</Label>
+      </>
+    );
+  }
   return (
     <>
       <IconForFolder name={directoryName} style={IconAdjustStyle} />
@@ -94,9 +100,8 @@ export function FileTreeItem(props: {
   path: string;
   key: string;
   showTop: boolean;
+  expanded: string[];
 }) {
-  const theme = useTheme();
-
   //log.error(`FileTreeItem: ${props.path}`);
   const stat = api.fs.stat.useQuery(props.path, {
     onError: () => {
@@ -130,13 +135,19 @@ export function FileTreeItem(props: {
         path={props.path + sep.data + child}
         key={child}
         showTop={true}
+        expanded={props.expanded}
       />
     ));
     if (props.showTop) {
       return (
         <TreeItem
           itemId={props.path}
-          label={<DirectoryLabel stat={stat.data} />}
+          label={
+            <DirectoryLabel
+              stat={stat.data}
+              isExpanded={props.expanded.includes(props.path)}
+            />
+          }
         >
           {children}
         </TreeItem>
