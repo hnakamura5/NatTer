@@ -4,10 +4,12 @@ import { shellRouter } from "@/server/ShellProcess";
 import { fileSystemRouter } from "@/server/FileSystem";
 import { osShellRouter } from "@/server/osShell";
 import { configurationRouter } from "@/server/configuration";
+import { iconServerRouter } from "@/server/iconServer";
 
 export const router = server.router({
   shell: shellRouter,
   fs: fileSystemRouter,
+  icon: iconServerRouter,
   os: osShellRouter,
   config: configurationRouter,
 });

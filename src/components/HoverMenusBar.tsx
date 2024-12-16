@@ -21,14 +21,14 @@ import { Popper, PopperPlacementType } from "@mui/material";
 import React, { useCallback, useEffect } from "react";
 
 import { api } from "@/api";
-import { FileTree } from "@/components/HoverMenus/FileTree";
+import { FileManager } from "@/components/FileManager";
 import { usePid } from "@/SessionStates";
 import FocusBoundary from "@/components/FocusBoundary";
 import { UnderConstruction } from "@/components/UnderConstruction";
 import { GlobalFocusMap } from "./GlobalFocusMap";
 import { set } from "zod";
 
-function FileTreeWrapper(props: { focusRef: React.RefObject<HTMLElement> }) {
+function FileManagerWrapper(props: { focusRef: React.RefObject<HTMLElement> }) {
   const theme = useTheme();
   const pid = usePid();
   const currentDir = api.shell.current.useQuery(pid, {
@@ -42,7 +42,7 @@ function FileTreeWrapper(props: { focusRef: React.RefObject<HTMLElement> }) {
   }
   return (
     <FocusBoundary defaultBorderColor={theme.system.backgroundColor}>
-      <FileTree home={currentDir.data.directory} focusRef={props.focusRef} />
+      <FileManager home={currentDir.data.directory} focusRef={props.focusRef} />
     </FocusBoundary>
   );
 }
@@ -160,7 +160,7 @@ function HoverMenusBar(props: HoverMenusBarProps) {
       <HoverMenuItem
         icon={FolderIcon}
         color={theme.terminal.directoryColor}
-        popup={<FileTreeWrapper focusRef={fileTreeRef} />}
+        popup={<FileManagerWrapper focusRef={fileTreeRef} />}
         focusKey={GlobalFocusMap.GlobalKey.FileView}
         focusRef={fileTreeRef}
       />

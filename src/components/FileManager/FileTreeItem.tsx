@@ -1,21 +1,18 @@
-import {
-  TreeItem as MuiTreeItem,
-  SimpleTreeView as MuiTreeView,
-} from "@mui/x-tree-view";
-import { Box, Breadcrumbs as MUIBreadcrumbs } from "@mui/material";
-import { styled } from "@mui/material";
-
-import { useState } from "react";
+import { TreeItem as MuiTreeItem } from "@mui/x-tree-view";
+import styled from "@emotion/styled";
 import { FileStat } from "@/datatypes/PathAbstraction";
 import { api } from "@/api";
 import { useTheme } from "@/AppState";
 
-import { FaFolder as FolderIcon, FaFile as FileIcon } from "react-icons/fa";
-
-import React from "react";
-import { KeybindScope } from "../KeybindScope";
+import {
+  FaFolder as FolderIcon,
+  FaFile as FileIcon,
+  FaFolderOpen as FolderOpenIcon,
+} from "react-icons/fa";
 
 import { log } from "@/datatypes/Logger";
+
+import { IconForFile, IconForFolder, IconOpenFolder } from "./FileIcon";
 
 function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
   return (
@@ -24,6 +21,12 @@ function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
     </span>
   );
 }
+const IconAdjustStyle = {
+  verticalAlign: "-4px",
+  width: "1em",
+  height: "1em",
+  paddingRight: "4px",
+};
 
 function Label(props: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -47,10 +50,12 @@ function FileLabel(props: { stat: FileStat }) {
   if (!parsed.data) {
     return <Label>Loading...</Label>;
   }
+  const fileName = parsed.data.base;
+  // <Icon icon={<FileIcon />} />
   return (
     <>
-      <Icon icon={<FileIcon />} />
-      <Label>{parsed.data.base}</Label>
+      <IconForFile name={fileName} style={IconAdjustStyle} />
+      <Label>{fileName}</Label>
     </>
   );
 }
@@ -66,37 +71,32 @@ function DirectoryLabel(props: { stat: FileStat }) {
   if (!parsed.data) {
     return <Label>Loading...</Label>;
   }
+  const directoryName = parsed.data.base;
   return (
     <>
-      <Icon
-        icon={<FolderIcon />}
-        style={{ color: theme.terminal.directoryColor }}
-      />
-      <Label>{parsed.data.base}</Label>
+      <IconForFolder name={directoryName} style={IconAdjustStyle} />
+      <Label>{directoryName}</Label>
     </>
   );
 }
 
 const ListMargin = "3px";
 
-function TreeView(props: { children: React.ReactNode }) {
-  const theme = useTheme();
-  const TreeView = styled(MuiTreeView)({
-    color: theme.system.textColor,
-    margin: `${ListMargin} 0px ${ListMargin} 0px`,
-  });
-  return <TreeView>{props.children}</TreeView>;
-}
+const TreeItem = styled(MuiTreeItem)(({ theme }) => ({
+  color: theme.system.textColor,
+  backgroundColor: theme.system.secondaryBackgroundColor,
+  textAlign: "left",
+  margin: `-${ListMargin} 0px -${ListMargin} 0px`,
+  padding: "0px 0px 0px 5px", // top right bottom left
+}));
 
-function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
+export function FileTreeItem(props: {
+  path: string;
+  key: string;
+  showTop: boolean;
+}) {
   const theme = useTheme();
-  const TreeItem = styled(MuiTreeItem)({
-    color: theme.system.textColor,
-    backgroundColor: theme.system.secondaryBackgroundColor,
-    textAlign: "left",
-    margin: `-${ListMargin} 0px -${ListMargin} 0px`,
-    padding: "0px 0px 0px 5px", // top right bottom left
-  });
+
   //log.error(`FileTreeItem: ${props.path}`);
   const stat = api.fs.stat.useQuery(props.path, {
     onError: () => {
@@ -150,29 +150,4 @@ function FileTreeItem(props: { path: string; key: string; showTop: boolean }) {
       <TreeItem itemId={props.path} label={<FileLabel stat={stat.data} />} />
     );
   }
-}
-
-export type FileTreeProps = {
-  home: string;
-  focusRef?: React.Ref<unknown>;
-};
-
-export function FileTree(props: FileTreeProps) {
-  const theme = useTheme();
-
-  const [current, setCurrent] = useState<string>(props.home);
-  if (current !== props.home) {
-    setCurrent(props.home);
-  }
-  // log.error(`FileTree: current=${current}`);
-
-  return (
-    <KeybindScope>
-      <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
-        <TreeView>
-          <FileTreeItem path={current} key={current} showTop={false} />
-        </TreeView>
-      </div>
-    </KeybindScope>
-  );
 }

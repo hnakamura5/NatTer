@@ -24,6 +24,7 @@ const CurrentBarStyle = styled(Box)(({ theme }) => ({
   fontSize: theme.terminal.fontSize,
   textAlign: "left",
   padding: "3px 0px 0px 5px", // top right bottom left
+  overflow: "hidden",
 }));
 
 const CurrentDirStyle = styled.span(({ theme }) => ({

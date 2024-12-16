@@ -31,6 +31,16 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, "public")
   : RENDERER_DIST;
 
+// Path to material-icon-theme icons.
+process.env.MATERIAL_ICON_THEME_PATH = app.isPackaged
+  ? path.join(process.env.APP_ROOT, "node_modules/material-icon-theme/icons")
+  : path.join("./node_modules/material-icon-theme/icons");
+// In non-packaged mode, the absolute path is blocked by security policy.
+
+log.debug(`APP_ROOT: ${process.env.APP_ROOT}`);
+log.debug(`VITE_PUBLIC: ${process.env.VITE_PUBLIC}`);
+log.debug(`MATERIAL_ICON_THEME_PATH: ${process.env.MATERIAL_ICON_THEME_PATH}`);
+
 let win: BrowserWindow | null;
 
 // TODO: Stop logging to file now.

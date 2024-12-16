@@ -30,28 +30,28 @@ import {
 
 import { log } from "@/datatypes/Logger";
 
+const Paper = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: theme.terminal.backgroundColor,
+  color: theme.terminal.textColor,
+  paddingTop: "1px",
+  paddingBottom: "3px",
+}));
+
+const OverToLeft = styled(Box)(({ theme }) => ({
+  position: "relative",
+  left: `calc(-${theme.system.hoverMenuWidth} + 5px)`,
+  width: `calc(100% + ${theme.system.hoverMenuWidth})`,
+}));
+
 interface InputBoxProps {}
 
 function InputBox(props: InputBoxProps) {
   const theme = useTheme();
   const pid = usePid();
   const inputBoxRef = React.createRef<HTMLInputElement>();
-
-  const Paper = styled(Box)({
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: theme.terminal.backgroundColor,
-    color: theme.terminal.textColor,
-    paddingTop: "1px",
-    paddingBottom: "3px",
-  });
-
-  const OverToLeft = styled(Box)({
-    position: "relative",
-    left: `calc(-${theme.system.hoverMenuWidth} + 5px)`,
-    width: `calc(100% + ${theme.system.hoverMenuWidth})`,
-  });
 
   const execute = api.shell.execute.useMutation();
   const submit = useCallback(

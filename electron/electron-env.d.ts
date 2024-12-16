@@ -18,6 +18,8 @@ declare namespace NodeJS {
     APP_ROOT: string
     /** /dist/ or /public/ */
     VITE_PUBLIC: string
+    /* material-icon-theme icon path */
+    MATERIAL_ICON_THEME_PATH: string
   }
 }
 
