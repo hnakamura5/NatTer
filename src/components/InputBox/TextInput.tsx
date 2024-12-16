@@ -110,6 +110,7 @@ export function Input(props: {
     <ErrorBoundary fallback={<InputBoxError />}>
       <KeybindScope keybindRef={keybindRef}>
         <MuiInputBase
+          id = {`input-${pid}`}
           inputRef={props.inputBoxRef}
           style={{
             width: `calc(100% - ${theme.system.hoverMenuWidth})`,
