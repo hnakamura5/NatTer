@@ -4,6 +4,7 @@ import {
   PathKind,
   PathKindSchema,
   FileStatScheme,
+  PathParsedScheme,
 } from "@/datatypes/PathAbstraction";
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -130,26 +131,26 @@ export const fileSystemRouter = server.router({
     }),
 
   parsePath: proc
-    .input(z.string())
-    .output(
-      z.object({
-        dir: z.string(),
-        dirHier: z.array(z.string()),
-        base: z.string(),
-        ext: z.string(),
-        stem: z.string(),
-      })
+    .input(
+      // If pathKind is not provided, use the OS's default path kind
+      z.object({ fullPath: z.string(), pathKind: PathKindSchema.optional() })
     )
+    .output(PathParsedScheme)
     .query(async (opts) => {
-      const filePath = opts.input;
-      const parsed = path.parse(path.normalize(filePath));
-      const dirHier = parsed.dir.split(path.sep);
+      const { fullPath, pathKind } = opts.input;
+      const pathLib = pathKind ? pathOf(pathKind) : path;
+      const parsed = pathLib.parse(pathLib.normalize(fullPath));
+      // All hierarchies including the root as the first element
+      const dirHier = parsed.dir.slice(parsed.root.length).split(pathLib.sep);
+      dirHier.unshift(parsed.root);
       return {
         dir: parsed.dir,
-        dirHier,
+        root: parsed.root,
+        dirHier: dirHier,
         base: parsed.base,
-        ext: parsed.ext,
-        stem: parsed.name,
+        baseStem: parsed.name,
+        baseExt: parsed.ext,
+        sep: pathLib.sep,
       };
     }),
 });

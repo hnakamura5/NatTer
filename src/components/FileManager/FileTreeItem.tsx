@@ -12,7 +12,12 @@ import {
 
 import { log } from "@/datatypes/Logger";
 
-import { IconForFile, IconForFolder, IconOpenFolder } from "./FileIcon";
+import {
+  IconForFile,
+  IconForFolder,
+  IconOpenFolder,
+  InlineIconAdjustStyle,
+} from "./FileIcon";
 
 function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
   return (
@@ -21,12 +26,6 @@ function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
     </span>
   );
 }
-const IconAdjustStyle = {
-  verticalAlign: "-4px",
-  width: "1em",
-  height: "1em",
-  paddingRight: "4px",
-};
 
 function Label(props: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -42,11 +41,14 @@ function Label(props: { children: React.ReactNode }) {
 function FileLabel(props: { stat: FileStat }) {
   const theme = useTheme();
 
-  const parsed = api.fs.parsePath.useQuery(props.stat.fullPath, {
-    onError: () => {
-      log.error(`Failed to parse ${props.stat.fullPath}`);
-    },
-  });
+  const parsed = api.fs.parsePath.useQuery(
+    { fullPath: props.stat.fullPath },
+    {
+      onError: () => {
+        log.error(`Failed to parse ${props.stat.fullPath}`);
+      },
+    }
+  );
   if (!parsed.data) {
     return <Label>Loading...</Label>;
   }
@@ -54,18 +56,21 @@ function FileLabel(props: { stat: FileStat }) {
   // <Icon icon={<FileIcon />} />
   return (
     <>
-      <IconForFile name={fileName} style={IconAdjustStyle} />
+      <IconForFile name={fileName} style={InlineIconAdjustStyle} />
       <Label>{fileName}</Label>
     </>
   );
 }
 
 function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
-  const parsed = api.fs.parsePath.useQuery(props.stat.fullPath, {
-    onError: () => {
-      log.error(`Failed to parse ${props.stat.fullPath}`);
-    },
-  });
+  const parsed = api.fs.parsePath.useQuery(
+    { fullPath: props.stat.fullPath },
+    {
+      onError: () => {
+        log.error(`Failed to parse ${props.stat.fullPath}`);
+      },
+    }
+  );
   if (!parsed.data) {
     return <Label>Loading...</Label>;
   }
@@ -73,14 +78,14 @@ function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
   if (props.isExpanded) {
     return (
       <>
-        <IconOpenFolder name={directoryName} style={IconAdjustStyle} />
+        <IconOpenFolder name={directoryName} style={InlineIconAdjustStyle} />
         <Label>{directoryName}</Label>
       </>
     );
   }
   return (
     <>
-      <IconForFolder name={directoryName} style={IconAdjustStyle} />
+      <IconForFolder name={directoryName} style={InlineIconAdjustStyle} />
       <Label>{directoryName}</Label>
     </>
   );
@@ -93,14 +98,14 @@ const TreeItem = styled(MuiTreeItem)(({ theme }) => ({
   backgroundColor: theme.system.secondaryBackgroundColor,
   textAlign: "left",
   margin: `-${ListMargin} 0px -${ListMargin} 0px`,
-  padding: "0px 0px 0px 5px", // top right bottom left
+  padding: "0px 0px 0px 1px", // top right bottom left
 }));
 
 export function FileTreeItem(props: {
   path: string;
   key: string;
   showTop: boolean;
-  expanded: string[];
+  expandedItems: string[];
 }) {
   //log.error(`FileTreeItem: ${props.path}`);
   const stat = api.fs.stat.useQuery(props.path, {
@@ -135,7 +140,7 @@ export function FileTreeItem(props: {
         path={props.path + sep.data + child}
         key={child}
         showTop={true}
-        expanded={props.expanded}
+        expandedItems={props.expandedItems}
       />
     ));
     if (props.showTop) {
@@ -145,7 +150,7 @@ export function FileTreeItem(props: {
           label={
             <DirectoryLabel
               stat={stat.data}
-              isExpanded={props.expanded.includes(props.path)}
+              isExpanded={props.expandedItems.includes(props.path)}
             />
           }
         >

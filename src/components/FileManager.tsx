@@ -1,5 +1,5 @@
 import { SimpleTreeView as MuiTreeView } from "@mui/x-tree-view";
-import { Box, Breadcrumbs as MUIBreadcrumbs } from "@mui/material";
+import { Box } from "@mui/material";
 import styled from "@emotion/styled";
 
 import { useState } from "react";
@@ -12,41 +12,84 @@ import { KeybindScope } from "@/components/KeybindScope";
 import { FileTreeItem } from "@/components/FileManager/FileTreeItem";
 
 import { log } from "@/datatypes/Logger";
+import { FileManagerHeader } from "./FileManager/FileManagerHeader";
+import { set } from "zod";
 
-const ListMargin = "3px";
+const ListMargin = "0px";
 
 const TreeView = styled(MuiTreeView)(({ theme }) => ({
   color: theme.system.textColor,
-  margin: `${ListMargin} 0px ${ListMargin} 0px`,
+  margin: `${ListMargin} 0px ${ListMargin} 0px`, // top right bottom left
+}));
+
+const FileManagerFrame = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.system.backgroundColor,
+  color: theme.system.textColor,
+  fontFamily: theme.system.font,
+  fontSize: theme.system.fontSize,
+  width: `calc(100vw - ${theme.system.hoverMenuWidth} - 10px)`,
+}));
+
+const FileTreeFrame = styled(Box)(({ theme }) => ({
+  maxHeight: "70vh",
+  overflowY: "scroll",
 }));
 
 export type FileManagerProps = {
   home: string;
+  current: string;
   focusRef?: React.Ref<unknown>;
 };
 
 export function FileManager(props: FileManagerProps) {
-  const [current, setCurrent] = useState<string>(props.home);
-  const [expanded, setExpanded] = useState<string[]>([]);
-  if (current !== props.home) {
-    setCurrent(props.home);
+  const [trackingCurrent, setTrackingCurrent] = useState<boolean>(true);
+  const [currentPath, setCurrentPath] = useState<string>(props.current);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  if (currentPath !== props.home) {
+    setCurrentPath(props.home);
   }
 
   return (
     <KeybindScope>
       <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
-        <TreeView
-          onExpandedItemsChange={(e, items) => {
-            setExpanded(items);
-          }}
-        >
-          <FileTreeItem
-            path={current}
-            key={current}
-            showTop={false}
-            expanded={expanded}
+        <FileManagerFrame>
+          <FileManagerHeader
+            fullPath={currentPath}
+            moveFullPath={(path) => {
+              setTrackingCurrent(false);
+              setCurrentPath(path);
+            }}
+            navigateBack={() => {
+              console.log("Navigate back");
+              // TODO: Implement navigate back
+              setTrackingCurrent(false);
+            }}
+            navigateForward={() => {
+              console.log("Navigate forward");
+              // TODO: Implement navigate forward
+              setTrackingCurrent(false);
+            }}
+            trackingCurrent={trackingCurrent}
+            toggleKeepTrackCurrent={() => {
+              setTrackingCurrent(!trackingCurrent);
+            }}
           />
-        </TreeView>
+          <FileTreeFrame>
+            <TreeView
+              onExpandedItemsChange={(e, items) => {
+                setExpandedItems(items);
+              }}
+              multiSelect
+            >
+              <FileTreeItem
+                path={currentPath}
+                key={currentPath}
+                showTop={false}
+                expandedItems={expandedItems}
+              />
+            </TreeView>
+          </FileTreeFrame>
+        </FileManagerFrame>
       </div>
     </KeybindScope>
   );

@@ -102,4 +102,23 @@ export const iconServerRouter = server.router({
         ) + ".svg"
       );
     }),
+
+  fileOrFolderIcon: proc
+    .input(
+      z.object({
+        name: z.string(),
+        isDir: z.boolean(),
+        isOpen: z.boolean().optional(),
+      })
+    )
+    .output(z.string())
+    .query(async (opts) => {
+      const { name, isDir, isOpen } = opts.input;
+      const icon = isDir
+        ? isOpen
+          ? getIconOpenFolder(name)
+          : getIconForFolder(name)
+        : getIconForFile(name);
+      return path.join(process.env.MATERIAL_ICON_THEME_PATH, icon) + ".svg";
+    }),
 });

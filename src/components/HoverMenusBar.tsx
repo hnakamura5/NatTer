@@ -42,7 +42,11 @@ function FileManagerWrapper(props: { focusRef: React.RefObject<HTMLElement> }) {
   }
   return (
     <FocusBoundary defaultBorderColor={theme.system.backgroundColor}>
-      <FileManager home={currentDir.data.directory} focusRef={props.focusRef} />
+      <FileManager
+        home={currentDir.data.directory}
+        current={currentDir.data.directory}
+        focusRef={props.focusRef}
+      />
     </FocusBoundary>
   );
 }
