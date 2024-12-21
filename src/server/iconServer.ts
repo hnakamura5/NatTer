@@ -63,14 +63,6 @@ export const iconServerRouter = server.router({
     .input(z.string())
     .output(z.string())
     .query(async (opts) => {
-      log.debug(
-        `fileIcon = ${
-          path.join(
-            process.env.MATERIAL_ICON_THEME_PATH,
-            getIconForFile(opts.input)
-          ) + ".svg"
-        }`
-      );
       return (
         path.join(
           process.env.MATERIAL_ICON_THEME_PATH,

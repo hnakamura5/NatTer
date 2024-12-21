@@ -2,7 +2,7 @@ import { SimpleTreeView as MuiTreeView } from "@mui/x-tree-view";
 import { Box } from "@mui/material";
 import styled from "@emotion/styled";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/api";
 import { useTheme } from "@/AppState";
 
@@ -39,40 +39,113 @@ const FileTreeFrame = styled(Box)(({ theme }) => ({
   overflowY: "scroll",
 }));
 
+export type FileManagerState = {
+  currentPath: string;
+  trackingCurrent: boolean;
+  expandedItems: string[];
+  historyBack: string[];
+  historyForward: string[];
+};
+
 export type FileManagerProps = {
-  home: string;
   current: string;
+  state?: FileManagerState;
+  setState: (state: FileManagerState) => void;
   focusRef?: React.Ref<unknown>;
 };
 
 export function FileManager(props: FileManagerProps) {
-  const [trackingCurrent, setTrackingCurrent] = useState<boolean>(true);
-  const [currentPath, setCurrentPath] = useState<string>(props.current);
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  // const [currentPath, setCurrentPath] = useState<string>(props.current);
+  // const [trackingCurrent, setTrackingCurrent] = useState<boolean>(true);
+  // const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  useEffect(() => {
+    log.debug(`FileManager: componentDidMount`);
+  }, []);
+
+  const state = props.state;
+  useEffect(() => {
+    // Initialize the state if it is not set
+    if (!state) {
+      props.setState({
+        currentPath: props.current,
+        trackingCurrent: true,
+        expandedItems: [],
+        historyBack: [],
+        historyForward: [],
+      });
+    }
+  }, [state === undefined]);
+  useEffect(() => {
+    // Track to the current path of the shell
+    if (state) {
+      if (state.trackingCurrent && state.currentPath !== props.current) {
+        log.debug(`FileManager: track to current: ${props.current}`);
+        props.setState({ ...state, currentPath: props.current });
+      }
+    }
+  }, [state, props]);
+
+  if (!state) {
+    return <div>FileManager Loading...</div>;
+  }
+
+  const {
+    currentPath,
+    trackingCurrent,
+    expandedItems,
+    historyBack,
+    historyForward,
+  } = state;
+  // State update functions
+  const setCurrentPath = (path: string, clearHistoryForward?: boolean) => {
+    // If a path different from the current path is set, stop tracking
+    const newTrackingCurrent = trackingCurrent && path === props.current;
+    props.setState({
+      ...state,
+      currentPath: path,
+      trackingCurrent: newTrackingCurrent,
+      historyForward: clearHistoryForward ? [] : historyForward,
+    });
+  };
+  const setTrackingCurrent = (value: boolean) => {
+    props.setState({ ...state, trackingCurrent: value });
+  };
+  const setExpandedItems = (items: string[]) => {
+    props.setState({ ...state, expandedItems: items });
+  };
 
   log.debug(
-    `FileManager: home:${props.home} shellCurrent:${props.current} current: ${currentPath} trackingCurrent: ${trackingCurrent}`
+    `FileManager: props.current:${props.current} currentPath: ${currentPath} trackingCurrent: ${trackingCurrent}`
   );
-  if (trackingCurrent && currentPath !== props.current) {
-    setCurrentPath(props.current);
-  }
 
   const handle = createFileManagerHandle({
     getCurrentPath: () => currentPath,
     moveToPath: (path) => {
       log.debug(`Move to path: ${path}`);
-      setTrackingCurrent(false);
-      setCurrentPath(path);
+      if (currentPath != path) {
+        historyBack.push(currentPath);
+      }
+      setCurrentPath(path, true);
     },
     navigateForward: () => {
       log.debug("Navigate forward");
-      // TODO: Implement navigate forward
-      setTrackingCurrent(false);
+      if (historyForward.length > 0) {
+        const path = historyForward.pop();
+        if (path) {
+          historyBack.push(currentPath);
+          setCurrentPath(path);
+        }
+      }
     },
     navigateBack: () => {
       log.debug("Navigate back");
-      // TODO: Implement navigate back
-      setTrackingCurrent(false);
+      if (history.length > 0) {
+        const path = historyBack.pop();
+        if (path) {
+          historyForward.push(currentPath);
+          setCurrentPath(path);
+        }
+      }
     },
     trackingCurrent: () => trackingCurrent,
     setKeepTrackCurrent: (value) => {

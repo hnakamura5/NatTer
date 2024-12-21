@@ -18,6 +18,7 @@ import {
   IconOpenFolder,
   InlineIconAdjustStyle,
 } from "./FileIcon";
+import { useFileManagerHandle } from "./FileManagerHandle";
 
 function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
   return (
@@ -107,6 +108,7 @@ export function FileTreeItem(props: {
   showTop: boolean;
   expandedItems: string[];
 }) {
+  const handle = useFileManagerHandle();
   //log.error(`FileTreeItem: ${props.path}`);
   const stat = api.fs.stat.useQuery(props.path, {
     onError: () => {
@@ -153,6 +155,9 @@ export function FileTreeItem(props: {
               isExpanded={props.expandedItems.includes(props.path)}
             />
           }
+          onDoubleClick={() => {
+            handle.moveToPath(props.path);
+          }}
         >
           {children}
         </TreeItem>

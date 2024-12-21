@@ -1,6 +1,7 @@
 import { atom } from "jotai";
 import React from "react";
 import { ProcessID } from "@/datatypes/Command";
+import { FileManagerState } from "@/components/FileManager";
 
 // Defines the state with scope of one session
 
@@ -12,8 +13,12 @@ export const usePid = () => {
     throw new Error("usePid must be used within a pidContext");
   }
   return pid;
-}
+};
 
 // InputText is the text in the command input box.
 export const InputText = atom("");
 
+// State of the file manager.
+export const FileManagerStateAtom = atom<FileManagerState | undefined>(
+  undefined
+);

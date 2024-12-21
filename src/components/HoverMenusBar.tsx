@@ -22,15 +22,17 @@ import React, { useCallback, useEffect } from "react";
 
 import { api } from "@/api";
 import { FileManager } from "@/components/FileManager";
-import { usePid } from "@/SessionStates";
+import { FileManagerStateAtom, usePid } from "@/SessionStates";
 import FocusBoundary from "@/components/FocusBoundary";
 import { UnderConstruction } from "@/components/UnderConstruction";
 import { GlobalFocusMap } from "./GlobalFocusMap";
 import { set } from "zod";
+import { useAtom } from "jotai";
 
 function FileManagerWrapper(props: { focusRef: React.RefObject<HTMLElement> }) {
   const theme = useTheme();
   const pid = usePid();
+  const [fileManagerState, setFileManagerState] = useAtom(FileManagerStateAtom);
   const currentDir = api.shell.current.useQuery(pid, {
     refetchInterval: 1000,
     onError: (error) => {
@@ -43,8 +45,9 @@ function FileManagerWrapper(props: { focusRef: React.RefObject<HTMLElement> }) {
   return (
     <FocusBoundary defaultBorderColor={theme.system.backgroundColor}>
       <FileManager
-        home={currentDir.data.directory}
         current={currentDir.data.directory}
+        state={fileManagerState}
+        setState={setFileManagerState}
         focusRef={props.focusRef}
       />
     </FocusBoundary>

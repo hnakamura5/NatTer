@@ -18,7 +18,7 @@ function FileBreadcrumbElement(props: {
   moveToPath: (path: string) => void;
   useIcon?: boolean;
 }) {
-  log.debug(`FileBreadcrumbElement: ${props.name} (${props.fullPath})`);
+  // log.debug(`FileBreadcrumbElement: ${props.name} (${props.fullPath})`);
   const handleClick = () => {
     props.moveToPath(props.fullPath);
   };
