@@ -1,8 +1,5 @@
-import {
-  IconButton,
-  Link,
-  Breadcrumbs as MUIBreadcrumbs,
-} from "@mui/material";
+import { MouseEventHandler } from "react";
+import { IconButton, Link, Breadcrumbs as MUIBreadcrumbs } from "@mui/material";
 import styled from "@emotion/styled";
 
 import { AlignRight } from "@/components/AlignUtils";
@@ -11,20 +8,23 @@ import { IconForFileOrFolder, InlineIconAdjustStyle } from "./FileIcon";
 
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import { useFileManagerHandle } from "./FileManagerHandle";
+import { log } from "@/datatypes/Logger";
 
 function FileBreadcrumbElement(props: {
   name: string;
   fullPath: string;
   isDir: boolean;
+  moveToPath: (path: string) => void;
   useIcon?: boolean;
 }) {
-  const handleClick = (e) => {
-    e.preventDefault();
-    console.log("clicked on", props.fullPath);
+  log.debug(`FileBreadcrumbElement: ${props.name} (${props.fullPath})`);
+  const handleClick = () => {
+    props.moveToPath(props.fullPath);
   };
   if (props.useIcon) {
     return (
-      <Link href="/" color="inherit" onClick={handleClick}>
+      <Link color="inherit" onClick={handleClick}>
         <IconForFileOrFolder
           name={props.name}
           isDir={props.isDir}
@@ -36,7 +36,7 @@ function FileBreadcrumbElement(props: {
     );
   } else {
     return (
-      <Link href="/" color="inherit" onClick={handleClick}>
+      <Link color="inherit" onClick={handleClick}>
         {props.name}
       </Link>
     );
@@ -47,7 +47,6 @@ function AddBookmarkButton(props: { addBookmark: () => void }) {
   return (
     <IconButton
       onClick={() => {
-        console.log("Add bookmark");
         props.addBookmark();
       }}
       sx={{
@@ -77,8 +76,13 @@ const Breadcrumbs = styled(MUIBreadcrumbs)(({ theme }) => ({
   borderRadius: "5px",
 }));
 
-export function FileBreadcrumbs(props: { parsedPath: PathParsed }) {
+export type FileBreadcrumbsProps = {
+  parsedPath: PathParsed;
+};
+
+export function FileBreadcrumbs(props: FileBreadcrumbsProps) {
   const { parsedPath } = props;
+  const handle = useFileManagerHandle();
   const elements = [];
   const hier = parsedPath.dirHier;
   let elementFullPath = "";
@@ -93,10 +97,11 @@ export function FileBreadcrumbs(props: { parsedPath: PathParsed }) {
     elementFullPath += part;
     elements.push(
       <FileBreadcrumbElement
-        key={part}
+        key={elementFullPath}
         name={part}
         fullPath={elementFullPath}
         isDir={true}
+        moveToPath={handle.moveToPath}
         useIcon={i > 0}
       />
     );
@@ -116,7 +121,11 @@ export function FileBreadcrumbs(props: { parsedPath: PathParsed }) {
         {elements}
       </Breadcrumbs>
       <AlignRight>
-        <AddBookmarkButton addBookmark={() => console.log("add bookmark")} />
+        <AddBookmarkButton
+          addBookmark={() => {
+            handle.addBookmark(handle.getCurrentPath());
+          }}
+        />
       </AlignRight>
     </FileBreadcrumbFrame>
   );

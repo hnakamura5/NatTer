@@ -139,11 +139,18 @@ export const fileSystemRouter = server.router({
     .query(async (opts) => {
       const { fullPath, pathKind } = opts.input;
       const pathLib = pathKind ? pathOf(pathKind) : path;
-      const parsed = pathLib.parse(pathLib.normalize(fullPath));
+      const normalizedPath = pathLib.normalize(fullPath);
+      const parsed = pathLib.parse(normalizedPath);
       // All hierarchies including the root as the first element
-      const dirHier = parsed.dir.slice(parsed.root.length).split(pathLib.sep);
+      const nonRootPart = parsed.dir.slice(parsed.root.length);
+      const dirHier =
+        nonRootPart.length == 0 ? [] : nonRootPart.split(pathLib.sep);
       dirHier.unshift(parsed.root);
+      if (parsed.base.length > 0) {
+        dirHier.push(parsed.base);
+      }
       return {
+        fullPath: normalizedPath,
         dir: parsed.dir,
         root: parsed.root,
         dirHier: dirHier,

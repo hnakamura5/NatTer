@@ -19,6 +19,7 @@ export const FileStatScheme = z.object({
 export type FileStat = z.infer<typeof FileStatScheme>;
 
 export const PathParsedScheme = z.object({
+  fullPath: z.string(),
   // Directory of the path
   dir: z.string(),
   // Root of the path. For example, "/" in Unix-like systems and "C:\" in Windows

@@ -54,9 +54,9 @@ export function IconForFileOrFolder(props: {
 }) {
   if (props.isDir) {
     if (props.isOpen) {
-      return <IconOpenFolder name={props.name} style={props.style} />;
+      return <IconOpenFolder name={props.name} style={props.style || {}} />;
     }
-    return <IconForFolder name={props.name} style={props.style} />;
+    return <IconForFolder name={props.name} style={props.style || {}} />;
   }
   return <IconForFile name={props.name} style={props.style} />;
 }

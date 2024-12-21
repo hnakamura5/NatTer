@@ -1,42 +1,42 @@
 import { createContext, useContext } from "react";
 
 export interface FileManagerHandleBasic {
-  currentFullPath: () => string;
-  moveFullPath: (path: string) => void;
+  getCurrentPath: () => string;
+  moveToPath: (path: string) => void;
   navigateForward: () => void;
   navigateBack: () => void;
   trackingCurrent: () => boolean;
   setKeepTrackCurrent: (keepTracking: boolean) => void;
   addBookmark: (path: string) => void;
-  getBookmarks: () => string[]; // TODO: type?
+  getBookmarks: () => string[];
   splitPane: () => void;
 }
 
 // File handling shell. Does not contain the state itself.
 class FileManagerHandle implements FileManagerHandleBasic {
   constructor(
-    public currentFullPath: () => string,
-    public moveFullPath: (path: string) => void,
-    public navigateForward: () => void,
-    public navigateBack: () => void,
-    public trackingCurrent: () => boolean,
-    public setKeepTrackCurrent: (keepTracking: boolean) => void,
-    public addBookmark: (path: string) => void,
-    public getBookmarks: () => string[], // TODO: type?
-    public splitPane: () => void
+    public readonly getCurrentPath: () => string,
+    public readonly moveToPath: (path: string) => void,
+    public readonly navigateForward: () => void,
+    public readonly navigateBack: () => void,
+    public readonly trackingCurrent: () => boolean,
+    public readonly setKeepTrackCurrent: (keepTracking: boolean) => void,
+    public readonly addBookmark: (path: string) => void,
+    public readonly getBookmarks: () => string[],
+    public readonly splitPane: () => void
   ) {}
 
-  public toggleKeepTrackCurrent() {
+  toggleKeepTrackCurrent = () => {
     this.setKeepTrackCurrent(!this.trackingCurrent());
-  }
+  };
 }
 
 export function createFileManagerHandle(
   handleBasic: FileManagerHandleBasic
 ): FileManagerHandle {
   return new FileManagerHandle(
-    handleBasic.currentFullPath,
-    handleBasic.moveFullPath,
+    handleBasic.getCurrentPath,
+    handleBasic.moveToPath,
     handleBasic.navigateForward,
     handleBasic.navigateBack,
     handleBasic.trackingCurrent,
@@ -55,7 +55,7 @@ export function useFileManagerHandle() {
   const handle = useContext(FileManagerHandleContext);
   if (handle === undefined) {
     throw new Error(
-      "useFileHandle must be used within a FileManagerHandleProvider"
+      "useFileManagerHandle must be used within a FileManagerHandleProvider"
     );
   }
   return handle;

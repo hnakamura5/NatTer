@@ -49,35 +49,43 @@ export function FileManager(props: FileManagerProps) {
   const [trackingCurrent, setTrackingCurrent] = useState<boolean>(true);
   const [currentPath, setCurrentPath] = useState<string>(props.current);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  if (currentPath !== props.home) {
-    setCurrentPath(props.home);
+
+  log.debug(
+    `FileManager: home:${props.home} shellCurrent:${props.current} current: ${currentPath} trackingCurrent: ${trackingCurrent}`
+  );
+  if (trackingCurrent && currentPath !== props.current) {
+    setCurrentPath(props.current);
   }
 
   const handle = createFileManagerHandle({
-    currentFullPath: () => currentPath,
-    moveFullPath: (path) => {
+    getCurrentPath: () => currentPath,
+    moveToPath: (path) => {
+      log.debug(`Move to path: ${path}`);
       setTrackingCurrent(false);
       setCurrentPath(path);
     },
     navigateForward: () => {
-      console.log("Navigate forward");
+      log.debug("Navigate forward");
       // TODO: Implement navigate forward
       setTrackingCurrent(false);
     },
     navigateBack: () => {
-      console.log("Navigate back");
+      log.debug("Navigate back");
       // TODO: Implement navigate back
       setTrackingCurrent(false);
     },
     trackingCurrent: () => trackingCurrent,
     setKeepTrackCurrent: (value) => {
       setTrackingCurrent(value);
+      if (value) {
+        setCurrentPath(props.current);
+      }
     },
     addBookmark: (path) => {
-      console.log(`Add bookmark: ${path}`);
+      log.debug(`Add bookmark: ${path}`);
     },
     getBookmarks: () => {
-      console.log("get bookmarks");
+      log.debug("get bookmarks");
       return [];
     },
     splitPane: () => {
@@ -90,27 +98,7 @@ export function FileManager(props: FileManagerProps) {
       <FileManagerHandleContext.Provider value={handle}>
         <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
           <FileManagerFrame>
-            <FileManagerHeader
-              fullPath={currentPath}
-              moveFullPath={(path) => {
-                setTrackingCurrent(false);
-                setCurrentPath(path);
-              }}
-              navigateBack={() => {
-                console.log("Navigate back");
-                // TODO: Implement navigate back
-                setTrackingCurrent(false);
-              }}
-              navigateForward={() => {
-                console.log("Navigate forward");
-                // TODO: Implement navigate forward
-                setTrackingCurrent(false);
-              }}
-              trackingCurrent={trackingCurrent}
-              toggleKeepTrackCurrent={() => {
-                setTrackingCurrent(!trackingCurrent);
-              }}
-            />
+            <FileManagerHeader />
             <FileTreeFrame>
               <TreeView
                 onExpandedItemsChange={(e, items) => {

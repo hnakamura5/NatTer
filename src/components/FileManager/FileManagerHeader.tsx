@@ -1,6 +1,6 @@
 import { Box, IconButton } from "@mui/material";
 import styled from "@emotion/styled";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/api";
 
 import { AlignRight } from "@/components/AlignUtils";
@@ -14,6 +14,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 import BookmarksIcon from "@mui/icons-material/Bookmarks";
 import { useFileManagerHandle } from "./FileManagerHandle";
+import { log } from "@/datatypes/Logger";
 
 function NavigationForwardButton(props: {
   parsedPath: PathParsed;
@@ -48,10 +49,10 @@ function NavigationBackButton(props: {
 }
 
 function KeepTrackCurrentToggleButton(props: {
-  trackingCurrent: boolean;
+  trackingCurrent: () => boolean;
   toggleKeepTrackCurrent: () => void;
 }) {
-  const color = props.trackingCurrent ? "warning" : "disabled";
+  const color = props.trackingCurrent() ? "warning" : "disabled";
   return (
     <IconButton
       onClick={() => {
@@ -120,10 +121,15 @@ export type FileManagerHeaderProps = {
 
 export function FileManagerHeader(props: FileManagerHeaderProps) {
   const handle = useFileManagerHandle();
-  const fullPath = handle.currentFullPath();
+  const fullPath = handle.getCurrentPath();
   const [parsedPath, setParsedPath] = useState<PathParsed | undefined>(
     undefined
   );
+  useEffect(() => {
+    if (parsedPath?.fullPath != fullPath) {
+      setParsedPath(undefined);
+    }
+  }, [fullPath, parsedPath]);
   const parsed = api.fs.parsePath.useQuery(
     {
       fullPath: fullPath,
@@ -131,7 +137,7 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
     {
       enabled: parsedPath === undefined,
       onError: () => {
-        console.error(`Failed to parse ${fullPath}`);
+        log.error(`Failed to parse ${fullPath}`);
       },
     }
   );
@@ -141,6 +147,10 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
   if (!parsed.data) {
     return <div>Loading...</div>;
   }
+  log.debug(
+    `FileManagerHeader: ${parsed.data.fullPath}: `,
+    parsed.data.dirHier
+  );
   return (
     <FileManagerHeaderFrame>
       <NavigationBackButton
@@ -152,15 +162,22 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
         navigateForward={handle.navigateForward}
       />
       <KeepTrackCurrentToggleButton
-        trackingCurrent={handle.trackingCurrent()}
-        toggleKeepTrackCurrent={handle.toggleKeepTrackCurrent}
+        trackingCurrent={handle.trackingCurrent}
+        toggleKeepTrackCurrent={() => {
+          handle.toggleKeepTrackCurrent();
+        }}
       />
       <FileBreadcrumbs parsedPath={parsed.data} />
       <AlignRight>
         <BookmarksButton bookmarks={handle.getBookmarks} />
       </AlignRight>
       <AlignRight>
-        <SearchButton search={() => console.log("search")} />
+        <SearchButton
+          search={
+            // TODO: implement search
+            () => console.log("TODO: search")
+          }
+        />
       </AlignRight>
       <AlignRight>
         <SplitButton split={handle.splitPane} />
