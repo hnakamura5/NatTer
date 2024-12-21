@@ -1,99 +1,19 @@
-import {
-  Box,
-  IconButton,
-  Link,
-  Breadcrumbs as MUIBreadcrumbs,
-} from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import styled from "@emotion/styled";
 import { useState } from "react";
 import { api } from "@/api";
+
+import { AlignRight } from "@/components/AlignUtils";
 import { PathParsed } from "@/datatypes/PathAbstraction";
-import { IconForFileOrFolder, InlineIconAdjustStyle } from "./FileIcon";
+import { FileBreadcrumbs } from "./FileBreadcrumbs";
+
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import LinkIcon from "@mui/icons-material/Link";
 import SearchIcon from "@mui/icons-material/Search";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
-
-function FileBreadcrumbElement(props: {
-  name: string;
-  fullPath: string;
-  isDir: boolean;
-  useIcon?: boolean;
-}) {
-  const handleClick = (e) => {
-    e.preventDefault();
-    console.log("clicked on", props.fullPath);
-  };
-  if (props.useIcon) {
-    return (
-      <Link href="/" color="inherit" onClick={handleClick}>
-        <IconForFileOrFolder
-          name={props.name}
-          isDir={props.isDir}
-          isOpen={props.isDir}
-          style={InlineIconAdjustStyle}
-        />
-        {props.name}
-      </Link>
-    );
-  } else {
-    return (
-      <Link href="/" color="inherit" onClick={handleClick}>
-        {props.name}
-      </Link>
-    );
-  }
-}
-
-const Breadcrumbs = styled(MUIBreadcrumbs)(({ theme }) => ({
-  color: theme.system.textColor,
-  backgroundColor: theme.system.backgroundColor,
-  fontFamily: theme.system.font,
-  fontSize: theme.system.fontSize,
-  padding: "3px 10px 3px 10px", // top right bottom left
-  borderRadius: "5px",
-}));
-
-function FileBreadcrumb(props: { parsedPath: PathParsed }) {
-  const { parsedPath } = props;
-  const elements = [];
-  const hier = parsedPath.dirHier;
-  let elementFullPath = "";
-  for (let i = 0; i < hier.length; i++) {
-    const part = hier[i];
-    if (i > 1) {
-      // Separator not in the first.
-      // Root already has the separator.
-      // So, add separator before the second element first.
-      elementFullPath += parsedPath.sep;
-    }
-    elementFullPath += part;
-    elements.push(
-      <FileBreadcrumbElement
-        key={part}
-        name={part}
-        fullPath={elementFullPath}
-        isDir={true}
-        useIcon={i > 0}
-      />
-    );
-  }
-  return (
-    <Breadcrumbs
-      sx={{
-        ".MuiBreadcrumbs-separator": {
-          marginLeft: "0px",
-          marginRight: "0px",
-        },
-        width: "100%",
-      }}
-      separator={<NavigateNextIcon fontSize="small" />}
-    >
-      {elements}
-    </Breadcrumbs>
-  );
-}
+import BookmarksIcon from "@mui/icons-material/Bookmarks";
+import { useFileManagerHandle } from "./FileManagerHandle";
 
 function NavigationForwardButton(props: {
   parsedPath: PathParsed;
@@ -144,6 +64,19 @@ function KeepTrackCurrentToggleButton(props: {
   );
 }
 
+function BookmarksButton(props: { bookmarks: () => void }) {
+  return (
+    <IconButton
+      onClick={() => {
+        console.log("Bookmarks");
+        props.bookmarks();
+      }}
+    >
+      <BookmarksIcon fontSize="small" />
+    </IconButton>
+  );
+}
+
 function SearchButton(props: { search: () => void }) {
   return (
     <IconButton
@@ -182,27 +115,23 @@ const FileManagerHeaderFrame = styled(Box)(({ theme }) => ({
 }));
 
 export type FileManagerHeaderProps = {
-  fullPath: string;
-  moveFullPath: (path: string) => void;
-  navigateForward: () => void;
-  navigateBack: () => void;
-  trackingCurrent: boolean;
-  toggleKeepTrackCurrent: () => void;
   focusRef?: React.RefObject<HTMLElement>;
 };
 
 export function FileManagerHeader(props: FileManagerHeaderProps) {
+  const handle = useFileManagerHandle();
+  const fullPath = handle.currentFullPath();
   const [parsedPath, setParsedPath] = useState<PathParsed | undefined>(
     undefined
   );
   const parsed = api.fs.parsePath.useQuery(
     {
-      fullPath: props.fullPath,
+      fullPath: fullPath,
     },
     {
       enabled: parsedPath === undefined,
       onError: () => {
-        console.error(`Failed to parse ${props.fullPath}`);
+        console.error(`Failed to parse ${fullPath}`);
       },
     }
   );
@@ -216,23 +145,26 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
     <FileManagerHeaderFrame>
       <NavigationBackButton
         parsedPath={parsed.data}
-        navigateBack={props.navigateBack}
+        navigateBack={handle.navigateBack}
       />
       <NavigationForwardButton
         parsedPath={parsed.data}
-        navigateForward={props.navigateForward}
+        navigateForward={handle.navigateForward}
       />
       <KeepTrackCurrentToggleButton
-        trackingCurrent={props.trackingCurrent}
-        toggleKeepTrackCurrent={props.toggleKeepTrackCurrent}
+        trackingCurrent={handle.trackingCurrent()}
+        toggleKeepTrackCurrent={handle.toggleKeepTrackCurrent}
       />
-      <FileBreadcrumb parsedPath={parsed.data} />
-      <div style={{ marginLeft: "auto" /* align to the right */ }}>
+      <FileBreadcrumbs parsedPath={parsed.data} />
+      <AlignRight>
+        <BookmarksButton bookmarks={handle.getBookmarks} />
+      </AlignRight>
+      <AlignRight>
         <SearchButton search={() => console.log("search")} />
-      </div>
-      <div style={{ marginLeft: "auto" /* align to the right */ }}>
-        <SplitButton split={() => console.log("split")} />
-      </div>
+      </AlignRight>
+      <AlignRight>
+        <SplitButton split={handle.splitPane} />
+      </AlignRight>
     </FileManagerHeaderFrame>
   );
 }

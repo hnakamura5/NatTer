@@ -98,7 +98,7 @@ const TreeItem = styled(MuiTreeItem)(({ theme }) => ({
   backgroundColor: theme.system.secondaryBackgroundColor,
   textAlign: "left",
   margin: `-${ListMargin} 0px -${ListMargin} 0px`,
-  padding: "0px 0px 0px 1px", // top right bottom left
+  padding: "0px 0px 0px 3px", // top right bottom left
 }));
 
 export function FileTreeItem(props: {

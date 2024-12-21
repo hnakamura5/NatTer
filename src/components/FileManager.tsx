@@ -14,6 +14,10 @@ import { FileTreeItem } from "@/components/FileManager/FileTreeItem";
 import { log } from "@/datatypes/Logger";
 import { FileManagerHeader } from "./FileManager/FileManagerHeader";
 import { set } from "zod";
+import {
+  FileManagerHandleContext,
+  createFileManagerHandle,
+} from "./FileManager/FileManagerHandle";
 
 const ListMargin = "0px";
 
@@ -49,48 +53,82 @@ export function FileManager(props: FileManagerProps) {
     setCurrentPath(props.home);
   }
 
+  const handle = createFileManagerHandle({
+    currentFullPath: () => currentPath,
+    moveFullPath: (path) => {
+      setTrackingCurrent(false);
+      setCurrentPath(path);
+    },
+    navigateForward: () => {
+      console.log("Navigate forward");
+      // TODO: Implement navigate forward
+      setTrackingCurrent(false);
+    },
+    navigateBack: () => {
+      console.log("Navigate back");
+      // TODO: Implement navigate back
+      setTrackingCurrent(false);
+    },
+    trackingCurrent: () => trackingCurrent,
+    setKeepTrackCurrent: (value) => {
+      setTrackingCurrent(value);
+    },
+    addBookmark: (path) => {
+      console.log(`Add bookmark: ${path}`);
+    },
+    getBookmarks: () => {
+      console.log("get bookmarks");
+      return [];
+    },
+    splitPane: () => {
+      console.log("split pane");
+    },
+  });
+
   return (
     <KeybindScope>
-      <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
-        <FileManagerFrame>
-          <FileManagerHeader
-            fullPath={currentPath}
-            moveFullPath={(path) => {
-              setTrackingCurrent(false);
-              setCurrentPath(path);
-            }}
-            navigateBack={() => {
-              console.log("Navigate back");
-              // TODO: Implement navigate back
-              setTrackingCurrent(false);
-            }}
-            navigateForward={() => {
-              console.log("Navigate forward");
-              // TODO: Implement navigate forward
-              setTrackingCurrent(false);
-            }}
-            trackingCurrent={trackingCurrent}
-            toggleKeepTrackCurrent={() => {
-              setTrackingCurrent(!trackingCurrent);
-            }}
-          />
-          <FileTreeFrame>
-            <TreeView
-              onExpandedItemsChange={(e, items) => {
-                setExpandedItems(items);
+      <FileManagerHandleContext.Provider value={handle}>
+        <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
+          <FileManagerFrame>
+            <FileManagerHeader
+              fullPath={currentPath}
+              moveFullPath={(path) => {
+                setTrackingCurrent(false);
+                setCurrentPath(path);
               }}
-              multiSelect
-            >
-              <FileTreeItem
-                path={currentPath}
-                key={currentPath}
-                showTop={false}
-                expandedItems={expandedItems}
-              />
-            </TreeView>
-          </FileTreeFrame>
-        </FileManagerFrame>
-      </div>
+              navigateBack={() => {
+                console.log("Navigate back");
+                // TODO: Implement navigate back
+                setTrackingCurrent(false);
+              }}
+              navigateForward={() => {
+                console.log("Navigate forward");
+                // TODO: Implement navigate forward
+                setTrackingCurrent(false);
+              }}
+              trackingCurrent={trackingCurrent}
+              toggleKeepTrackCurrent={() => {
+                setTrackingCurrent(!trackingCurrent);
+              }}
+            />
+            <FileTreeFrame>
+              <TreeView
+                onExpandedItemsChange={(e, items) => {
+                  setExpandedItems(items);
+                }}
+                multiSelect
+              >
+                <FileTreeItem
+                  path={currentPath}
+                  key={currentPath}
+                  showTop={false}
+                  expandedItems={expandedItems}
+                />
+              </TreeView>
+            </FileTreeFrame>
+          </FileManagerFrame>
+        </div>
+      </FileManagerHandleContext.Provider>
     </KeybindScope>
   );
 }
