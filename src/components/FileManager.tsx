@@ -9,7 +9,10 @@ import { useTheme } from "@/AppState";
 import React from "react";
 import { KeybindScope } from "@/components/KeybindScope";
 
-import { FileTreeItem, ListMargin } from "@/components/FileManager/FileTreeItem";
+import {
+  FileTreeItem,
+  ListMargin,
+} from "@/components/FileManager/FileTreeItem";
 
 import { log } from "@/datatypes/Logger";
 import { FileManagerHeader } from "./FileManager/FileManagerHeader";
@@ -18,6 +21,13 @@ import {
   FileManagerHandleContext,
   createFileManagerHandle,
 } from "./FileManager/FileManagerHandle";
+
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  MeasuringStrategy,
+} from "@dnd-kit/core";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   backgroundColor: theme.system.backgroundColor,
@@ -54,9 +64,6 @@ export type FileManagerProps = {
 };
 
 export function FileManager(props: FileManagerProps) {
-  // const [currentPath, setCurrentPath] = useState<string>(props.current);
-  // const [trackingCurrent, setTrackingCurrent] = useState<boolean>(true);
-  // const [expandedItems, setExpandedItems] = useState<string[]>([]);
   useEffect(() => {
     log.debug(`FileManager: componentDidMount`);
   }, []);
@@ -183,28 +190,36 @@ export function FileManager(props: FileManagerProps) {
 
   return (
     <KeybindScope>
-      <FileManagerHandleContext.Provider value={handle}>
-        <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
-          <FileManagerFrame>
-            <FileManagerHeader />
-            <FileTreeFrame>
-              <TreeView
-                onExpandedItemsChange={(e, items) => {
-                  setExpandedItems(items);
-                }}
-                multiSelect
-              >
-                <FileTreeItem
-                  path={currentPath}
-                  key={currentPath}
-                  showTop={false}
-                  expandedItems={expandedItems}
-                />
-              </TreeView>
-            </FileTreeFrame>
-          </FileManagerFrame>
-        </div>
-      </FileManagerHandleContext.Provider>
+      <DndContext
+        onDragEnd={(e: DragEndEvent) => {
+          const fromId = e.active.id;
+          const toId = e.over?.id;
+          log.debug(`FileManager DragEnd: ${fromId} -> ${toId}`);
+        }}
+      >
+        <FileManagerHandleContext.Provider value={handle}>
+          <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
+            <FileManagerFrame>
+              <FileManagerHeader />
+              <FileTreeFrame>
+                <TreeView
+                  onExpandedItemsChange={(e, items) => {
+                    setExpandedItems(items);
+                  }}
+                  multiSelect
+                >
+                  <FileTreeItem
+                    path={currentPath}
+                    key={currentPath}
+                    showTop={false}
+                    expandedItems={expandedItems}
+                  />
+                </TreeView>
+              </FileTreeFrame>
+            </FileManagerFrame>
+          </div>
+        </FileManagerHandleContext.Provider>
+      </DndContext>
     </KeybindScope>
   );
 }

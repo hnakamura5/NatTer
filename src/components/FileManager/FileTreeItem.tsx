@@ -1,10 +1,12 @@
-import { TreeItem as MuiTreeItem } from "@mui/x-tree-view";
+import { TreeItem as MuiTreeItem, TreeItemProps } from "@mui/x-tree-view";
 import styled from "@emotion/styled";
 import { FileStat } from "@/datatypes/PathAbstraction";
 import { api } from "@/api";
 import { useTheme } from "@/AppState";
 import { log } from "@/datatypes/Logger";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { useDroppable, useDraggable } from "@dnd-kit/core";
+import { CSS as DndCSS, Transform } from "@dnd-kit/utilities";
 
 import {
   FaFolder as FolderIcon,
@@ -19,6 +21,7 @@ import {
 } from "./FileIcon";
 
 import { useFileManagerHandle } from "./FileManagerHandle";
+import { CSSProperties } from "react";
 
 function Label(props: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -40,13 +43,25 @@ function ParseLoadingLabel() {
         color={theme.system.loadingBaseColor}
       />
       <Label>
-        <LoadingSkeleton width={40} />
+        <LoadingSkeleton width={80} />
       </Label>
     </span>
   );
 }
 
+const DragStyle = (transform: Transform | null) => {
+  return { transform: DndCSS.Translate.toString(transform) };
+};
+
 function FileLabel(props: { stat: FileStat }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef: dragNodeRef,
+    transform,
+  } = useDraggable({
+    id: props.stat.fullPath,
+  });
   const parsed = api.fs.parsePath.useQuery(
     { fullPath: props.stat.fullPath },
     {
@@ -60,14 +75,30 @@ function FileLabel(props: { stat: FileStat }) {
   }
   const fileName = parsed.data.base;
   return (
-    <>
+    <div
+      ref={dragNodeRef}
+      style={DragStyle(transform)}
+      {...attributes}
+      {...listeners}
+    >
       <IconForFile name={fileName} style={InlineIconAdjustStyle} />
       <Label>{fileName}</Label>
-    </>
+    </div>
   );
 }
 
 function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
+  const { setNodeRef: dropNodeRef, isOver } = useDroppable({
+    id: props.stat.fullPath,
+  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef: dragNodeRef,
+    transform,
+  } = useDraggable({
+    id: props.stat.fullPath,
+  });
   const parsed = api.fs.parsePath.useQuery(
     { fullPath: props.stat.fullPath },
     {
@@ -80,19 +111,37 @@ function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
     return <ParseLoadingLabel />;
   }
   const directoryName = parsed.data.base;
+  const dropOverStyle = isOver
+    ? { backgroundColor: "rgba(144, 202, 249, 0.16)" }
+    : {};
+  // const dropOverStyle = {};
   if (props.isExpanded) {
     return (
-      <>
-        <IconOpenFolder name={directoryName} style={InlineIconAdjustStyle} />
-        <Label>{directoryName}</Label>
-      </>
+      <div ref={dropNodeRef} style={dropOverStyle}>
+        <div
+          ref={dragNodeRef}
+          style={DragStyle(transform)}
+          {...attributes}
+          {...listeners}
+        >
+          <IconOpenFolder name={directoryName} style={InlineIconAdjustStyle} />
+          <Label>{directoryName}</Label>
+        </div>
+      </div>
     );
   }
   return (
-    <>
-      <IconForFolder name={directoryName} style={InlineIconAdjustStyle} />
-      <Label>{directoryName}</Label>
-    </>
+    <div ref={dropNodeRef} style={dropOverStyle}>
+      <div
+        ref={dragNodeRef}
+        style={DragStyle(transform)}
+        {...attributes}
+        {...listeners}
+      >
+        <IconForFolder name={directoryName} style={InlineIconAdjustStyle} />
+        <Label>{directoryName}</Label>
+      </div>
+    </div>
   );
 }
 
@@ -119,7 +168,7 @@ function StatLoadingLabel(props: { path: string }) {
 
 export const ListMargin = "3px";
 
-const TreeItem = styled(MuiTreeItem)(({ theme }) => ({
+const StyledTreeItem = styled(MuiTreeItem)(({ theme }) => ({
   color: theme.system.textColor,
   backgroundColor: theme.system.secondaryBackgroundColor,
   textAlign: "left",
@@ -129,6 +178,20 @@ const TreeItem = styled(MuiTreeItem)(({ theme }) => ({
     marginRight: "-7px",
   },
 }));
+
+function DraggableTreeItem(props: TreeItemProps) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: props.itemId,
+  });
+  return (
+    <StyledTreeItem
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      {...props}
+    />
+  );
+}
 
 export function FileTreeItem(props: {
   path: string;
@@ -156,7 +219,7 @@ export function FileTreeItem(props: {
 
   if (!stat.data) {
     return (
-      <TreeItem
+      <StyledTreeItem
         itemId={props.path}
         label={<StatLoadingLabel path={props.path} />}
       />
@@ -175,7 +238,7 @@ export function FileTreeItem(props: {
     ));
     if (props.showTop) {
       return (
-        <TreeItem
+        <StyledTreeItem
           itemId={props.path}
           label={
             <DirectoryLabel
@@ -189,7 +252,7 @@ export function FileTreeItem(props: {
           }}
         >
           {children}
-        </TreeItem>
+        </StyledTreeItem>
       );
     } else {
       return <>{children}</>;
@@ -197,7 +260,10 @@ export function FileTreeItem(props: {
   } else {
     // File
     return (
-      <TreeItem itemId={props.path} label={<FileLabel stat={stat.data} />} />
+      <StyledTreeItem
+        itemId={props.path}
+        label={<FileLabel stat={stat.data} />}
+      />
     );
   }
 }
