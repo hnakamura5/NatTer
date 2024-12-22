@@ -34,8 +34,8 @@ const Paper = styled(Box)(({ theme }) => ({
   display: "flex",
   flexDirection: "row",
   alignItems: "center",
-  backgroundColor: theme.terminal.backgroundColor,
-  color: theme.terminal.textColor,
+  backgroundColor: theme.shell.backgroundColor,
+  color: theme.shell.textColor,
   paddingTop: "1px",
   paddingBottom: "3px",
 }));
@@ -95,7 +95,7 @@ function InputBox(props: InputBoxProps) {
   return (
     <ErrorBoundary fallbackRender={InputBoxError}>
       <OverToLeft>
-        <FocusBoundary defaultBorderColor={theme.terminal.backgroundColor}>
+        <FocusBoundary defaultBorderColor={theme.shell.backgroundColor}>
           <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox-${pid}`}>
             <GlobalFocusMap.Target
               focusKey={GlobalFocusMap.GlobalKey.InputBox}

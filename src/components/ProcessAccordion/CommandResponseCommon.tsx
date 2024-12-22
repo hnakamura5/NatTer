@@ -5,15 +5,15 @@ import { useTheme } from "@/AppState";
 import { Command, CommandID } from "@/datatypes/Command";
 
 const CurrentDirStyle = styled.span(({ theme }) => ({
-  color: theme.terminal.directoryColor,
+  color: theme.shell.directoryColor,
 }));
 const UserStyle = styled.span(({ theme }) => ({
-  color: theme.terminal.userColor,
+  color: theme.shell.userColor,
   float: "right",
   marginRight: "10px",
 }));
 const TimeStyle = styled.span(({ theme }) => ({
-  color: theme.terminal.timeColor,
+  color: theme.shell.timeColor,
   style: "bold underline",
   marginRight: "10px",
 }));
@@ -25,7 +25,7 @@ export const ResponseAlign = styled(Box)(({ theme }) => ({
 
 export const ResponseStyle = styled(ResponseAlign)(({ theme }) => ({
   maxHeight: "calc(50vh - 50px)",
-  backgroundColor: theme.terminal.secondaryBackgroundColor,
+  backgroundColor: theme.shell.secondaryBackgroundColor,
   paddingBottom: "5px",
 }));
 
@@ -49,7 +49,7 @@ export function CommandHeader(props: { command: Command }) {
   const theme = useTheme();
   return (
     <ResponseAlign>
-      <Box sx={colorSection(theme.terminal.useCommandColor)}>
+      <Box sx={colorSection(theme.shell.useCommandColor)}>
         <span>
           <TimeStyle>{command.startTime}</TimeStyle>
           <CurrentDirStyle>{command.currentDirectory}</CurrentDirStyle>

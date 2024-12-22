@@ -26,8 +26,8 @@ function Button(props: {
   const theme = useTheme();
   const iconWidth = "20px";
   const IconButton = styled(MuiIconButton)({
-    color: theme.terminal.textColor,
-    backgroundColor: theme.terminal.backgroundColor,
+    color: theme.shell.textColor,
+    backgroundColor: theme.shell.backgroundColor,
     width: iconWidth,
     padding: "0px",
     scale: 0.6,
@@ -62,13 +62,13 @@ export function ControlButtons(props: { submit: (command: string) => void }) {
     <IconBox>
       <Button
         icon={<PlayArrow />}
-        color={theme.terminal.runButtonColor}
+        color={theme.shell.runButtonColor}
         tooltip="Run Command (Ctrl+Enter)"
         onClick={run}
       />
       <Button
         icon={<PlayCircle />}
-        color={theme.terminal.runBackgroundButtonColor}
+        color={theme.shell.runBackgroundButtonColor}
         tooltip="Run Command Background (Ctrl+Alt+Enter)"
         onClick={run}
       />

@@ -166,7 +166,7 @@ function HoverMenusBar(props: HoverMenusBarProps) {
     <VerticalList>
       <HoverMenuItem
         icon={FolderIcon}
-        color={theme.terminal.directoryColor}
+        color={theme.shell.directoryColor}
         popup={<FileManagerWrapper focusRef={fileTreeRef} />}
         focusKey={GlobalFocusMap.GlobalKey.FileView}
         focusRef={fileTreeRef}

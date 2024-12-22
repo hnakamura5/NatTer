@@ -8,8 +8,8 @@ interface UnderConstructionProps {
 }
 
 const StyledDiv = styled.div(({ theme }) => ({
-  backgroundColor: theme.terminal.backgroundColor,
-  color: theme.terminal.textColor,
+  backgroundColor: theme.shell.backgroundColor,
+  color: theme.shell.textColor,
   fontFamily: theme.system.font,
   fontSize: theme.system.fontSize,
   padding: "10px",

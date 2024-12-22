@@ -39,14 +39,14 @@ export function CommandResponse(props: { command: Command }) {
     <ResponseStyleWithScroll>
       <CommandHeader command={command} />
       <Box sx={{ overflow: "auto" }}>
-        <Box sx={colorLine(theme.terminal.stdoutColor)}>
+        <Box sx={colorLine(theme.shell.stdoutColor)}>
           <div
             dangerouslySetInnerHTML={{
               __html: stdoutHTML,
             }}
           />
         </Box>
-        <Box sx={colorLine(theme.terminal.stderrColor)}>
+        <Box sx={colorLine(theme.shell.stderrColor)}>
           <div
             dangerouslySetInnerHTML={{
               __html: stderrHTML,
@@ -82,12 +82,12 @@ function RecordedCommandResponse(props: { cid: CommandID }) {
     <Box>
       <CommandHeader command={command.data} />
       <ResponseStyleWithScroll>
-        <Box sx={colorLine(theme.terminal.stdoutColor)}>
+        <Box sx={colorLine(theme.shell.stdoutColor)}>
           <div
             dangerouslySetInnerHTML={{ __html: command.data.stdoutHTML || "" }}
           />
         </Box>
-        <Box sx={colorLine(theme.terminal.stderrColor)}>
+        <Box sx={colorLine(theme.shell.stderrColor)}>
           <div
             dangerouslySetInnerHTML={{ __html: command.data.stderrHTML || "" }}
           />
@@ -169,10 +169,10 @@ export function AliveCommandResponse(props: { cid: CommandID }) {
     <Box>
       <CommandHeader command={command.data} />
       <ResponseStyleWithScroll>
-        <Box sx={colorLine(theme.terminal.stdoutColor)}>
+        <Box sx={colorLine(theme.shell.stdoutColor)}>
           <div dangerouslySetInnerHTML={{ __html: stdoutHTML || "" }} />
         </Box>
-        <Box sx={colorLine(theme.terminal.stderrColor)}>
+        <Box sx={colorLine(theme.shell.stderrColor)}>
           <div
             dangerouslySetInnerHTML={{ __html: command.data.stderrHTML || "" }}
           />

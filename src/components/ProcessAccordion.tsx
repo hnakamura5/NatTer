@@ -51,10 +51,10 @@ const queryOption = {
 };
 
 const AccordionStyle = styled(Box)(({ theme }) => ({
-  color: theme.terminal.textColor,
-  backgroundColor: theme.terminal.backgroundColor,
-  fontFamily: theme.terminal.font,
-  fontSize: theme.terminal.fontSize,
+  color: theme.shell.textColor,
+  backgroundColor: theme.shell.backgroundColor,
+  fontFamily: theme.shell.font,
+  fontSize: theme.shell.fontSize,
   textAlign: "left",
   overflow: "hidden",
   overflowWrap: "anywhere",
@@ -90,7 +90,7 @@ function ProcessAccordionSummary(props: { cid: CommandID }) {
         expandIcon={
           <ExpandMoreIcon
             sx={{
-              color: theme.terminal.textColor,
+              color: theme.shell.textColor,
               margin: -1,
             }}
           />
@@ -336,7 +336,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       <ProcessKeySender cid={cid}>
         <KeybindScope keybindRef={keybindRef}>
           <FocusBoundary
-            defaultBorderColor={theme.terminal.backgroundColor}
+            defaultBorderColor={theme.shell.backgroundColor}
             boundaryRef={boundaryRef}
           >
             <EasyFocus.Land

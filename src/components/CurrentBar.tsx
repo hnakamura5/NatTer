@@ -18,21 +18,21 @@ function IconText(props: { icon: React.ReactNode; text?: string }) {
   );
 }
 const CurrentBarStyle = styled(Box)(({ theme }) => ({
-  color: theme.terminal.textColor,
+  color: theme.shell.textColor,
   backgroundColor: theme.system.secondaryBackgroundColor,
-  fontFamily: theme.terminal.font,
-  fontSize: theme.terminal.fontSize,
+  fontFamily: theme.shell.font,
+  fontSize: theme.shell.fontSize,
   textAlign: "left",
   padding: "3px 0px 0px 5px", // top right bottom left
   overflow: "hidden",
 }));
 
 const CurrentDirStyle = styled.span(({ theme }) => ({
-  color: theme.terminal.directoryColor,
+  color: theme.shell.directoryColor,
 }));
 
 const UserStyle = styled.span(({ theme }) => ({
-  color: theme.terminal.userColor,
+  color: theme.shell.userColor,
   float: "right",
   marginRight: "5px",
 }));

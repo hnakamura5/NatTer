@@ -114,10 +114,10 @@ export function Input(props: {
           inputRef={props.inputBoxRef}
           style={{
             width: `calc(100% - ${theme.system.hoverMenuWidth})`,
-            backgroundColor: theme.terminal.secondaryBackgroundColor,
-            color: theme.terminal.textColor,
-            fontFamily: theme.terminal.font,
-            fontSize: theme.terminal.fontSize,
+            backgroundColor: theme.shell.secondaryBackgroundColor,
+            color: theme.shell.textColor,
+            fontFamily: theme.shell.font,
+            fontSize: theme.shell.fontSize,
             marginLeft: "0px",
             paddingLeft: "10px",
           }}

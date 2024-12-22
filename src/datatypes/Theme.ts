@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const ThemeSchema = z.object({
-  terminal: z.object({
+  shell: z.object({
     font: z.string(),
     fontSize: z.string(),
     textColor: z.string(),
@@ -33,13 +33,15 @@ const ThemeSchema = z.object({
     tagColor: z.string(),
     infoColor: z.string(),
     settingsColor: z.string(),
+    loadingBaseColor: z.string(),
+    loadingHighlightColor: z.string(),
   }),
 });
 
 export type Theme = z.infer<typeof ThemeSchema>;
 
 export const DefaultDarkTheme: Theme = {
-  terminal: {
+  shell: {
     // font: "Consolas",
     font: "PlemolJP Console NF",
     fontSize: "12px",
@@ -73,5 +75,7 @@ export const DefaultDarkTheme: Theme = {
     tagColor: "#E57373",
     infoColor: "#64B5F6",
     settingsColor: "#A1887F",
+    loadingBaseColor: "#9E9E9E",
+    loadingHighlightColor: "#E0E0E0",
   },
 };

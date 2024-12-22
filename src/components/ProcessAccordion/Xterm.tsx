@@ -19,10 +19,10 @@ let count = 0;
 function newTerminal(theme: Theme) {
   const terminal = new Terminal({
     theme: {
-      background: theme.terminal.secondaryBackgroundColor,
-      foreground: theme.terminal.textColor,
+      background: theme.shell.secondaryBackgroundColor,
+      foreground: theme.shell.textColor,
     },
-    fontFamily: theme.terminal.font,
+    fontFamily: theme.shell.font,
     allowProposedApi: true,
   });
   const fitAddon = new FitAddon();

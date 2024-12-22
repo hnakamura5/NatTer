@@ -56,7 +56,6 @@ function KeepTrackCurrentToggleButton(props: {
   return (
     <IconButton
       onClick={() => {
-        console.log("Keep track current");
         props.toggleKeepTrackCurrent();
       }}
     >

@@ -3,30 +3,22 @@ import styled from "@emotion/styled";
 import { FileStat } from "@/datatypes/PathAbstraction";
 import { api } from "@/api";
 import { useTheme } from "@/AppState";
+import { log } from "@/datatypes/Logger";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 
 import {
   FaFolder as FolderIcon,
   FaFile as FileIcon,
   FaFolderOpen as FolderOpenIcon,
 } from "react-icons/fa";
-
-import { log } from "@/datatypes/Logger";
-
 import {
   IconForFile,
   IconForFolder,
   IconOpenFolder,
   InlineIconAdjustStyle,
 } from "./FileIcon";
-import { useFileManagerHandle } from "./FileManagerHandle";
 
-function Icon(props: { icon: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <span style={{ verticalAlign: "-2px", fontSize: "0.8em", ...props.style }}>
-      {props.icon}{" "}
-    </span>
-  );
-}
+import { useFileManagerHandle } from "./FileManagerHandle";
 
 function Label(props: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -39,9 +31,22 @@ function Label(props: { children: React.ReactNode }) {
   return <span style={labelStyle}>{props.children}</span>;
 }
 
-function FileLabel(props: { stat: FileStat }) {
+function ParseLoadingLabel() {
   const theme = useTheme();
+  return (
+    <span>
+      <FileIcon
+        style={InlineIconAdjustStyle}
+        color={theme.system.loadingBaseColor}
+      />
+      <Label>
+        <LoadingSkeleton width={40} />
+      </Label>
+    </span>
+  );
+}
 
+function FileLabel(props: { stat: FileStat }) {
   const parsed = api.fs.parsePath.useQuery(
     { fullPath: props.stat.fullPath },
     {
@@ -51,10 +56,9 @@ function FileLabel(props: { stat: FileStat }) {
     }
   );
   if (!parsed.data) {
-    return <Label>Loading...</Label>;
+    return <ParseLoadingLabel />;
   }
   const fileName = parsed.data.base;
-  // <Icon icon={<FileIcon />} />
   return (
     <>
       <IconForFile name={fileName} style={InlineIconAdjustStyle} />
@@ -73,7 +77,7 @@ function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
     }
   );
   if (!parsed.data) {
-    return <Label>Loading...</Label>;
+    return <ParseLoadingLabel />;
   }
   const directoryName = parsed.data.base;
   if (props.isExpanded) {
@@ -89,6 +93,27 @@ function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
       <IconForFolder name={directoryName} style={InlineIconAdjustStyle} />
       <Label>{directoryName}</Label>
     </>
+  );
+}
+
+function StatLoadingLabel(props: { path: string }) {
+  const parsed = api.fs.parsePath.useQuery(
+    { fullPath: props.path },
+    {
+      onError: () => {
+        log.error(`Failed to parse ${props.path}`);
+      },
+    }
+  );
+  if (!parsed.data) {
+    return <ParseLoadingLabel />;
+  }
+  const fileName = parsed.data.base;
+  return (
+    <span>
+      <IconForFile name={fileName} style={InlineIconAdjustStyle} />
+      {fileName}
+    </span>
   );
 }
 
@@ -130,7 +155,7 @@ export function FileTreeItem(props: {
     return (
       <TreeItem
         itemId={props.path}
-        label={`The pass ${props.path} not found.`}
+        label={<StatLoadingLabel path={props.path} />}
       />
     );
   }

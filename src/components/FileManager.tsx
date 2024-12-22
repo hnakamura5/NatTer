@@ -45,6 +45,7 @@ export type FileManagerState = {
   expandedItems: string[];
   historyBack: string[];
   historyForward: string[];
+  historyRecent: string[];
 };
 
 export type FileManagerProps = {
@@ -72,6 +73,7 @@ export function FileManager(props: FileManagerProps) {
         expandedItems: [],
         historyBack: [],
         historyForward: [],
+        historyRecent: [],
       });
     }
   }, [state === undefined]);
@@ -95,16 +97,23 @@ export function FileManager(props: FileManagerProps) {
     expandedItems,
     historyBack,
     historyForward,
+    historyRecent: historyAll,
   } = state;
   // State update functions
   const setCurrentPath = (path: string, clearHistoryForward?: boolean) => {
     // If a path different from the current path is set, stop tracking
     const newTrackingCurrent = trackingCurrent && path === props.current;
+    const historyLimit = 30; // TODO: Make this configurable
+    const newHistoryAll = historyAll
+      .filter((p) => p !== path)
+      .slice(-(historyLimit - 1));
+    newHistoryAll.push(path);
     props.setState({
       ...state,
       currentPath: path,
       trackingCurrent: newTrackingCurrent,
       historyForward: clearHistoryForward ? [] : historyForward,
+      historyRecent: newHistoryAll,
     });
   };
   const setTrackingCurrent = (value: boolean) => {
@@ -147,12 +156,16 @@ export function FileManager(props: FileManagerProps) {
         }
       }
     },
-    trackingCurrent: () => trackingCurrent,
+    trackingCurrent: () => {
+      log.debug(`Get Tracking current: ${trackingCurrent}`);
+      return trackingCurrent;
+    },
     setKeepTrackCurrent: (value) => {
-      setTrackingCurrent(value);
+      log.debug(`Set keep track current: ${value}`);
       if (value) {
         setCurrentPath(props.current);
       }
+      setTrackingCurrent(value);
     },
     addBookmark: (path) => {
       log.debug(`Add bookmark: ${path}`);

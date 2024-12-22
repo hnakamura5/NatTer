@@ -51,7 +51,8 @@ function AddBookmarkButton(props: { addBookmark: () => void }) {
       }}
       sx={{
         scale: 0.9,
-        padding: "4px 5px 0 0", // top right bottom left
+        padding: "5px 4px 0 0", // top right bottom left
+        verticalAlign: "bottom",
       }}
     >
       <BookmarkBorderIcon fontSize="small" />
@@ -72,7 +73,7 @@ const Breadcrumbs = styled(MUIBreadcrumbs)(({ theme }) => ({
   backgroundColor: theme.system.backgroundColor,
   fontFamily: theme.system.font,
   fontSize: theme.system.fontSize,
-  padding: "3px 10px 3px 10px", // top right bottom left
+  padding: "3px 7px 3px 7px", // top right bottom left
   borderRadius: "5px",
 }));
 
@@ -116,7 +117,7 @@ export function FileBreadcrumbs(props: FileBreadcrumbsProps) {
           },
           width: "100%",
         }}
-        separator={<NavigateNextIcon fontSize="small" />}
+        separator={<NavigateNextIcon sx={{ fontSize: "small" }} />}
       >
         {elements}
       </Breadcrumbs>

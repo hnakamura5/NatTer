@@ -25,7 +25,7 @@ function statusIcon(command: Command, theme: Theme) {
     return (
       <CheckCircleOutlineIcon
         sx={{
-          color: theme.terminal.stdoutColor,
+          color: theme.shell.stdoutColor,
           scale: 0.7,
           marginTop: marginTop,
           marginLeft: marginLeft,
@@ -36,7 +36,7 @@ function statusIcon(command: Command, theme: Theme) {
   return (
     <ErrorOutlineIcon
       sx={{
-        color: theme.terminal.stderrColor,
+        color: theme.shell.stderrColor,
         scale: 0.7,
         marginTop: marginTop,
         marginLeft: marginLeft,
@@ -51,7 +51,7 @@ interface CommandSummaryProps {
 
 const CommandStyle = styled(Box)(({ theme }) => ({
   width: "100%",
-  backgroundColor: theme.terminal.backgroundColor,
+  backgroundColor: theme.shell.backgroundColor,
   paddingLeft: "0px",
 }));
 const CommandIndexStyle = styled.span(({ theme }) => ({

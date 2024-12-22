@@ -43,11 +43,11 @@ function newTerminal(theme: Theme): terminalHandle {
     cursorBlink: true,
     allowProposedApi: true,
     theme: {
-      background: theme.terminal.secondaryBackgroundColor,
-      foreground: theme.terminal.textColor,
+      background: theme.shell.secondaryBackgroundColor,
+      foreground: theme.shell.textColor,
     },
-    fontFamily: theme.terminal.font,
-    fontSize: pxToNumber(theme.terminal.fontSize),
+    fontFamily: theme.shell.font,
+    fontSize: pxToNumber(theme.shell.fontSize),
   });
   const fitAddon = new FitAddon();
   const serializeAddon = new SerializeAddon();
