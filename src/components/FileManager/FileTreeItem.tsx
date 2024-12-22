@@ -117,7 +117,7 @@ function StatLoadingLabel(props: { path: string }) {
   );
 }
 
-const ListMargin = "3px";
+export const ListMargin = "3px";
 
 const TreeItem = styled(MuiTreeItem)(({ theme }) => ({
   color: theme.system.textColor,
@@ -125,6 +125,9 @@ const TreeItem = styled(MuiTreeItem)(({ theme }) => ({
   textAlign: "left",
   margin: `-${ListMargin} 0px -${ListMargin} 0px`,
   padding: "0px 0px 0px 3px", // top right bottom left
+  "& .MuiTreeItem-iconContainer": {
+    marginRight: "-7px",
+  },
 }));
 
 export function FileTreeItem(props: {
@@ -180,8 +183,9 @@ export function FileTreeItem(props: {
               isExpanded={props.expandedItems.includes(props.path)}
             />
           }
-          onDoubleClick={() => {
+          onDoubleClick={(e) => {
             handle.moveToPath(props.path);
+            e.stopPropagation();
           }}
         >
           {children}

@@ -9,6 +9,7 @@ export interface FileManagerHandleBasic {
   setKeepTrackCurrent: (keepTracking: boolean) => void;
   addBookmark: (path: string) => void;
   getBookmarks: () => string[];
+  getRecentDirectories: () => string[];
   splitPane: () => void;
 }
 
@@ -23,6 +24,7 @@ class FileManagerHandle implements FileManagerHandleBasic {
     public readonly setKeepTrackCurrent: (keepTracking: boolean) => void,
     public readonly addBookmark: (path: string) => void,
     public readonly getBookmarks: () => string[],
+    public readonly getRecentDirectories: () => string[],
     public readonly splitPane: () => void
   ) {}
 
@@ -43,6 +45,7 @@ export function createFileManagerHandle(
     handleBasic.setKeepTrackCurrent,
     handleBasic.addBookmark,
     handleBasic.getBookmarks,
+    handleBasic.getRecentDirectories,
     handleBasic.splitPane
   );
 }

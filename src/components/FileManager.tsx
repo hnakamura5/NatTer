@@ -9,7 +9,7 @@ import { useTheme } from "@/AppState";
 import React from "react";
 import { KeybindScope } from "@/components/KeybindScope";
 
-import { FileTreeItem } from "@/components/FileManager/FileTreeItem";
+import { FileTreeItem, ListMargin } from "@/components/FileManager/FileTreeItem";
 
 import { log } from "@/datatypes/Logger";
 import { FileManagerHeader } from "./FileManager/FileManagerHeader";
@@ -18,13 +18,6 @@ import {
   FileManagerHandleContext,
   createFileManagerHandle,
 } from "./FileManager/FileManagerHandle";
-
-const ListMargin = "0px";
-
-const TreeView = styled(MuiTreeView)(({ theme }) => ({
-  color: theme.system.textColor,
-  margin: `${ListMargin} 0px ${ListMargin} 0px`, // top right bottom left
-}));
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   backgroundColor: theme.system.backgroundColor,
@@ -36,7 +29,12 @@ const FileManagerFrame = styled(Box)(({ theme }) => ({
 
 const FileTreeFrame = styled(Box)(({ theme }) => ({
   maxHeight: "70vh",
-  overflowY: "scroll",
+  overflowY: "auto",
+}));
+
+const TreeView = styled(MuiTreeView)(({ theme }) => ({
+  color: theme.system.textColor,
+  padding: `${ListMargin} 0px ${ListMargin} 0px`, // top right bottom left
 }));
 
 export type FileManagerState = {
@@ -97,23 +95,23 @@ export function FileManager(props: FileManagerProps) {
     expandedItems,
     historyBack,
     historyForward,
-    historyRecent: historyAll,
+    historyRecent,
   } = state;
   // State update functions
   const setCurrentPath = (path: string, clearHistoryForward?: boolean) => {
     // If a path different from the current path is set, stop tracking
     const newTrackingCurrent = trackingCurrent && path === props.current;
     const historyLimit = 30; // TODO: Make this configurable
-    const newHistoryAll = historyAll
+    const newRecent = historyRecent
       .filter((p) => p !== path)
       .slice(-(historyLimit - 1));
-    newHistoryAll.push(path);
+    newRecent.push(path);
     props.setState({
       ...state,
       currentPath: path,
       trackingCurrent: newTrackingCurrent,
       historyForward: clearHistoryForward ? [] : historyForward,
-      historyRecent: newHistoryAll,
+      historyRecent: newRecent,
     });
   };
   const setTrackingCurrent = (value: boolean) => {
@@ -173,6 +171,10 @@ export function FileManager(props: FileManagerProps) {
     getBookmarks: () => {
       log.debug("get bookmarks");
       return [];
+    },
+    getRecentDirectories: () => {
+      log.debug("get recent directories");
+      return historyRecent;
     },
     splitPane: () => {
       console.log("split pane");

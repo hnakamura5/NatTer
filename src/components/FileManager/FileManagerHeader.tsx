@@ -13,6 +13,8 @@ import LinkIcon from "@mui/icons-material/Link";
 import SearchIcon from "@mui/icons-material/Search";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 import BookmarksIcon from "@mui/icons-material/Bookmarks";
+import HistoryIcon from "@mui/icons-material/History";
+
 import { useFileManagerHandle } from "./FileManagerHandle";
 import { log } from "@/datatypes/Logger";
 
@@ -23,7 +25,6 @@ function NavigationForwardButton(props: {
   return (
     <IconButton
       onClick={() => {
-        console.log("Move forward");
         props.navigateForward();
       }}
     >
@@ -39,7 +40,6 @@ function NavigationBackButton(props: {
   return (
     <IconButton
       onClick={() => {
-        console.log("Move back");
         props.navigateBack();
       }}
     >
@@ -68,11 +68,24 @@ function BookmarksButton(props: { bookmarks: () => void }) {
   return (
     <IconButton
       onClick={() => {
-        console.log("Bookmarks");
-        props.bookmarks();
+        console.log("TODO: Bookmarks");
+        // TODO: implement bookmarks
       }}
     >
       <BookmarksIcon fontSize="small" />
+    </IconButton>
+  );
+}
+
+function RecentHistoryButton(props: { recent: () => void }) {
+  return (
+    <IconButton
+      onClick={() => {
+        console.log("TODO: Recent");
+        // TODO: implement recent
+      }}
+    >
+      <HistoryIcon fontSize="small" />
     </IconButton>
   );
 }
@@ -81,8 +94,7 @@ function SearchButton(props: { search: () => void }) {
   return (
     <IconButton
       onClick={() => {
-        console.log("Search");
-        props.search();
+        console.log("TODO: Search");
       }}
     >
       <SearchIcon fontSize="small" />
@@ -94,8 +106,7 @@ function SplitButton(props: { split: () => void }) {
   return (
     <IconButton
       onClick={() => {
-        console.log("Split");
-        props.split();
+        console.log("TODO: Split");
       }}
     >
       <VerticalSplitIcon fontSize="small" />
@@ -169,6 +180,9 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
       <FileBreadcrumbs parsedPath={parsed.data} />
       <AlignRight>
         <BookmarksButton bookmarks={handle.getBookmarks} />
+      </AlignRight>
+      <AlignRight>
+        <RecentHistoryButton recent={handle.getRecentDirectories} />
       </AlignRight>
       <AlignRight>
         <SearchButton

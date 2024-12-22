@@ -1,4 +1,3 @@
-import { MouseEventHandler } from "react";
 import { IconButton, Link, Breadcrumbs as MUIBreadcrumbs } from "@mui/material";
 import styled from "@emotion/styled";
 
