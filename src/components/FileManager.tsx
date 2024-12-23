@@ -27,6 +27,9 @@ import {
   DragEndEvent,
   DragOverEvent,
   MeasuringStrategy,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
@@ -42,7 +45,7 @@ const FileTreeFrame = styled(Box)(({ theme }) => ({
   overflowY: "auto",
 }));
 
-const TreeView = styled(MuiTreeView)(({ theme }) => ({
+const FileTreeView = styled(MuiTreeView)(({ theme }) => ({
   color: theme.system.textColor,
   padding: `${ListMargin} 0px ${ListMargin} 0px`, // top right bottom left
 }));
@@ -64,11 +67,14 @@ export type FileManagerProps = {
 };
 
 export function FileManager(props: FileManagerProps) {
+  const state = props.state;
+  // Local state does not lives
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
   useEffect(() => {
     log.debug(`FileManager: componentDidMount`);
   }, []);
 
-  const state = props.state;
   useEffect(() => {
     // Initialize the state if it is not set
     if (!state) {
@@ -91,6 +97,14 @@ export function FileManager(props: FileManagerProps) {
       }
     }
   }, [state, props]);
+
+  // Sensor to avoid preventing treeitem expansion and selection
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 10, // pixels
+    },
+  });
+  const dndSensors = useSensors(pointerSensor);
 
   if (!state) {
     return <div>FileManager Loading...</div>;
@@ -191,10 +205,15 @@ export function FileManager(props: FileManagerProps) {
   return (
     <KeybindScope>
       <DndContext
+        sensors={dndSensors}
         onDragEnd={(e: DragEndEvent) => {
           const fromId = e.active.id;
+          const fromIdIsSelected = selectedItems.includes(fromId as string);
           const toId = e.over?.id;
-          log.debug(`FileManager DragEnd: ${fromId} -> ${toId}`);
+          // TODO: To get all selected items?
+          log.debug(
+            `FileManager DragEnd: ${fromId} -> ${toId} selected: ${fromIdIsSelected}`
+          );
         }}
       >
         <FileManagerHandleContext.Provider value={handle}>
@@ -202,9 +221,18 @@ export function FileManager(props: FileManagerProps) {
             <FileManagerFrame>
               <FileManagerHeader />
               <FileTreeFrame>
-                <TreeView
+                <FileTreeView
                   onExpandedItemsChange={(e, items) => {
                     setExpandedItems(items);
+                  }}
+                  onSelectedItemsChange={(e, items) => {
+                    if (typeof items === "string") {
+                      setSelectedItems([items]);
+                    } else if (items === null) {
+                      setSelectedItems([]);
+                    } else {
+                      setSelectedItems(items);
+                    }
                   }}
                   multiSelect
                 >
@@ -214,7 +242,7 @@ export function FileManager(props: FileManagerProps) {
                     showTop={false}
                     expandedItems={expandedItems}
                   />
-                </TreeView>
+                </FileTreeView>
               </FileTreeFrame>
             </FileManagerFrame>
           </div>
