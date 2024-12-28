@@ -26,11 +26,13 @@ import {
   DndContext,
   DragEndEvent,
   DragOverEvent,
+  KeyboardSensor,
   MeasuringStrategy,
   PointerSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { useHotkeys } from "react-hotkeys-hook";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   backgroundColor: theme.system.backgroundColor,
@@ -114,6 +116,14 @@ export function FileManager(props: FileManagerProps) {
     },
   });
   const dndSensors = useSensors(pointerSensor);
+  const [ctrlIsPressed, setctrlIsPressed] = useState(false);
+  useHotkeys(
+    "ctrl",
+    (e) => {
+      setctrlIsPressed(e.type === "keydown");
+    },
+    { keyup: true, keydown: true }
+  );
 
   if (!state) {
     return <div>FileManager Loading...</div>;
@@ -249,14 +259,23 @@ export function FileManager(props: FileManagerProps) {
           const toId = e.over?.id;
           // TODO: To get all selected items?
           log.debug(
-            `FileManager DragEnd: ${fromId} -> ${toId} selected: ${fromIdIsSelected}`
+            `FileManager DragEnd: ${fromId} -> ${toId} selected: ${fromIdIsSelected} ctrl: ${ctrlIsPressed}`
           );
           if (toId) {
-            if (fromIdIsSelected) {
-              // Move all selected items
-              handle.moveStructural(selectedItems, toId as string);
+            if (ctrlIsPressed) {
+              if (fromIdIsSelected) {
+                // Copy all selected items
+                handle.copyStructural(selectedItems, toId as string);
+              } else {
+                handle.copyTo(fromId as string, toId as string);
+              }
             } else {
-              handle.moveTo(fromId as string, toId as string);
+              if (fromIdIsSelected) {
+                // Move all selected items
+                handle.moveStructural(selectedItems, toId as string);
+              } else {
+                handle.moveTo(fromId as string, toId as string);
+              }
             }
           }
         }}
