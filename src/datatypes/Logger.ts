@@ -1,4 +1,4 @@
-import * as logRenderer from "electron-log/renderer";
+import * as logRenderer from "electron-log";
 
 // Generic access to the logger, wrapping both main and renderer loggers.
 
@@ -10,8 +10,6 @@ function traceStack() {
   const traceStack = new Error().stack;
   return traceStack?.slice(traceStack.indexOf("\n"));
 }
-
-logRenderer.transports.console.format = "[{level}:main] > {text}";
 
 export const log = {
   /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -41,7 +39,7 @@ export const log = {
   },
 };
 
-function stringToHexLog(str: string) {
+export function stringToHexLog(str: string) {
   const encoded = new TextEncoder().encode(str);
   return Array.from(encoded)
     .map((byte) => byte.toString(16).padStart(2, "0"))

@@ -8,6 +8,10 @@ import { setupShellProcess, shutdownShellProcess } from "@/server/ShellProcess";
 
 import * as log from "electron-log/main";
 
+import * as logRenderer from "electron-log/renderer";
+
+logRenderer.transports.console.format = "[{level}:main] > {text}";
+
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

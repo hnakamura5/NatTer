@@ -12,11 +12,21 @@ import { pathOf } from "@/server/ShellUtils/pathAbstractionUtil";
 import { chmod, chown } from "original-fs";
 
 import { log } from "@/datatypes/Logger";
+import { observable } from "@trpc/server/observable";
+import { EventEmitter, on } from "node:events";
 
 const proc = server.procedure;
 
 function pathCanonicalize(filePath: string): string {
   return path.normalize(filePath);
+}
+
+const eventEmitter = new EventEmitter();
+function changeFileEvent(filePath: string) {
+  changeDirectoryEvent(path.dirname(filePath));
+}
+function changeDirectoryEvent(filePath: string) {
+  eventEmitter.emit("change", filePath);
 }
 
 // TODO: add remote support.
@@ -70,7 +80,40 @@ export const fileSystemRouter = server.router({
     )
     .mutation(async (opts) => {
       const { src, dest } = opts.input;
-      await fs.rename(src, dest);
+      if (src !== dest) {
+        await fs.rename(src, dest);
+        changeFileEvent(src);
+        changeFileEvent(dest);
+      }
+    }),
+
+  moveTo: proc
+    .input(
+      z.object({
+        src: z.string(),
+        destDir: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const { src, destDir } = opts.input;
+      if (src !== destDir) {
+        await fs.rename(src, path.join(destDir, path.basename(src)));
+        changeFileEvent(src);
+        changeDirectoryEvent(destDir);
+      }
+    }),
+
+  moveStructural: proc
+    .input(
+      z.object({
+        src: z.array(z.string()),
+        destDir: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const { src, destDir } = opts.input;
+      log.debug(`moveStructural: mutation ${src} -> ${destDir}`);
+      moveStructural(src, destDir);
     }),
 
   remove: proc.input(z.string()).mutation(async (opts) => {
@@ -88,7 +131,33 @@ export const fileSystemRouter = server.router({
     )
     .mutation(async (opts) => {
       const { src, dest } = opts.input;
-      await fs.copyFile(src, dest);
+      if (src !== dest) {
+        await fs.copyFile(src, dest);
+      }
+    }),
+
+  copyTo: proc
+    .input(
+      z.object({
+        src: z.string(),
+        destDir: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const { src, destDir } = opts.input;
+      await fs.copyFile(src, path.join(destDir, path.basename(src)));
+    }),
+
+  copyStructural: proc
+    .input(
+      z.object({
+        src: z.array(z.string()),
+        destDir: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const { src, destDir } = opts.input;
+      copyStructural(src, destDir);
     }),
 
   makeDir: proc
@@ -160,4 +229,96 @@ export const fileSystemRouter = server.router({
         sep: pathLib.sep,
       };
     }),
+
+  pollChange: proc.input(z.string()).subscription(async (opts) => {
+    const filePath = opts.input;
+    const isDir = (await fs.stat(filePath)).isDirectory();
+    return observable<boolean>((observer) => {
+      const onChange = (changedPath: string) => {
+        if (changedPath === filePath) {
+          log.debug(`pollChange: ${filePath} changed`);
+          observer.next(true);
+        }
+      };
+      if (isDir) {
+        eventEmitter.on("change", onChange);
+        return () => {
+          eventEmitter.off("change", onChange);
+        };
+      }
+    });
+  }),
 });
+
+// If one of the src contains other ones in src, keeps the structure in destination.
+export function structuralSrcToDest(
+  src: string[],
+  destDir: string
+): [string, string][] {
+  const result: [string, string][] = [];
+  const sorted = src.sort();
+  for (let i = 0; i < sorted.length; i++) {
+    const srcPath = sorted[i];
+    const destPath = path.join(destDir, path.basename(srcPath));
+    let childAdded = false;
+    for (let j = i + 1; j < sorted.length; j++) {
+      const srcPathMayChild = sorted[j];
+      if (srcPathMayChild.startsWith(srcPath)) {
+        const destPathChild = path.join(
+          destPath,
+          srcPathMayChild.slice(srcPath.length)
+        );
+        result.push([srcPathMayChild, destPathChild]);
+        childAdded = true;
+        i = j;
+      } else {
+        break;
+      }
+    }
+    if (!childAdded) {
+      result.push([srcPath, destPath]);
+    }
+  }
+  return result;
+}
+
+async function exists(dir: string): Promise<boolean> {
+  return fs
+    .access(dir)
+    .then(() => true)
+    .catch(() => false);
+}
+
+async function operationStructural(
+  src: string[],
+  destDir: string,
+  operation: (src: string, dest: string) => Promise<void>,
+  logName?: string
+) {
+  const srcToDest = structuralSrcToDest(src, destDir);
+  for (const [srcPath, destPath] of srcToDest) {
+    if (srcPath !== destPath) {
+      const destPathDir = path.dirname(destPath);
+      if (!(await exists(destPathDir))) {
+        await fs.mkdir(destPathDir, { recursive: true });
+      }
+      log.debug(`${logName} ${srcPath} -> ${destPath}`);
+      operation(srcPath, destPath)
+        .then(() => {
+          changeDirectoryEvent(destDir);
+        })
+        .catch((err) => {
+          log.error(`error ${logName} ${srcPath} -> ${destPath}: ${err}`);
+        });
+      changeFileEvent(srcPath);
+    }
+  }
+}
+
+async function moveStructural(src: string[], destDir: string) {
+  operationStructural(src, destDir, fs.rename, "moveStructural");
+}
+
+async function copyStructural(src: string[], destDir: string) {
+  operationStructural(src, destDir, fs.copyFile, "copyStructural");
+}

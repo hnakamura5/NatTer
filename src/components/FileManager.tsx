@@ -98,6 +98,15 @@ export function FileManager(props: FileManagerProps) {
     }
   }, [state, props]);
 
+  // File system mutators
+  const move = api.fs.move.useMutation();
+  const moveTo = api.fs.moveTo.useMutation();
+  const moveStructural = api.fs.moveStructural.useMutation();
+  const remove = api.fs.remove.useMutation();
+  const copy = api.fs.copy.useMutation();
+  const copyTo = api.fs.copyTo.useMutation();
+  const copyStructural = api.fs.copyStructural.useMutation();
+
   // Sensor to avoid preventing treeitem expansion and selection
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: {
@@ -200,6 +209,34 @@ export function FileManager(props: FileManagerProps) {
     splitPane: () => {
       console.log("split pane");
     },
+    move: (src, dest) => {
+      log.debug(`Move: ${src} -> ${dest}`);
+      move.mutate({ src: src, dest: dest });
+    },
+    moveTo: (src, destDir) => {
+      log.debug(`MoveTo: ${src} -> ${destDir}`);
+      moveTo.mutate({ src: src, destDir: destDir });
+    },
+    moveStructural: (src, destDir) => {
+      log.debug(`Move Structural: ${src} -> ${destDir}`);
+      moveStructural.mutate({ src: src, destDir: destDir });
+    },
+    remove: (filePath) => {
+      log.debug(`Remove: ${filePath}`);
+      remove.mutate(filePath);
+    },
+    copy: (src, dest) => {
+      log.debug(`Copy: ${src} -> ${dest}`);
+      copy.mutate({ src: src, dest: dest });
+    },
+    copyTo: (src, destDir) => {
+      log.debug(`CopyTo: ${src} -> ${destDir}`);
+      copyTo.mutate({ src: src, destDir: destDir });
+    },
+    copyStructural: (src, destDir) => {
+      log.debug(`Copy Structural: ${src} -> ${destDir}`);
+      copyStructural.mutate({ src: src, destDir: destDir });
+    },
   });
 
   return (
@@ -214,6 +251,14 @@ export function FileManager(props: FileManagerProps) {
           log.debug(
             `FileManager DragEnd: ${fromId} -> ${toId} selected: ${fromIdIsSelected}`
           );
+          if (toId) {
+            if (fromIdIsSelected) {
+              // Move all selected items
+              handle.moveStructural(selectedItems, toId as string);
+            } else {
+              handle.moveTo(fromId as string, toId as string);
+            }
+          }
         }}
       >
         <FileManagerHandleContext.Provider value={handle}>

@@ -216,6 +216,15 @@ export function FileTreeItem(props: {
       log.error(`Failed to get sep`);
     },
   });
+  api.fs.pollChange.useSubscription(props.path, {
+    onError: () => {
+      log.error(`Failed to pollChange ${props.path}`);
+    },
+    onData: () => {
+      stat.refetch();
+      list.refetch();
+    },
+  });
 
   if (!stat.data) {
     return (

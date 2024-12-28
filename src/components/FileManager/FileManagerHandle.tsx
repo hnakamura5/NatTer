@@ -11,6 +11,13 @@ export interface FileManagerHandleBasic {
   getBookmarks: () => string[];
   getRecentDirectories: () => string[];
   splitPane: () => void;
+  move: (src: string, dest: string) => void;
+  moveStructural: (src: string[], destDir: string) => void;
+  moveTo: (src: string, destDir: string) => void;
+  remove: (filePath: string) => void;
+  copy: (src: string, dest: string) => void;
+  copyTo: (src: string, destDir: string) => void;
+  copyStructural: (src: string[], destDir: string) => void;
 }
 
 // File handling shell. Does not contain the state itself.
@@ -25,7 +32,14 @@ class FileManagerHandle implements FileManagerHandleBasic {
     public readonly addBookmark: (path: string) => void,
     public readonly getBookmarks: () => string[],
     public readonly getRecentDirectories: () => string[],
-    public readonly splitPane: () => void
+    public readonly splitPane: () => void,
+    public readonly move: (src: string, dest: string) => void,
+    public readonly moveTo: (src: string, destDir: string) => void,
+    public readonly moveStructural: (src: string[], destDir: string) => void,
+    public readonly remove: (filePath: string) => void,
+    public readonly copy: (src: string, dest: string) => void,
+    public readonly copyTo: (src: string, destDir: string) => void,
+    public readonly copyStructural: (src: string[], dest: string) => void
   ) {}
 
   toggleKeepTrackCurrent = () => {
@@ -46,7 +60,14 @@ export function createFileManagerHandle(
     handleBasic.addBookmark,
     handleBasic.getBookmarks,
     handleBasic.getRecentDirectories,
-    handleBasic.splitPane
+    handleBasic.splitPane,
+    handleBasic.move,
+    handleBasic.moveTo,
+    handleBasic.moveStructural,
+    handleBasic.remove,
+    handleBasic.copy,
+    handleBasic.copyTo,
+    handleBasic.copyStructural
   );
 }
 
