@@ -29,6 +29,12 @@ function changeDirectoryEvent(filePath: string) {
   eventEmitter.emit("change", filePath);
 }
 
+const directoryPathScheme = z.string().refine(async (path) => {
+  return await fs.stat(path).then((stats) => {
+    return stats.isDirectory();
+  });
+});
+
 // TODO: add remote support.
 export const fileSystemRouter = server.router({
   list: proc
@@ -91,7 +97,7 @@ export const fileSystemRouter = server.router({
     .input(
       z.object({
         src: z.string(),
-        destDir: z.string(),
+        destDir: directoryPathScheme,
       })
     )
     .mutation(async (opts) => {
@@ -107,7 +113,7 @@ export const fileSystemRouter = server.router({
     .input(
       z.object({
         src: z.array(z.string()),
-        destDir: z.string(),
+        destDir: directoryPathScheme,
       })
     )
     .mutation(async (opts) => {
@@ -133,6 +139,8 @@ export const fileSystemRouter = server.router({
       const { src, dest } = opts.input;
       if (src !== dest) {
         await fs.copyFile(src, dest);
+        changeFileEvent(src);
+        changeFileEvent(dest);
       }
     }),
 
@@ -140,19 +148,23 @@ export const fileSystemRouter = server.router({
     .input(
       z.object({
         src: z.string(),
-        destDir: z.string(),
+        destDir: directoryPathScheme,
       })
     )
     .mutation(async (opts) => {
       const { src, destDir } = opts.input;
-      await fs.copyFile(src, path.join(destDir, path.basename(src)));
+      if (src !== destDir) {
+        await fs.copyFile(src, path.join(destDir, path.basename(src)));
+        changeFileEvent(src);
+        changeDirectoryEvent(destDir);
+      }
     }),
 
   copyStructural: proc
     .input(
       z.object({
         src: z.array(z.string()),
-        destDir: z.string(),
+        destDir: directoryPathScheme,
       })
     )
     .mutation(async (opts) => {

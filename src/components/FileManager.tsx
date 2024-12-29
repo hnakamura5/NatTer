@@ -4,7 +4,8 @@ import styled from "@emotion/styled";
 
 import { useEffect, useState } from "react";
 import { api } from "@/api";
-import { useTheme } from "@/AppState";
+import { InternalClipboard, useTheme } from "@/AppState";
+import { InternalClipboardType } from "@/datatypes/InternalClipboardData";
 
 import React from "react";
 import { KeybindScope } from "@/components/KeybindScope";
@@ -18,8 +19,8 @@ import { log } from "@/datatypes/Logger";
 import { FileManagerHeader } from "./FileManager/FileManagerHeader";
 import { set } from "zod";
 import {
+  FileManagerHandle,
   FileManagerHandleContext,
-  createFileManagerHandle,
 } from "./FileManager/FileManagerHandle";
 
 import {
@@ -33,6 +34,8 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useHotkeys } from "react-hotkeys-hook";
+import { FileKeybindings } from "./FileManager/FileKeybindings";
+import { useAtom } from "jotai";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   backgroundColor: theme.system.backgroundColor,
@@ -53,7 +56,7 @@ const FileTreeView = styled(MuiTreeView)(({ theme }) => ({
 }));
 
 export type FileManagerState = {
-  currentPath: string;
+  activePath: string;
   trackingCurrent: boolean;
   expandedItems: string[];
   historyBack: string[];
@@ -70,6 +73,7 @@ export type FileManagerProps = {
 
 export function FileManager(props: FileManagerProps) {
   const state = props.state;
+  const [internalClipboard, setInternalClipboard] = useAtom(InternalClipboard);
   // Local state does not lives
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -81,7 +85,7 @@ export function FileManager(props: FileManagerProps) {
     // Initialize the state if it is not set
     if (!state) {
       props.setState({
-        currentPath: props.current,
+        activePath: props.current,
         trackingCurrent: true,
         expandedItems: [],
         historyBack: [],
@@ -93,9 +97,9 @@ export function FileManager(props: FileManagerProps) {
   useEffect(() => {
     // Track to the current path of the shell
     if (state) {
-      if (state.trackingCurrent && state.currentPath !== props.current) {
+      if (state.trackingCurrent && state.activePath !== props.current) {
         log.debug(`FileManager: track to current: ${props.current}`);
-        props.setState({ ...state, currentPath: props.current });
+        props.setState({ ...state, activePath: props.current });
       }
     }
   }, [state, props]);
@@ -108,6 +112,8 @@ export function FileManager(props: FileManagerProps) {
   const copy = api.fs.copy.useMutation();
   const copyTo = api.fs.copyTo.useMutation();
   const copyStructural = api.fs.copyStructural.useMutation();
+  const writeClipboard = api.os.writeClipboard.useMutation();
+  const readClipboard = api.os.readClipboard.useMutation();
 
   // Sensor to avoid preventing treeitem expansion and selection
   const pointerSensor = useSensor(PointerSensor, {
@@ -116,11 +122,11 @@ export function FileManager(props: FileManagerProps) {
     },
   });
   const dndSensors = useSensors(pointerSensor);
-  const [ctrlIsPressed, setctrlIsPressed] = useState(false);
+  const [ctrlIsPressed, setCtrlIsPressed] = useState(false);
   useHotkeys(
     "ctrl",
     (e) => {
-      setctrlIsPressed(e.type === "keydown");
+      setCtrlIsPressed(e.type === "keydown");
     },
     { keyup: true, keydown: true }
   );
@@ -130,7 +136,7 @@ export function FileManager(props: FileManagerProps) {
   }
 
   const {
-    currentPath,
+    activePath: currentPath,
     trackingCurrent,
     expandedItems,
     historyBack,
@@ -138,7 +144,7 @@ export function FileManager(props: FileManagerProps) {
     historyRecent,
   } = state;
   // State update functions
-  const setCurrentPath = (path: string, clearHistoryForward?: boolean) => {
+  const setActivePath = (path: string, clearHistoryForward?: boolean) => {
     // If a path different from the current path is set, stop tracking
     const newTrackingCurrent = trackingCurrent && path === props.current;
     const historyLimit = 30; // TODO: Make this configurable
@@ -148,7 +154,7 @@ export function FileManager(props: FileManagerProps) {
     newRecent.push(path);
     props.setState({
       ...state,
-      currentPath: path,
+      activePath: path,
       trackingCurrent: newTrackingCurrent,
       historyForward: clearHistoryForward ? [] : historyForward,
       historyRecent: newRecent,
@@ -160,19 +166,36 @@ export function FileManager(props: FileManagerProps) {
   const setExpandedItems = (items: string[]) => {
     props.setState({ ...state, expandedItems: items });
   };
+  const getCanonicalTargetPath = () => {
+    return selectedItems.length == 0
+      ? currentPath
+      : selectedItems.length == 1
+      ? selectedItems[0]
+      : undefined;
+  };
+  const clipSelection = (clipType: InternalClipboardType) => {
+    if (selectedItems.length > 0) {
+      setInternalClipboard({
+        clipType: clipType,
+        args: selectedItems,
+      });
+      const clipString = selectedItems.join(" ");
+      writeClipboard.mutate(clipString);
+    }
+  };
 
   log.debug(
     `FileManager: props.current:${props.current} currentPath: ${currentPath} trackingCurrent: ${trackingCurrent}`
   );
 
-  const handle = createFileManagerHandle({
-    getCurrentPath: () => currentPath,
-    moveToPath: (path) => {
+  const handle: FileManagerHandle = {
+    getActivePath: () => currentPath,
+    moveActivePathTo: (path) => {
       log.debug(`Move to path: ${path}`);
       if (currentPath != path) {
         historyBack.push(currentPath);
       }
-      setCurrentPath(path, true);
+      setActivePath(path, true);
     },
     navigateForward: () => {
       log.debug("Navigate forward");
@@ -180,7 +203,7 @@ export function FileManager(props: FileManagerProps) {
         const path = historyForward.pop();
         if (path) {
           historyBack.push(currentPath);
-          setCurrentPath(path);
+          setActivePath(path);
         }
       }
     },
@@ -190,7 +213,7 @@ export function FileManager(props: FileManagerProps) {
         const path = historyBack.pop();
         if (path) {
           historyForward.push(currentPath);
-          setCurrentPath(path);
+          setActivePath(path);
         }
       }
     },
@@ -201,7 +224,7 @@ export function FileManager(props: FileManagerProps) {
     setKeepTrackCurrent: (value) => {
       log.debug(`Set keep track current: ${value}`);
       if (value) {
-        setCurrentPath(props.current);
+        setActivePath(props.current);
       }
       setTrackingCurrent(value);
     },
@@ -231,6 +254,10 @@ export function FileManager(props: FileManagerProps) {
       log.debug(`Move Structural: ${src} -> ${destDir}`);
       moveStructural.mutate({ src: src, destDir: destDir });
     },
+    cutToInternalClipboard: () => {
+      log.debug(`Cut Clipboard: `, selectedItems);
+      clipSelection("FileCut");
+    },
     remove: (filePath) => {
       log.debug(`Remove: ${filePath}`);
       remove.mutate(filePath);
@@ -247,40 +274,62 @@ export function FileManager(props: FileManagerProps) {
       log.debug(`Copy Structural: ${src} -> ${destDir}`);
       copyStructural.mutate({ src: src, destDir: destDir });
     },
-  });
+    copyToInternalClipboard: () => {
+      log.debug(`Copy Clipboard: `, selectedItems);
+      clipSelection("FileCopy");
+    },
+    pasteFromInternalClipboard: () => {
+      const destDir = getCanonicalTargetPath();
+      log.debug(
+        `Paste Clipboard: dest=${destDir}, clipboard=`,
+        internalClipboard
+      );
+      if (internalClipboard && destDir) {
+        if (internalClipboard.clipType === "FileCut") {
+          handle.moveStructural(internalClipboard.args, destDir);
+        } else if (internalClipboard.clipType === "FileCopy") {
+          handle.copyStructural(internalClipboard.args, destDir);
+        }
+      }
+    },
+    selectItems: (items) => {
+      log.debug("Select Items", items);
+      setSelectedItems(items);
+    },
+  };
 
   return (
-    <KeybindScope>
-      <DndContext
-        sensors={dndSensors}
-        onDragEnd={(e: DragEndEvent) => {
-          const fromId = e.active.id;
-          const fromIdIsSelected = selectedItems.includes(fromId as string);
-          const toId = e.over?.id;
-          // TODO: To get all selected items?
-          log.debug(
-            `FileManager DragEnd: ${fromId} -> ${toId} selected: ${fromIdIsSelected} ctrl: ${ctrlIsPressed}`
-          );
-          if (toId) {
-            if (ctrlIsPressed) {
-              if (fromIdIsSelected) {
-                // Copy all selected items
-                handle.copyStructural(selectedItems, toId as string);
-              } else {
-                handle.copyTo(fromId as string, toId as string);
-              }
+    <DndContext
+      sensors={dndSensors}
+      onDragEnd={(e: DragEndEvent) => {
+        const fromId = e.active.id;
+        const fromIdIsSelected = selectedItems.includes(fromId as string);
+        const toId = e.over?.id;
+        // TODO: To get all selected items?
+        log.debug(
+          `FileManager DragEnd: ${fromId} -> ${toId} selected: ${fromIdIsSelected} ctrl: ${ctrlIsPressed}`
+        );
+        if (toId) {
+          if (ctrlIsPressed) {
+            if (fromIdIsSelected) {
+              // Copy all selected items
+              handle.copyStructural(selectedItems, toId as string);
             } else {
-              if (fromIdIsSelected) {
-                // Move all selected items
-                handle.moveStructural(selectedItems, toId as string);
-              } else {
-                handle.moveTo(fromId as string, toId as string);
-              }
+              handle.copyTo(fromId as string, toId as string);
+            }
+          } else {
+            if (fromIdIsSelected) {
+              // Move all selected items
+              handle.moveStructural(selectedItems, toId as string);
+            } else {
+              handle.moveTo(fromId as string, toId as string);
             }
           }
-        }}
-      >
-        <FileManagerHandleContext.Provider value={handle}>
+        }
+      }}
+    >
+      <FileManagerHandleContext.Provider value={handle}>
+        <FileKeybindings>
           <div ref={props.focusRef as React.Ref<HTMLDivElement>} tabIndex={-1}>
             <FileManagerFrame>
               <FileManagerHeader />
@@ -298,6 +347,7 @@ export function FileManager(props: FileManagerProps) {
                       setSelectedItems(items);
                     }
                   }}
+                  selectedItems={selectedItems}
                   multiSelect
                 >
                   <FileTreeItem
@@ -310,8 +360,8 @@ export function FileManager(props: FileManagerProps) {
               </FileTreeFrame>
             </FileManagerFrame>
           </div>
-        </FileManagerHandleContext.Provider>
-      </DndContext>
-    </KeybindScope>
+        </FileKeybindings>
+      </FileManagerHandleContext.Provider>
+    </DndContext>
   );
 }

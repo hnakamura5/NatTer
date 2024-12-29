@@ -10,7 +10,7 @@ import CurrentBar from "@/components/CurrentBar";
 
 import { api } from "@/api";
 import { ProcessID } from "@/datatypes/Command";
-import { pidContext, usePid } from "@/SessionStates";
+import { InputText, SessionStateJotaiStore, pidContext, usePid } from "@/SessionStates";
 import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
 import { useConfig, useTheme } from "@/AppState";
@@ -107,7 +107,7 @@ function SessionContainer(props: SessionContainerProps) {
         }}
       >
         <GlobalFocusMap.Provider>
-          <JotaiProvider>
+          <JotaiProvider store={SessionStateJotaiStore}>
             <pidContext.Provider value={pid}>
               <Box
                 sx={{

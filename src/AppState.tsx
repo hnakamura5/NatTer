@@ -21,13 +21,18 @@ import {
   keybindListMap,
 } from "@/datatypes/Keybind";
 
+import { atom, createStore, Provider as JotaiProvider } from "jotai";
+import { InternalClipboardData } from "@/datatypes/InternalClipboardData";
+
 import { log } from "@/datatypes/Logger";
 
 const ConfigContext = createContext<Config | undefined>(undefined);
 export function useConfig() {
   const config = useContext(ConfigContext);
   if (config === undefined) {
-    throw new Error("useConfig must be used within a ConfigProvider");
+    const message = "useConfig must be used within a ConfigProvider";
+    log.error(message);
+    throw new Error(message);
   }
   return config;
 }
@@ -74,7 +79,9 @@ const KeybindContext = createContext<KeybindListMap | undefined>(undefined);
 export function useKeybindList() {
   const keybind = useContext(KeybindContext);
   if (keybind === undefined) {
-    throw new Error("useKeybind must be used within a KeybindListProvider");
+    const message = "useKeybindList must be used within a KeybindListProvider";
+    log.error(message);
+    throw new Error(message);
   }
   return keybind;
 }
@@ -97,11 +104,18 @@ function KeybindListProvider(props: { children: React.ReactNode }) {
   );
 }
 
+// Internal clipboard for renderer.
+export const InternalClipboard = atom<InternalClipboardData | undefined>(
+  undefined
+);
+
 export function AppStateProvider(props: { children: React.ReactNode }) {
   return (
     <ConfigProvider>
       <KeybindListProvider>
-        <ThemeProvider>{props.children}</ThemeProvider>
+        <ThemeProvider>
+          <JotaiProvider>{props.children}</JotaiProvider>
+        </ThemeProvider>
       </KeybindListProvider>
     </ConfigProvider>
   );

@@ -101,7 +101,7 @@ export function FileBreadcrumbs(props: FileBreadcrumbsProps) {
         name={part}
         fullPath={elementFullPath}
         isDir={true}
-        moveToPath={handle.moveToPath}
+        moveToPath={handle.moveActivePathTo}
         useIcon={i > 0}
       />
     );
@@ -123,7 +123,7 @@ export function FileBreadcrumbs(props: FileBreadcrumbsProps) {
       <AlignRight>
         <AddBookmarkButton
           addBookmark={() => {
-            handle.addBookmark(handle.getCurrentPath());
+            handle.addBookmark(handle.getActivePath());
           }}
         />
       </AlignRight>

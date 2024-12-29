@@ -3,6 +3,7 @@
 import {
   shell,
   dialog,
+  clipboard,
   ShortcutDetails as ElectronShortcutDetails,
   OpenDialogReturnValue as ElectronOpenDialogReturnValue,
   OpenDialogOptions as ElectronOpenDialogOptions,
@@ -11,8 +12,9 @@ import {
 } from "electron";
 import path from "node:path";
 
-import { z } from "zod";
+import { boolean, z } from "zod";
 import { server } from "@/server/tRPCServer";
+import { read } from "node:fs";
 
 export const ShortcutDetailsSchema = z.object({
   target: z.string(),
@@ -149,6 +151,22 @@ export const osShellRouter = server.router({
     .query(async (opts) => {
       const { input } = opts;
       return showSaveDialog(input);
+    }),
+    // Clipboard functionalities.
+  writeClipboard: proc.input(z.string()).mutation(async (opts) => {
+    const { input } = opts;
+    await clipboard.writeText(input);
+  }),
+  readClipboard: proc
+    .input(z.boolean().optional())
+    .output(z.string())
+    .mutation(async (opts) => {
+      const clear = opts.input;
+      const result = clipboard.readText();
+      if (clear) {
+        clipboard.clear();
+      }
+      return result;
     }),
 });
 

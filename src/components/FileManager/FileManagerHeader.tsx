@@ -131,7 +131,7 @@ export type FileManagerHeaderProps = {
 
 export function FileManagerHeader(props: FileManagerHeaderProps) {
   const handle = useFileManagerHandle();
-  const fullPath = handle.getCurrentPath();
+  const fullPath = handle.getActivePath();
   const [parsedPath, setParsedPath] = useState<PathParsed | undefined>(
     undefined
   );
@@ -174,7 +174,7 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
       <KeepTrackCurrentToggleButton
         trackingCurrent={handle.trackingCurrent}
         toggleKeepTrackCurrent={() => {
-          handle.toggleKeepTrackCurrent();
+          handle.setKeepTrackCurrent(!handle.trackingCurrent());
         }}
       />
       <FileBreadcrumbs parsedPath={parsed.data} />

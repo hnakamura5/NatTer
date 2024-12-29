@@ -8,7 +8,8 @@
     "build": "tsc && vite build && electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test": "tsc && vite build && playwright test"
+    "test": "tsc && vite build && playwright test",
+    "quick-test": "playwright test"
   },
   "build": {
     "productName": "NatTer",

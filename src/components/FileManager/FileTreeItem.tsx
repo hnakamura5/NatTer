@@ -256,7 +256,7 @@ export function FileTreeItem(props: {
             />
           }
           onDoubleClick={(e) => {
-            handle.moveToPath(props.path);
+            handle.moveActivePathTo(props.path);
             e.stopPropagation();
           }}
         >
