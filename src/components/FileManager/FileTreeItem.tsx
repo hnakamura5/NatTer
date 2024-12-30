@@ -34,7 +34,7 @@ function Label(props: { children: React.ReactNode }) {
   return <span style={labelStyle}>{props.children}</span>;
 }
 
-function ParseLoadingLabel() {
+function ParseLoadingLabel(props: { baseName?: string }) {
   const theme = useTheme();
   return (
     <span>
@@ -43,7 +43,7 @@ function ParseLoadingLabel() {
         color={theme.system.loadingBaseColor}
       />
       <Label>
-        <LoadingSkeleton width={80} />
+        {props.baseName ? props.baseName : <LoadingSkeleton width={80} />}
       </Label>
     </span>
   );
@@ -53,7 +53,7 @@ const DragStyle = (transform: Transform | null) => {
   return { transform: DndCSS.Translate.toString(transform) };
 };
 
-function FileLabel(props: { stat: FileStat }) {
+function FileLabel(props: { stat: FileStat; baseName?: string }) {
   const {
     attributes,
     listeners,
@@ -71,7 +71,7 @@ function FileLabel(props: { stat: FileStat }) {
     }
   );
   if (!parsed.data) {
-    return <ParseLoadingLabel />;
+    return <ParseLoadingLabel baseName={props.baseName} />;
   }
   const fileName = parsed.data.base;
   return (
@@ -87,7 +87,11 @@ function FileLabel(props: { stat: FileStat }) {
   );
 }
 
-function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
+function DirectoryLabel(props: {
+  stat: FileStat;
+  isExpanded: boolean;
+  baseName?: string;
+}) {
   const { setNodeRef: dropNodeRef, isOver } = useDroppable({
     id: props.stat.fullPath,
   });
@@ -108,7 +112,7 @@ function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
     }
   );
   if (!parsed.data) {
-    return <ParseLoadingLabel />;
+    return <ParseLoadingLabel baseName={props.baseName} />;
   }
   const directoryName = parsed.data.base;
   const dropOverStyle = isOver
@@ -145,7 +149,7 @@ function DirectoryLabel(props: { stat: FileStat; isExpanded: boolean }) {
   );
 }
 
-function StatLoadingLabel(props: { path: string }) {
+function StatLoadingLabel(props: { path: string; baseName?: string }) {
   const parsed = api.fs.parsePath.useQuery(
     { fullPath: props.path },
     {
@@ -155,7 +159,7 @@ function StatLoadingLabel(props: { path: string }) {
     }
   );
   if (!parsed.data) {
-    return <ParseLoadingLabel />;
+    return <ParseLoadingLabel baseName={props.baseName} />;
   }
   const fileName = parsed.data.base;
   return (
@@ -193,11 +197,13 @@ function DraggableTreeItem(props: TreeItemProps) {
   );
 }
 
+// TODO: Fast up the rendering of directories with many files. (e.g. prefetching)
 export function FileTreeItem(props: {
   path: string;
   key: string;
   showTop: boolean;
   expandedItems: string[];
+  baseName?: string;
 }) {
   const handle = useFileManagerHandle();
   //log.error(`FileTreeItem: ${props.path}`);
@@ -230,7 +236,7 @@ export function FileTreeItem(props: {
     return (
       <StyledTreeItem
         itemId={props.path}
-        label={<StatLoadingLabel path={props.path} />}
+        label={<StatLoadingLabel path={props.path} baseName={props.baseName} />}
       />
     );
   }
@@ -243,6 +249,7 @@ export function FileTreeItem(props: {
         key={child}
         showTop={true}
         expandedItems={props.expandedItems}
+        baseName={child}
       />
     ));
     if (props.showTop) {
@@ -253,6 +260,7 @@ export function FileTreeItem(props: {
             <DirectoryLabel
               stat={stat.data}
               isExpanded={props.expandedItems.includes(props.path)}
+              baseName={props.baseName}
             />
           }
           onDoubleClick={(e) => {
@@ -271,7 +279,7 @@ export function FileTreeItem(props: {
     return (
       <StyledTreeItem
         itemId={props.path}
-        label={<FileLabel stat={stat.data} />}
+        label={<FileLabel stat={stat.data} baseName={props.baseName} />}
       />
     );
   }

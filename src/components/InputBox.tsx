@@ -7,6 +7,8 @@ import {
   TextField,
   Input as MuiInput,
   Icon,
+  MenuItem,
+  Menu,
 } from "@mui/material";
 import styled from "@emotion/styled";
 import { useTheme } from "@/AppState";
@@ -29,6 +31,19 @@ import {
 } from "@/components/KeybindScope";
 
 import { log } from "@/datatypes/Logger";
+import { ContextMenu } from "./Menu/ContextMenu";
+import { NestedMenu } from "./Menu/NestedMenu";
+
+function InputBoxContextMenu() {
+  return (
+    <>
+      <MenuItem>test</MenuItem>
+      <NestedMenu label={<MenuItem>nest</MenuItem>}>
+        <MenuItem>nested test</MenuItem>
+      </NestedMenu>
+    </>
+  );
+}
 
 const Paper = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -103,11 +118,13 @@ function InputBox(props: InputBoxProps) {
             >
               <Paper>
                 <ControlButtons submit={submit} />
-                <Input
-                  key={`input-${pid}`}
-                  inputBoxRef={inputBoxRef}
-                  submit={submit}
-                />
+                <ContextMenu contextMenuItems={<InputBoxContextMenu />}>
+                  <Input
+                    key={`input-${pid}`}
+                    inputBoxRef={inputBoxRef}
+                    submit={submit}
+                  />
+                </ContextMenu>
               </Paper>
             </GlobalFocusMap.Target>
           </EasyFocus.Land>

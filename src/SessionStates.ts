@@ -3,7 +3,6 @@ import React from "react";
 import { ProcessID } from "@/datatypes/Command";
 import { FileManagerState } from "@/components/FileManager";
 import { log } from "@/datatypes/Logger";
-import { Session } from "inspector/promises";
 
 // Defines the state with scope of one session
 
