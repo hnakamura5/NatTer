@@ -1,5 +1,6 @@
 import { Menu, Popper } from "@mui/material";
 import { useEffect, useRef, useState, ReactNode } from "react";
+import { log } from "@/datatypes/Logger";
 
 export type NestedMenuProps = {
   label: ReactNode;
@@ -23,9 +24,11 @@ export function NestedMenu(props: NestedMenuProps) {
       style={{ display: "contents" }}
       // Mouse control
       onMouseEnter={() => {
+        log.debug("Mouse enter to the container menu");
         setOpen(!props.disabled);
       }}
       onMouseLeave={() => {
+        log.debug("Mouse leave from the container menu");
         setOpen(false);
       }}
     >
@@ -49,9 +52,10 @@ export function NestedMenu(props: NestedMenuProps) {
       </div>
       <Menu // Nested menu
         style={{ pointerEvents: "none" }}
-        open={open}
+        open={!props.disabled && open}
         anchorEl={anchorEl}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
         onClose={() => {
           setOpen(false);
         }}
@@ -61,9 +65,12 @@ export function NestedMenu(props: NestedMenuProps) {
             setOpen(false);
           }
         }}
-        ref={menuRef}
+        disableAutoFocus
+        disableEnforceFocus
       >
-        {props.children}
+        <div ref={menuRef} style={{ pointerEvents: "auto" }}>
+          {props.children}
+        </div>
       </Menu>
     </div>
   );
