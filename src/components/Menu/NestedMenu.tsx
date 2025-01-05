@@ -1,6 +1,27 @@
-import { Menu, Popper } from "@mui/material";
+import { Menu } from "@mui/material";
 import { useEffect, useRef, useState, ReactNode } from "react";
 import { log } from "@/datatypes/Logger";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { InlineFullFillPadding } from "../AlignUtils";
+import { MenuItem } from "./MenuItem";
+import { useTheme } from "@/AppState";
+
+export function NestedMenuItem(props: { children: ReactNode }) {
+  const theme = useTheme();
+  return (
+    <MenuItem>
+      <div style={{ display: "flex", flex: 1 }}>
+        {props.children}
+        <InlineFullFillPadding />
+        <span style={{ verticalAlign: "middle" }}>
+          <ChevronRightIcon
+            sx={{ scale: 1.4, fontSize: theme.system.fontSize }}
+          />
+        </span>
+      </div>
+    </MenuItem>
+  );
+}
 
 export type NestedMenuProps = {
   label: ReactNode;

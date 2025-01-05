@@ -35,6 +35,10 @@ const ThemeSchema = z.object({
     settingsColor: z.string(),
     loadingBaseColor: z.string(),
     loadingHighlightColor: z.string(),
+    contextMenuWidth: z.string(),
+    contextNestedMenuWidth: z.string(),
+    contextMenuColor: z.string(),
+    contextMenuBackgroundColor: z.string(),
   }),
 });
 
@@ -77,5 +81,9 @@ export const DefaultDarkTheme: Theme = {
     settingsColor: "#A1887F",
     loadingBaseColor: "#9E9E9E",
     loadingHighlightColor: "#E0E0E0",
+    contextMenuWidth: "250px",
+    contextNestedMenuWidth: "200px",
+    contextMenuColor: "#F5F5F5",
+    contextMenuBackgroundColor: "#111111",
   },
 };

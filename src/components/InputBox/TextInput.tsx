@@ -113,7 +113,7 @@ export function Input(props: {
           id = {`input-${pid}`}
           inputRef={props.inputBoxRef}
           style={{
-            width: `calc(100% - ${theme.system.hoverMenuWidth})`,
+            width: `calc(100% - 10px)`,
             backgroundColor: theme.shell.secondaryBackgroundColor,
             color: theme.shell.textColor,
             fontFamily: theme.shell.font,

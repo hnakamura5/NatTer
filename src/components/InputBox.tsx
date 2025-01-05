@@ -7,7 +7,6 @@ import {
   TextField,
   Input as MuiInput,
   Icon,
-  MenuItem,
   Menu,
 } from "@mui/material";
 import styled from "@emotion/styled";
@@ -31,17 +30,24 @@ import {
 } from "@/components/KeybindScope";
 
 import { log } from "@/datatypes/Logger";
-import { ContextMenu } from "./Menu/ContextMenu";
-import { NestedMenu } from "./Menu/NestedMenu";
+import {
+  ContextMenu,
+  ContextMenuStyleBox,
+  NestedContextMenuStyleBox,
+} from "./Menu/ContextMenu";
+import { NestedMenu, NestedMenuItem } from "./Menu/NestedMenu";
+import { MenuItem } from "./Menu/MenuItem";
 
 function InputBoxContextMenu() {
   return (
-    <>
+    <ContextMenuStyleBox>
       <MenuItem>test</MenuItem>
-      <NestedMenu label={<MenuItem>nest</MenuItem>}>
-        <MenuItem>nested test</MenuItem>
+      <NestedMenu label={<NestedMenuItem>nest</NestedMenuItem>}>
+        <NestedContextMenuStyleBox>
+          <MenuItem>nested test</MenuItem>
+        </NestedContextMenuStyleBox>
       </NestedMenu>
-    </>
+    </ContextMenuStyleBox>
   );
 }
 
