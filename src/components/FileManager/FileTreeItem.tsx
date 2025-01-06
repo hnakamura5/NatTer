@@ -280,7 +280,7 @@ export function FileTreeItem(props: {
     // File
     return (
       <ContextMenu
-        contextMenuItems={
+        items={
           <FileTreeItemContextMenu handle={handle} filePath={props.path} />
         }
       >

@@ -32,22 +32,23 @@ import {
 import { log } from "@/datatypes/Logger";
 import {
   ContextMenu,
+  ContextSubMenu,
   ContextMenuStyleBox,
-  NestedContextMenuStyleBox,
+  ContextSubMenuStyleBox,
 } from "./Menu/ContextMenu";
-import { NestedMenu, NestedMenuItem } from "./Menu/NestedMenu";
+import { SubMenu, SubMenuItem } from "./Menu/SubMenu";
 import { MenuItem } from "./Menu/MenuItem";
 
-function InputBoxContextMenu() {
+function InputBoxContextMenuContents() {
   return (
-    <ContextMenuStyleBox>
+    <>
       <MenuItem>test</MenuItem>
-      <NestedMenu label={<NestedMenuItem>nest</NestedMenuItem>}>
-        <NestedContextMenuStyleBox>
+      <ContextSubMenu label={<SubMenuItem>nest</SubMenuItem>}>
+        <ContextSubMenuStyleBox>
           <MenuItem>nested test</MenuItem>
-        </NestedContextMenuStyleBox>
-      </NestedMenu>
-    </ContextMenuStyleBox>
+        </ContextSubMenuStyleBox>
+      </ContextSubMenu>
+    </>
   );
 }
 
@@ -124,7 +125,7 @@ function InputBox(props: InputBoxProps) {
             >
               <Paper>
                 <ControlButtons submit={submit} />
-                <ContextMenu contextMenuItems={<InputBoxContextMenu />}>
+                <ContextMenu items={<InputBoxContextMenuContents />}>
                   <Input
                     key={`input-${pid}`}
                     inputBoxRef={inputBoxRef}
