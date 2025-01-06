@@ -22,6 +22,8 @@ import {
 
 import { useFileManagerHandle } from "./FileManagerHandle";
 import { CSSProperties } from "react";
+import { ContextMenu } from "../Menu/ContextMenu";
+import { FileTreeItemContextMenu } from "./FileTreeItemContextMenu";
 
 function Label(props: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -277,10 +279,16 @@ export function FileTreeItem(props: {
   } else {
     // File
     return (
-      <StyledTreeItem
-        itemId={props.path}
-        label={<FileLabel stat={stat.data} baseName={props.baseName} />}
-      />
+      <ContextMenu
+        contextMenuItems={
+          <FileTreeItemContextMenu handle={handle} filePath={props.path} />
+        }
+      >
+        <StyledTreeItem
+          itemId={props.path}
+          label={<FileLabel stat={stat.data} baseName={props.baseName} />}
+        />
+      </ContextMenu>
     );
   }
 }

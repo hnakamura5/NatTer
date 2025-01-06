@@ -254,7 +254,15 @@ export function FileManager(props: FileManagerProps) {
       log.debug(`Move Structural: ${src} -> ${destDir}`);
       moveStructural.mutate({ src: src, destDir: destDir });
     },
-    cutToInternalClipboard: () => {
+    cutToInternalClipboard: (src) => {
+      log.debug(`Cut Clipboard: ${src}`);
+      setInternalClipboard({
+        clipType: "FileCut",
+        args: [src],
+      });
+      writeClipboard.mutate(src);
+    },
+    cutSelectedToInternalClipboard: () => {
       log.debug(`Cut Clipboard: `, selectedItems);
       clipSelection("FileCut");
     },
@@ -274,7 +282,15 @@ export function FileManager(props: FileManagerProps) {
       log.debug(`Copy Structural: ${src} -> ${destDir}`);
       copyStructural.mutate({ src: src, destDir: destDir });
     },
-    copyToInternalClipboard: () => {
+    copyToInternalClipboard: (src) => {
+      log.debug(`Copy Clipboard: `, src);
+      setInternalClipboard({
+        clipType: "FileCopy",
+        args: [src],
+      });
+      writeClipboard.mutate(src);
+    },
+    copySelectionToInternalClipboard: () => {
       log.debug(`Copy Clipboard: `, selectedItems);
       clipSelection("FileCopy");
     },

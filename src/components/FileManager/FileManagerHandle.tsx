@@ -14,12 +14,14 @@ export interface FileManagerHandle {
   move: (src: string, dest: string) => void;
   moveTo: (src: string, destDir: string) => void;
   moveStructural: (src: string[], destDir: string) => void;
-  cutToInternalClipboard: () => void;
+  cutToInternalClipboard: (src: string) => void;
+  cutSelectedToInternalClipboard: () => void;
   remove: (filePath: string) => void;
   copy: (src: string, dest: string) => void;
   copyTo: (src: string, destDir: string) => void;
   copyStructural: (src: string[], destDir: string) => void;
-  copyToInternalClipboard: () => void;
+  copyToInternalClipboard: (src: string) => void;
+  copySelectionToInternalClipboard: () => void;
   pasteFromInternalClipboard: () => void;
   selectItems: (items: string[]) => void;
 }
