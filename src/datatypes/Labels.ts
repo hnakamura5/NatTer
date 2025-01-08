@@ -31,6 +31,8 @@ export const LabelsSchema = z.object({
       newDirectory: z.string(),
       rename: z.string(),
       delete: z.string(),
+      deletePermanently: z.string(),
+      trash : z.string(),
       copy: z.string(),
       paste: z.string(),
       cut: z.string(),

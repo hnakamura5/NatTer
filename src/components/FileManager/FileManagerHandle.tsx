@@ -17,6 +17,7 @@ export interface FileManagerHandle {
   cutToInternalClipboard: (src: string) => void;
   cutSelectedToInternalClipboard: () => void;
   remove: (filePath: string) => void;
+  trash: (filePath: string) => void;
   copy: (src: string, dest: string) => void;
   copyTo: (src: string, destDir: string) => void;
   copyStructural: (src: string[], destDir: string) => void;

@@ -13,7 +13,7 @@ export function SubMenuItem(props: { children: ReactNode }) {
       <div style={{ display: "flex", flex: 1 }}>
         {props.children}
         <InlineFullFillPadding />
-        <span style={{ verticalAlign: "middle" }}>
+        <span style={{ verticalAlign: "middle", marginTop: "3px" }}>
           <ChevronRightIcon
             sx={{ scale: 1.4, fontSize: theme.system.fontSize }}
           />

@@ -27,6 +27,8 @@
       "newDirectory": "New directory",
       "rename": "Rename",
       "delete": "Delete",
+      "deletePermanently": "Delete permanently",
+      "trash": "Trash",
       "copy": "Copy",
       "paste": "Paste",
       "cut": "Cut",

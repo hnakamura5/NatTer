@@ -10,14 +10,14 @@ export const TransparentTrigger = styled(RadixContextMenu.Trigger)({
 });
 
 export const ContextMenuStyleBox = styled.div(({ theme }) => ({
-  font: theme.system.font,
   fontSize: theme.system.fontSize,
   width: theme.system.contextMenuWidth,
   backgroundColor: theme.system.contextMenuBackgroundColor,
   color: theme.system.textColor,
-  borderRadius: "10px",
+  borderRadius: "3px",
   position: "relative",
   flex: 1,
+  padding: "3px",
 }));
 
 function isPointInsideElement(element: HTMLElement, x: number, y: number) {
@@ -43,11 +43,12 @@ export function ContextMenu(props: { children: ReactNode; items: ReactNode }) {
 }
 
 export const ContextSubMenuStyleBox = styled.div(({ theme }) => ({
-  font: theme.system.font,
   fontSize: theme.system.fontSize,
   width: theme.system.contextNestedMenuWidth,
   backgroundColor: theme.system.contextMenuBackgroundColor,
   color: theme.system.textColor,
+  borderRadius: "3px",
+  padding: "3px",
 }));
 
 export function ContextSubMenu(props: SubMenuProps) {

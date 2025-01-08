@@ -109,6 +109,7 @@ export function FileManager(props: FileManagerProps) {
   const moveTo = api.fs.moveTo.useMutation();
   const moveStructural = api.fs.moveStructural.useMutation();
   const remove = api.fs.remove.useMutation();
+  const trash = api.os.trashItem.useMutation();
   const copy = api.fs.copy.useMutation();
   const copyTo = api.fs.copyTo.useMutation();
   const copyStructural = api.fs.copyStructural.useMutation();
@@ -269,6 +270,10 @@ export function FileManager(props: FileManagerProps) {
     remove: (filePath) => {
       log.debug(`Remove: ${filePath}`);
       remove.mutate(filePath);
+    },
+    trash: (filePath) => {
+      log.debug(`Trash: ${filePath}`);
+      trash.mutate(filePath);
     },
     copy: (src, dest) => {
       log.debug(`Copy: ${src} -> ${dest}`);

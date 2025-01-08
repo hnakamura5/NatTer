@@ -3,9 +3,11 @@ import styled from "@emotion/styled";
 import { ReactNode } from "react";
 
 export const MenuItem = styled(MuiMenuItem)(({ theme }) => ({
-  font: theme.system.font,
+  fontFamily: theme.system.font,
   fontSize: theme.system.fontSize,
   color: theme.system.textColor,
+  borderRadius: "3px",
+  padding: "3px !important",
 }));
 
 export type IconMenuItemProps = {
@@ -21,7 +23,7 @@ export function IconMenuItem(props: IconMenuItemProps) {
   return (
     <MenuItem onClick={props.onClick}>
       <ListItemIcon>
-        <span style={{ verticalAlign: "middle" }}>{props.icon}</span>
+        {props.icon}
         {props.label}
       </ListItemIcon>
     </MenuItem>
