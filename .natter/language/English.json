@@ -1,0 +1,36 @@
+{
+  "input": {
+    "tooltip": {
+      "run": "Run command",
+      "stop": "Stop",
+      "runBackground": "Run command in background",
+    }
+  },
+  "fileManager": {
+    "header": {
+      "tooltip": {
+        "forward": "Forward",
+        "back": "Back",
+        "linkToCurrent": "Link to current directory",
+        "bookmark": "Bookmark",
+        "history": "History",
+        "search": "Search",
+      }
+    },
+    "footer": {
+      "tooltip": {
+        "splitTile": "Tiling the managers",
+      }
+    },
+    "context": {
+      "newFile": "New file",
+      "newDirectory": "New directory",
+      "rename": "Rename",
+      "delete": "Delete",
+      "copy": "Copy",
+      "paste": "Paste",
+      "cut": "Cut",
+      "properties": "Properties",
+    }
+  }
+}

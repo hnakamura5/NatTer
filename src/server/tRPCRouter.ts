@@ -3,7 +3,7 @@ import { z } from "zod";
 import { shellRouter } from "@/server/ShellProcess";
 import { fileSystemRouter } from "@/server/FileSystem";
 import { osShellRouter } from "@/server/osShell";
-import { configurationRouter } from "@/server/configuration";
+import { configurationRouter } from "@/server/configServer";
 import { iconServerRouter } from "@/server/iconServer";
 
 export const router = server.router({

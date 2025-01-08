@@ -17,6 +17,7 @@ import {
   ShellSpecification,
   parseShellSpec,
 } from "@/datatypes/ShellSpecification";
+import { LabelsSchema, parseLabels } from "@/datatypes/Labels";
 
 const proc = server.procedure;
 
@@ -35,6 +36,11 @@ const shellSpecDir = path.join(
   Electron.app.getPath("home"),
   ".natter",
   "shellSpecs"
+);
+const labelsDir = path.join(
+  Electron.app.getPath("home"),
+  ".natter",
+  "language"
 );
 
 function readConfig() {
@@ -94,7 +100,7 @@ export function readShellSpecs() {
   return shellSpecs.then((specs) => {
     return Promise.all(
       specs.map((spec) => {
-        const specPath = shellSpecDir + "/" + spec;
+        const specPath = path.join(shellSpecDir, spec);
         log.debug("Reading shell spec from: ", specPath);
         const specRead = fs.readFile(specPath, "utf-8");
         return specRead.then((specContent) => {
@@ -110,7 +116,7 @@ export function readShellSpecs() {
 }
 
 export function writeShellSpec(name: string, spec: ShellSpecification) {
-  const specPath = shellSpecDir + "/" + name;
+  const specPath = path.join(shellSpecDir, name);
   const writeFile = fs.writeFile(specPath, JSON.stringify(spec, null, 2));
   return writeFile
     .then(() => {
@@ -118,6 +124,25 @@ export function writeShellSpec(name: string, spec: ShellSpecification) {
     })
     .catch(() => {
       return false;
+    });
+}
+
+export function readLabels(language: string) {
+  const labelsPath = path.join(labelsDir, `${language}.json`);
+  log.debug("Reading labels from: ", labelsPath);
+  const labelsRead = fs.readFile(labelsPath, "utf-8");
+  return labelsRead
+    .then((labels) => {
+      const parsed = parseLabels(labels);
+      if (parsed) {
+        return parsed;
+      }
+      log.error("Failed to parse labels");
+      throw new Error("Failed to parse labels");
+    })
+    .catch((e) => {
+      log.error(`Failed to read labels from ${labelsPath}`, e);
+      throw new Error("Failed to read labels");
     });
 }
 
@@ -150,5 +175,11 @@ export const configurationRouter = server.router({
     .output(z.boolean())
     .mutation(async (opts) => {
       return writeShellSpec(opts.input.name, opts.input.spec);
+    }),
+  readLabels: proc
+    .input(z.object({ language: z.string() }))
+    .output(LabelsSchema)
+    .query(async (opts) => {
+      return readLabels(opts.input.language);
     }),
 });

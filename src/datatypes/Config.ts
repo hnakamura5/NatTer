@@ -18,6 +18,7 @@ export const ShellConfigSchema = z.object({
 export type ShellConfig = z.infer<typeof ShellConfigSchema>;
 
 export const ConfigSchema = z.object({
+  language: z.string().optional(),
   theme: z.string().optional(),
   themePaths: z.array(z.string()).optional(),
   defaultShell: z.string().optional(),

@@ -28,7 +28,7 @@ import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
 import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
-import { readShellSpecs } from "./configuration";
+import { readShellSpecs } from "./configServer";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 

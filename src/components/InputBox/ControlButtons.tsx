@@ -11,7 +11,7 @@ import {
 
 import { PlayArrow, PlayCircle, Stop, Pause } from "@mui/icons-material";
 import styled from "@emotion/styled";
-import { useTheme } from "@/AppState";
+import { useLabels, useTheme } from "@/AppState";
 
 import { InputText, usePid } from "@/SessionStates";
 import { useCallback, useState } from "react";
@@ -49,6 +49,7 @@ function Button(props: {
 
 export function ControlButtons(props: { submit: (command: string) => void }) {
   const theme = useTheme();
+  const labels = useLabels();
   const IconBox = styled(Box)({
     width: `calc(${theme.system.hoverMenuWidth} - 5px)`,
   });
@@ -63,13 +64,13 @@ export function ControlButtons(props: { submit: (command: string) => void }) {
       <Button
         icon={<PlayArrow />}
         color={theme.shell.runButtonColor}
-        tooltip="Run Command (Ctrl+Enter)"
+        tooltip={`${labels.input.tooltip.run} (Ctrl+Enter)`}
         onClick={run}
       />
       <Button
         icon={<PlayCircle />}
         color={theme.shell.runBackgroundButtonColor}
-        tooltip="Run Command Background (Ctrl+Alt+Enter)"
+        tooltip={`${labels.input.tooltip.runBackground} (Ctrl+Alt+Enter)`}
         onClick={run}
       />
     </IconBox>

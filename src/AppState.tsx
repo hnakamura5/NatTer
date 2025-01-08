@@ -25,6 +25,7 @@ import { atom, createStore, Provider as JotaiProvider } from "jotai";
 import { InternalClipboardData } from "@/datatypes/InternalClipboardData";
 
 import { log } from "@/datatypes/Logger";
+import { Labels } from "./datatypes/Labels";
 
 const ConfigContext = createContext<Config | undefined>(undefined);
 export function useConfig() {
@@ -104,6 +105,41 @@ function KeybindListProvider(props: { children: React.ReactNode }) {
   );
 }
 
+const LabelsContext = createContext<Labels | undefined>(undefined);
+
+export function useLabels() {
+  const labels = useContext(LabelsContext);
+  if (labels === undefined) {
+    const message = "useLabels must be used within a LabelsProvider";
+    log.error(message);
+    throw new Error(message);
+  }
+  return labels;
+}
+
+function LabelsProvider(props: { children: React.ReactNode }) {
+  const config = useConfig();
+  const labels = api.config.readLabels.useQuery(
+    {
+      language: config.language || "English",
+    },
+    {
+      onError: (error) => {
+        console.error("Failed to load labels: ", error);
+      },
+    }
+  );
+  log.debug("LabelsProvider: ", labels.data);
+  if (!labels.data) {
+    return <div>Failed to load labels</div>;
+  }
+  return (
+    <LabelsContext.Provider value={labels.data}>
+      {props.children}
+    </LabelsContext.Provider>
+  );
+}
+
 // Internal clipboard for renderer.
 export const InternalClipboard = atom<InternalClipboardData | undefined>(
   undefined
@@ -114,7 +150,9 @@ export function AppStateProvider(props: { children: React.ReactNode }) {
     <ConfigProvider>
       <KeybindListProvider>
         <ThemeProvider>
-          <JotaiProvider>{props.children}</JotaiProvider>
+          <LabelsProvider>
+            <JotaiProvider>{props.children}</JotaiProvider>
+          </LabelsProvider>
         </ThemeProvider>
       </KeybindListProvider>
     </ConfigProvider>
