@@ -36,6 +36,7 @@ import {
 import { useHotkeys } from "react-hotkeys-hook";
 import { FileKeybindings } from "./FileManager/FileKeybindings";
 import { useAtom } from "jotai";
+import { parse } from "path";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   backgroundColor: theme.system.backgroundColor,
@@ -115,6 +116,20 @@ export function FileManager(props: FileManagerProps) {
   const copyStructural = api.fs.copyStructural.useMutation();
   const writeClipboard = api.os.writeClipboard.useMutation();
   const readClipboard = api.os.readClipboard.useMutation();
+  const parsePathAsync = api.fs.parsePathAsync.useMutation();
+
+  // Queries for active path
+  const stat = api.fs.stat.useQuery(state?.activePath || "", {
+    enabled: state?.activePath !== undefined,
+  });
+  const parsedPath = api.fs.parsePath.useQuery(
+    {
+      fullPath: state?.activePath || "",
+    },
+    {
+      enabled: state?.activePath !== undefined,
+    }
+  );
 
   // Sensor to avoid preventing treeitem expansion and selection
   const pointerSensor = useSensor(PointerSensor, {
@@ -316,6 +331,34 @@ export function FileManager(props: FileManagerProps) {
     selectItems: (items) => {
       log.debug("Select Items", items);
       setSelectedItems(items);
+    },
+    copyToOSClipboard: (text) => {
+      writeClipboard.mutate(text);
+    },
+    getFromOSClipboard: () => {
+      return readClipboard.mutateAsync();
+    },
+    getRelativePathFromActive: (path) => {
+      if (path.startsWith(currentPath)) {
+        return path.slice(currentPath.length + 1);
+      }
+      return path;
+    },
+    getSubPathList: (path) => {
+      return parsePathAsync.mutateAsync({ fullPath: path }).then((parsed) => {
+        let accumulator = "";
+        const result: string[] = [];
+        for (let i = 0; i < parsed.dirHier.length; i++) {
+          const element = parsed.dirHier[i];
+          const isLast = i === parsed.dirHier.length - 1;
+          accumulator =
+            accumulator +
+            element +
+            (accumulator === "" || isLast ? "" : parsed.sep);
+          result.push(accumulator);
+        }
+        return result;
+      });
     },
   };
 

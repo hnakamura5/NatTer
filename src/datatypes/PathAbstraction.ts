@@ -6,6 +6,7 @@ export type PathKind = z.infer<typeof PathKindSchema>;
 
 export const FileStatScheme = z.object({
   fullPath: z.string(),
+  baseName: z.string(),
   isDir: z.boolean(),
   isSymlink: z.boolean(),
   modifiedTime: z.string(),

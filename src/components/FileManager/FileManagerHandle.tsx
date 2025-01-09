@@ -25,6 +25,10 @@ export interface FileManagerHandle {
   copySelectionToInternalClipboard: () => void;
   pasteFromInternalClipboard: () => void;
   selectItems: (items: string[]) => void;
+  copyToOSClipboard: (text: string) => void;
+  getFromOSClipboard: () => Promise<string>;
+  getRelativePathFromActive: (path: string) => string;
+  getSubPathList: (path: string) => Promise<string[]>;
 }
 
 export const FileManagerHandleContext = createContext<

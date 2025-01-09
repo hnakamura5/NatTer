@@ -36,6 +36,7 @@ export const LabelsSchema = z.object({
       copy: z.string(),
       paste: z.string(),
       cut: z.string(),
+      copyPath: z.string(),
       properties: z.string(),
     }),
   }),

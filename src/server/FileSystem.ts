@@ -35,6 +35,29 @@ const directoryPathScheme = z.string().refine(async (path) => {
   });
 });
 
+function parsePath(fullPath: string, pathKind?: PathKind) {
+  const pathLib = pathKind ? pathOf(pathKind) : path;
+  const normalizedPath = pathLib.normalize(fullPath);
+  const parsed = pathLib.parse(normalizedPath);
+  // All hierarchies including the root as the first element
+  const nonRootPart = parsed.dir.slice(parsed.root.length);
+  const dirHier = nonRootPart.length == 0 ? [] : nonRootPart.split(pathLib.sep);
+  dirHier.unshift(parsed.root);
+  if (parsed.base.length > 0) {
+    dirHier.push(parsed.base);
+  }
+  return {
+    fullPath: normalizedPath,
+    dir: parsed.dir,
+    root: parsed.root,
+    dirHier: dirHier,
+    base: parsed.base,
+    baseStem: parsed.name,
+    baseExt: parsed.ext,
+    sep: pathLib.sep,
+  };
+}
+
 // TODO: add remote support.
 export const fileSystemRouter = server.router({
   list: proc
@@ -61,6 +84,7 @@ export const fileSystemRouter = server.router({
         return stats.then((stats) => {
           return {
             fullPath: filePath,
+            baseName: path.basename(filePath),
             isDir: stats.isDirectory(),
             isSymlink: stats.isSymbolicLink(),
             modifiedTime: stats.mtime.toISOString(),
@@ -219,27 +243,17 @@ export const fileSystemRouter = server.router({
     .output(PathParsedScheme)
     .query(async (opts) => {
       const { fullPath, pathKind } = opts.input;
-      const pathLib = pathKind ? pathOf(pathKind) : path;
-      const normalizedPath = pathLib.normalize(fullPath);
-      const parsed = pathLib.parse(normalizedPath);
-      // All hierarchies including the root as the first element
-      const nonRootPart = parsed.dir.slice(parsed.root.length);
-      const dirHier =
-        nonRootPart.length == 0 ? [] : nonRootPart.split(pathLib.sep);
-      dirHier.unshift(parsed.root);
-      if (parsed.base.length > 0) {
-        dirHier.push(parsed.base);
-      }
-      return {
-        fullPath: normalizedPath,
-        dir: parsed.dir,
-        root: parsed.root,
-        dirHier: dirHier,
-        base: parsed.base,
-        baseStem: parsed.name,
-        baseExt: parsed.ext,
-        sep: pathLib.sep,
-      };
+      return parsePath(fullPath, pathKind);
+    }),
+
+  parsePathAsync: proc
+    .input(
+      z.object({ fullPath: z.string(), pathKind: PathKindSchema.optional() })
+    )
+    .output(PathParsedScheme)
+    .mutation(async (opts) => {
+      const { fullPath, pathKind } = opts.input;
+      return parsePath(fullPath, pathKind);
     }),
 
   pollChange: proc.input(z.string()).subscription(async (opts) => {

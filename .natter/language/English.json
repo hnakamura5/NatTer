@@ -32,6 +32,7 @@
       "copy": "Copy",
       "paste": "Paste",
       "cut": "Cut",
+      "copyPath": "Copy path to clipboard",
       "properties": "Properties",
     }
   }

@@ -1,4 +1,8 @@
-import { ListItemIcon, MenuItem as MuiMenuItem } from "@mui/material";
+import {
+  ListItemIcon,
+  ListItemText,
+  MenuItem as MuiMenuItem,
+} from "@mui/material";
 import styled from "@emotion/styled";
 import { ReactNode } from "react";
 
@@ -7,12 +11,12 @@ export const MenuItem = styled(MuiMenuItem)(({ theme }) => ({
   fontSize: theme.system.fontSize,
   color: theme.system.textColor,
   borderRadius: "3px",
-  padding: "3px !important",
+  padding: "0px !important",
 }));
 
 export type IconMenuItemProps = {
   icon?: ReactNode;
-  label: string;
+  label: string | ReactNode;
   onClick: () => void;
 };
 
@@ -22,10 +26,8 @@ export function IconMenuItem(props: IconMenuItemProps) {
   }
   return (
     <MenuItem onClick={props.onClick}>
-      <ListItemIcon>
-        {props.icon}
-        {props.label}
-      </ListItemIcon>
+      <ListItemIcon>{props.icon}</ListItemIcon>
+      {props.label}
     </MenuItem>
   );
 }

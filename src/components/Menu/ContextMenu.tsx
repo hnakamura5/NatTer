@@ -44,7 +44,7 @@ export function ContextMenu(props: { children: ReactNode; items: ReactNode }) {
 
 export const ContextSubMenuStyleBox = styled.div(({ theme }) => ({
   fontSize: theme.system.fontSize,
-  width: theme.system.contextNestedMenuWidth,
+  minWidth: theme.system.contextNestedMenuWidth,
   backgroundColor: theme.system.contextMenuBackgroundColor,
   color: theme.system.textColor,
   borderRadius: "3px",

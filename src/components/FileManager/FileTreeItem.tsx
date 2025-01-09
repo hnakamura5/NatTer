@@ -205,7 +205,7 @@ export function FileTreeItem(props: {
   key: string;
   showTop: boolean;
   expandedItems: string[];
-  baseName?: string;
+  baseName?: string; // Used for loading skeleton
 }) {
   const handle = useFileManagerHandle();
   //log.error(`FileTreeItem: ${props.path}`);
@@ -281,7 +281,7 @@ export function FileTreeItem(props: {
     return (
       <ContextMenu
         items={
-          <FileTreeFileItemContextMenu handle={handle} filePath={props.path} />
+          <FileTreeFileItemContextMenu filePath={props.path} stat={stat.data} />
         }
       >
         <StyledTreeItem
