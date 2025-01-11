@@ -27,6 +27,8 @@ export const LabelsSchema = z.object({
       }),
     }),
     context: z.object({
+      openFile: z.string(),
+      openDirectory: z.string(),
       newFile: z.string(),
       newDirectory: z.string(),
       rename: z.string(),

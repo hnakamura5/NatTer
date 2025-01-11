@@ -34,7 +34,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useHotkeys } from "react-hotkeys-hook";
-import { FileKeybindings } from "./FileManager/FileKeybindings";
+import { FileKeybindings } from "./FileManager/FileManagerKeybindings";
 import { useAtom } from "jotai";
 import { parse } from "path";
 
@@ -64,6 +64,16 @@ export type FileManagerState = {
   historyForward: string[];
   historyRecent: string[];
 };
+function emptyState(activePath: string): FileManagerState {
+  return {
+    activePath: activePath,
+    trackingCurrent: true,
+    expandedItems: [],
+    historyBack: [],
+    historyForward: [],
+    historyRecent: [],
+  };
+}
 
 export type FileManagerProps = {
   current: string;
@@ -73,10 +83,12 @@ export type FileManagerProps = {
 };
 
 export function FileManager(props: FileManagerProps) {
-  const state = props.state;
   const [internalClipboard, setInternalClipboard] = useAtom(InternalClipboard);
   // Local state does not lives
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [renamingPath, setRenamingPath] = useState<string | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     log.debug(`FileManager: componentDidMount`);
@@ -84,17 +96,10 @@ export function FileManager(props: FileManagerProps) {
 
   useEffect(() => {
     // Initialize the state if it is not set
-    if (!state) {
-      props.setState({
-        activePath: props.current,
-        trackingCurrent: true,
-        expandedItems: [],
-        historyBack: [],
-        historyForward: [],
-        historyRecent: [],
-      });
+    if (!props.state) {
+      props.setState(emptyState(props.current));
     }
-  }, [state === undefined]);
+  }, [props.state === undefined]);
   useEffect(() => {
     // Track to the current path of the shell
     if (state) {
@@ -103,33 +108,29 @@ export function FileManager(props: FileManagerProps) {
         props.setState({ ...state, activePath: props.current });
       }
     }
-  }, [state, props]);
+  }, [props.state, props]);
+
+  // In order to avoid undefined state, initialize it with an empty state
+  const state = props.state || emptyState(props.current);
 
   // File system mutators
+  const parsePathAsync = api.fs.parsePathAsync.useMutation();
   const move = api.fs.move.useMutation();
   const moveTo = api.fs.moveTo.useMutation();
   const moveStructural = api.fs.moveStructural.useMutation();
   const remove = api.fs.remove.useMutation();
-  const trash = api.os.trashItem.useMutation();
+  const trash = api.fs.trash.useMutation();
   const copy = api.fs.copy.useMutation();
   const copyTo = api.fs.copyTo.useMutation();
   const copyStructural = api.fs.copyStructural.useMutation();
+  const openPath = api.os.openPath.useMutation();
   const writeClipboard = api.os.writeClipboard.useMutation();
   const readClipboard = api.os.readClipboard.useMutation();
-  const parsePathAsync = api.fs.parsePathAsync.useMutation();
 
   // Queries for active path
   const stat = api.fs.stat.useQuery(state?.activePath || "", {
     enabled: state?.activePath !== undefined,
   });
-  const parsedPath = api.fs.parsePath.useQuery(
-    {
-      fullPath: state?.activePath || "",
-    },
-    {
-      enabled: state?.activePath !== undefined,
-    }
-  );
 
   // Sensor to avoid preventing treeitem expansion and selection
   const pointerSensor = useSensor(PointerSensor, {
@@ -146,10 +147,6 @@ export function FileManager(props: FileManagerProps) {
     },
     { keyup: true, keydown: true }
   );
-
-  if (!state) {
-    return <div>FileManager Loading...</div>;
-  }
 
   const {
     activePath: currentPath,
@@ -286,9 +283,17 @@ export function FileManager(props: FileManagerProps) {
       log.debug(`Remove: ${filePath}`);
       remove.mutate(filePath);
     },
+    removeSelection: () => {
+      log.debug(`Remove Selection: `, selectedItems);
+      selectedItems.forEach((item) => remove.mutate(item));
+    },
     trash: (filePath) => {
       log.debug(`Trash: ${filePath}`);
       trash.mutate(filePath);
+    },
+    trashSelection: () => {
+      log.debug(`Trash Selection: `, selectedItems);
+      selectedItems.forEach((item) => trash.mutate(item));
     },
     copy: (src, dest) => {
       log.debug(`Copy: ${src} -> ${dest}`);
@@ -314,19 +319,43 @@ export function FileManager(props: FileManagerProps) {
       log.debug(`Copy Clipboard: `, selectedItems);
       clipSelection("FileCopy");
     },
-    pasteFromInternalClipboard: () => {
-      const destDir = getCanonicalTargetPath();
+    pasteFromInternalClipboard: (destDir?: string) => {
+      const actualDestDir = destDir || getCanonicalTargetPath();
       log.debug(
-        `Paste Clipboard: dest=${destDir}, clipboard=`,
+        `Paste Clipboard: dest=${destDir}, actualDest=${actualDestDir} clipboard=`,
         internalClipboard
       );
-      if (internalClipboard && destDir) {
+      if (internalClipboard && actualDestDir) {
         if (internalClipboard.clipType === "FileCut") {
-          handle.moveStructural(internalClipboard.args, destDir);
+          handle.moveStructural(internalClipboard.args, actualDestDir);
         } else if (internalClipboard.clipType === "FileCopy") {
-          handle.copyStructural(internalClipboard.args, destDir);
+          handle.copyStructural(internalClipboard.args, actualDestDir);
         }
       }
+    },
+    startRenaming: (src) => {
+      log.debug(`Rename: ${src}`);
+      setRenamingPath(src);
+    },
+    getRenamingPath: () => {
+      log.debug(`Get Rename Path: ${renamingPath}`);
+      return renamingPath;
+    },
+    submitRenaming: (newBaseName) => {
+      log.debug(`Submit Rename: ${newBaseName}`);
+      if (renamingPath) {
+        parsePathAsync
+          .mutateAsync({ fullPath: renamingPath })
+          .then((parsed) => {
+            setRenamingPath(undefined);
+            const newPath = parsed.dir + "/" + newBaseName;
+            move.mutate({ src: renamingPath, dest: newPath });
+          });
+      }
+    },
+    cancelRenaming: () => {
+      log.debug(`Cancel Rename`);
+      setRenamingPath(undefined);
     },
     selectItems: (items) => {
       log.debug("Select Items", items);
@@ -357,8 +386,11 @@ export function FileManager(props: FileManagerProps) {
             (accumulator === "" || isLast ? "" : parsed.sep);
           result.push(accumulator);
         }
-        return result;
+        return result.reverse();
       });
+    },
+    openFile: (path) => {
+      openPath.mutate(path);
     },
   };
 

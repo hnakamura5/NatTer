@@ -4,10 +4,10 @@ import { log } from "@/datatypes/Logger";
 import { ListItemIcon } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { InlineFullFillPadding } from "../AlignUtils";
-import { MenuItem } from "./MenuItem";
+import { IconMenuItemProps, MenuItem } from "./MenuItem";
 import { useTheme } from "@/AppState";
 
-export function IconSubMenuItem(props: { icon?: ReactNode; label: string }) {
+export function IconSubMenuItem(props: IconMenuItemProps) {
   const theme = useTheme();
   return (
     <MenuItem>

@@ -2,7 +2,9 @@ import * as RadixContextMenu from "@radix-ui/react-context-menu";
 import { useState, ReactNode, useRef } from "react";
 import styled from "@emotion/styled";
 import { log } from "@/datatypes/Logger";
-import { SubMenu, SubMenuProps } from "./SubMenu";
+import { IconSubMenuItem, SubMenu, SubMenuProps } from "./SubMenu";
+import { IconMenuItem, IconMenuItemProps } from "./MenuItem";
+import { Divider } from "@mui/material";
 
 export const TransparentTrigger = styled(RadixContextMenu.Trigger)({
   position: "relative",
@@ -14,10 +16,10 @@ export const ContextMenuStyleBox = styled.div(({ theme }) => ({
   width: theme.system.contextMenuWidth,
   backgroundColor: theme.system.contextMenuBackgroundColor,
   color: theme.system.textColor,
-  borderRadius: "3px",
+  borderRadius: "2px",
   position: "relative",
   flex: 1,
-  padding: "3px",
+  padding: "2px",
 }));
 
 function isPointInsideElement(element: HTMLElement, x: number, y: number) {
@@ -42,6 +44,14 @@ export function ContextMenu(props: { children: ReactNode; items: ReactNode }) {
   );
 }
 
+export function ContextMenuItem(props: IconMenuItemProps) {
+  return (
+    <RadixContextMenu.Item>
+      <IconMenuItem {...props} />
+    </RadixContextMenu.Item>
+  );
+}
+
 export const ContextSubMenuStyleBox = styled.div(({ theme }) => ({
   fontSize: theme.system.fontSize,
   minWidth: theme.system.contextNestedMenuWidth,
@@ -57,4 +67,20 @@ export function ContextSubMenu(props: SubMenuProps) {
       <ContextSubMenuStyleBox>{props.children}</ContextSubMenuStyleBox>
     </SubMenu>
   );
+}
+
+export function ContextSubMenuItem(props: IconMenuItemProps) {
+  return (
+    <RadixContextMenu.Item>
+      <IconSubMenuItem {...props} />
+    </RadixContextMenu.Item>
+  );
+}
+
+
+export function ContextDivider() {
+  return <Divider sx={{
+    marginTop: "5px",
+    marginBottom: "5px",
+  }}/>;
 }

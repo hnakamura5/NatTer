@@ -74,6 +74,10 @@ export function addFixedKeybinds(keybinds: UserKeybindList): KeybindList {
       key: "ctrl+s",
       command: "Save",
     },
+    {
+      key: "delete",
+      command: "Delete",
+    },
   ];
   return fixedKeybinds.concat(keybinds);
 }

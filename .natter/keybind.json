@@ -35,5 +35,9 @@
   {
     "key": "Ctrl+Shift+F",
     "command": "FocusFileView"
+  },
+  {
+    "key": "F2",
+    "command": "RenameFile",
   }
 ]

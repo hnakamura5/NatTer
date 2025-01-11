@@ -10,6 +10,7 @@ export const UserKeybindCommandsSchema = z.enum([
   "FocusCommandDown",
   "FocusInput",
   "FocusFileView",
+  "RenameFile",
   "SearchCommands",
   "SearchInCommand",
   "SendKill",
@@ -24,6 +25,7 @@ export const FixedKeybindCommands = z.enum([
   "Redo",
   "SelectAll",
   "Save",
+  "Delete",
 ]);
 export type FixedKeybindCommands = z.infer<typeof FixedKeybindCommands>;
 

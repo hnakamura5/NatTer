@@ -4,6 +4,9 @@ import { useState } from "react";
 
 import { FaFolder, FaFile, FaFolderOpen } from "react-icons/fa";
 
+import styled from "@emotion/styled";
+import SpaceBarIcon from "@mui/icons-material/SpaceBar";
+
 export function IconForFile(props: { name: string; style?: CSSProperties }) {
   const [iconPath, setIconPath] = useState<string | undefined>(undefined);
   const fileIcon = api.icon.fileIcon.useQuery(props.name, {
@@ -67,3 +70,7 @@ export const InlineIconAdjustStyle = {
   height: "1em",
   paddingRight: "4px",
 };
+
+export const EmptySpaceIcon = styled(SpaceBarIcon)({
+  opacity: 0,
+});

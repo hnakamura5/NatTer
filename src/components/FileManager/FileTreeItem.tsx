@@ -1,175 +1,142 @@
 import { TreeItem as MuiTreeItem, TreeItemProps } from "@mui/x-tree-view";
+import Input from "@mui/material/Input";
 import styled from "@emotion/styled";
 import { FileStat } from "@/datatypes/PathAbstraction";
 import { api } from "@/api";
 import { useTheme } from "@/AppState";
 import { log } from "@/datatypes/Logger";
-import { LoadingSkeleton } from "@/components/LoadingSkeleton";
-import { useDroppable, useDraggable } from "@dnd-kit/core";
-import { CSS as DndCSS, Transform } from "@dnd-kit/utilities";
-
-import {
-  FaFolder as FolderIcon,
-  FaFile as FileIcon,
-  FaFolderOpen as FolderOpenIcon,
-} from "react-icons/fa";
-import {
-  IconForFile,
-  IconForFolder,
-  IconOpenFolder,
-  InlineIconAdjustStyle,
-} from "./FileIcon";
-
 import { useFileManagerHandle } from "./FileManagerHandle";
-import { CSSProperties } from "react";
 import { ContextMenu } from "../Menu/ContextMenu";
 import { FileTreeFileItemContextMenu } from "./FileTreeItemContextMenu";
+import {
+  DirectoryLabel,
+  StatLoadingLabel,
+  FileLabel,
+} from "./FileTreeItemLabel";
+import { useState } from "react";
+import { IconForFileOrFolder } from "./FileIcon";
+import { InlineIconAdjustStyle } from "./FileIcon";
 
-function Label(props: { children: React.ReactNode }) {
-  const theme = useTheme();
-  const labelStyle = {
-    color: theme.system.textColor,
-    fontFamily: theme.system.font,
-    fontSize: theme.system.fontSize,
-    paddingRight: "10px",
-  };
-  return <span style={labelStyle}>{props.children}</span>;
-}
+import {
+  KeybindScope,
+  useKeybindOfCommand,
+  useKeybindOfCommandScopeRef,
+} from "@/components/KeybindScope";
+import { ListItemIcon } from "@mui/material";
 
-function ParseLoadingLabel(props: { baseName?: string }) {
-  const theme = useTheme();
+const StyledInput = styled(Input)(({ theme }) => ({
+  color: theme.system.textColor,
+  backgroundColor: theme.system.backgroundColor,
+  fontFamily: theme.system.font,
+  fontSize: theme.system.fontSize,
+  width: "100%",
+}));
+
+function RenamingInput(props: {
+  currentName: string;
+  isDir: boolean;
+  submitName: (baseName: string) => void;
+  cancel: () => void;
+}) {
+  const [baseName, setBaseName] = useState(props.currentName);
   return (
-    <span>
-      <FileIcon
+    <div style={{ display: "flex" }}>
+      <IconForFileOrFolder
+        isDir={props.isDir}
+        name={props.currentName}
         style={InlineIconAdjustStyle}
-        color={theme.system.loadingBaseColor}
       />
-      <Label>
-        {props.baseName ? props.baseName : <LoadingSkeleton width={80} />}
-      </Label>
-    </span>
-  );
-}
-
-const DragStyle = (transform: Transform | null) => {
-  return { transform: DndCSS.Translate.toString(transform) };
-};
-
-function FileLabel(props: { stat: FileStat; baseName?: string }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef: dragNodeRef,
-    transform,
-  } = useDraggable({
-    id: props.stat.fullPath,
-  });
-  const parsed = api.fs.parsePath.useQuery(
-    { fullPath: props.stat.fullPath },
-    {
-      onError: () => {
-        log.error(`Failed to parse ${props.stat.fullPath}`);
-      },
-    }
-  );
-  if (!parsed.data) {
-    return <ParseLoadingLabel baseName={props.baseName} />;
-  }
-  const fileName = parsed.data.base;
-  return (
-    <div
-      ref={dragNodeRef}
-      style={DragStyle(transform)}
-      {...attributes}
-      {...listeners}
-    >
-      <IconForFile name={fileName} style={InlineIconAdjustStyle} />
-      <Label>{fileName}</Label>
+      <StyledInput
+        value={baseName}
+        onChange={(e) => setBaseName(e.target.value)}
+        autoFocus
+        onBlur={() => {
+          props.cancel();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            props.submitName(baseName);
+          } else if (e.key === "Escape") {
+            props.cancel();
+          }
+          e.stopPropagation();
+        }}
+      />
     </div>
   );
 }
 
-function DirectoryLabel(props: {
+function DirectoryLabelOrRenamingInput(props: {
   stat: FileStat;
   isExpanded: boolean;
-  baseName?: string;
+  baseName: string;
+  renamingMode: boolean;
+  setRenamingMode: (mode: boolean) => void;
+  submitRenaming: (baseName: string) => void;
 }) {
-  const { setNodeRef: dropNodeRef, isOver } = useDroppable({
-    id: props.stat.fullPath,
-  });
-  const {
-    attributes,
-    listeners,
-    setNodeRef: dragNodeRef,
-    transform,
-  } = useDraggable({
-    id: props.stat.fullPath,
-  });
-  const parsed = api.fs.parsePath.useQuery(
-    { fullPath: props.stat.fullPath },
-    {
-      onError: () => {
-        log.error(`Failed to parse ${props.stat.fullPath}`);
-      },
-    }
-  );
-  if (!parsed.data) {
-    return <ParseLoadingLabel baseName={props.baseName} />;
-  }
-  const directoryName = parsed.data.base;
-  const dropOverStyle = isOver
-    ? { backgroundColor: "rgba(144, 202, 249, 0.16)" }
-    : {};
-  // const dropOverStyle = {};
-  if (props.isExpanded) {
+  if (props.renamingMode) {
     return (
-      <div ref={dropNodeRef} style={dropOverStyle}>
-        <div
-          ref={dragNodeRef}
-          style={DragStyle(transform)}
-          {...attributes}
-          {...listeners}
-        >
-          <IconOpenFolder name={directoryName} style={InlineIconAdjustStyle} />
-          <Label>{directoryName}</Label>
-        </div>
-      </div>
+      <RenamingInput
+        currentName={props.baseName}
+        isDir={true}
+        submitName={props.submitRenaming}
+        cancel={() => {
+          props.setRenamingMode(false);
+        }}
+      />
+    );
+  } else {
+    return (
+      <ContextMenu
+        items={
+          <FileTreeFileItemContextMenu
+            stat={props.stat}
+            setRenamingMode={props.setRenamingMode}
+          />
+        }
+      >
+        <DirectoryLabel
+          stat={props.stat}
+          isExpanded={props.isExpanded}
+          baseName={props.baseName}
+        />
+      </ContextMenu>
     );
   }
-  return (
-    <div ref={dropNodeRef} style={dropOverStyle}>
-      <div
-        ref={dragNodeRef}
-        style={DragStyle(transform)}
-        {...attributes}
-        {...listeners}
-      >
-        <IconForFolder name={directoryName} style={InlineIconAdjustStyle} />
-        <Label>{directoryName}</Label>
-      </div>
-    </div>
-  );
 }
 
-function StatLoadingLabel(props: { path: string; baseName?: string }) {
-  const parsed = api.fs.parsePath.useQuery(
-    { fullPath: props.path },
-    {
-      onError: () => {
-        log.error(`Failed to parse ${props.path}`);
-      },
-    }
-  );
-  if (!parsed.data) {
-    return <ParseLoadingLabel baseName={props.baseName} />;
+function FileLabelOrRenamingInput(props: {
+  stat: FileStat;
+  baseName: string;
+  renamingMode: boolean;
+  setRenamingMode: (mode: boolean) => void;
+  submitRenaming: (baseName: string) => void;
+}) {
+  if (props.renamingMode) {
+    return (
+      <RenamingInput
+        currentName={props.baseName}
+        isDir={false}
+        submitName={props.submitRenaming}
+        cancel={() => {
+          props.setRenamingMode(false);
+        }}
+      />
+    );
+  } else {
+    return (
+      <ContextMenu
+        items={
+          <FileTreeFileItemContextMenu
+            stat={props.stat}
+            setRenamingMode={props.setRenamingMode}
+          />
+        }
+      >
+        <FileLabel stat={props.stat} baseName={props.baseName} />
+      </ContextMenu>
+    );
   }
-  const fileName = parsed.data.base;
-  return (
-    <span>
-      <IconForFile name={fileName} style={InlineIconAdjustStyle} />
-      {fileName}
-    </span>
-  );
 }
 
 export const ListMargin = "3px";
@@ -185,28 +152,17 @@ const StyledTreeItem = styled(MuiTreeItem)(({ theme }) => ({
   },
 }));
 
-function DraggableTreeItem(props: TreeItemProps) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: props.itemId,
-  });
-  return (
-    <StyledTreeItem
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      {...props}
-    />
-  );
-}
-
 // TODO: Fast up the rendering of directories with many files. (e.g. prefetching)
 export function FileTreeItem(props: {
   path: string;
   key: string;
   showTop: boolean;
   expandedItems: string[];
+  renamingMode?: boolean;
   baseName?: string; // Used for loading skeleton
 }) {
+  const [renamingMode, setRenamingMode] = useState(!!props.renamingMode);
+
   const handle = useFileManagerHandle();
   //log.error(`FileTreeItem: ${props.path}`);
   const stat = api.fs.stat.useQuery(props.path, {
@@ -214,14 +170,17 @@ export function FileTreeItem(props: {
       log.error(`Failed to stat ${props.path}`);
     },
   });
+  const parsed = api.fs.parsePath.useQuery(
+    { fullPath: props.path },
+    {
+      onError: () => {
+        log.error(`Failed to parse ${props.path}`);
+      },
+    }
+  );
   const list = api.fs.list.useQuery(props.path, {
     onError: () => {
       log.error(`Failed to list ${props.path}`);
-    },
-  });
-  const sep = api.fs.sep.useQuery(undefined, {
-    onError: () => {
-      log.error(`Failed to get sep`);
     },
   });
   api.fs.pollChange.useSubscription(props.path, {
@@ -234,7 +193,17 @@ export function FileTreeItem(props: {
     },
   });
 
-  if (!stat.data) {
+  // Keybinds
+  const keybindRef = useKeybindOfCommandScopeRef();
+  useKeybindOfCommand(
+    "RenameFile",
+    () => {
+      setRenamingMode(true);
+    },
+    keybindRef
+  );
+
+  if (!stat.data || !parsed.data) {
     return (
       <StyledTreeItem
         itemId={props.path}
@@ -243,11 +212,18 @@ export function FileTreeItem(props: {
     );
   }
 
+  const submitRenaming = (baseName: string) => {
+    const newPath = parsed.data.dir + parsed.data.sep + baseName;
+    log.debug(`Renaming ${props.path} to ${newPath}`);
+    setRenamingMode(false);
+    handle.move(props.path, newPath);
+  };
+
   if (stat.data.isDir) {
     // Directory
     const children = list.data?.map((child) => (
       <FileTreeItem
-        path={props.path + sep.data + child}
+        path={props.path + parsed.data.sep + child}
         key={child}
         showTop={true}
         expandedItems={props.expandedItems}
@@ -256,22 +232,33 @@ export function FileTreeItem(props: {
     ));
     if (props.showTop) {
       return (
-        <StyledTreeItem
-          itemId={props.path}
-          label={
-            <DirectoryLabel
-              stat={stat.data}
-              isExpanded={props.expandedItems.includes(props.path)}
-              baseName={props.baseName}
-            />
-          }
-          onDoubleClick={(e) => {
-            handle.moveActivePathTo(props.path);
-            e.stopPropagation();
-          }}
-        >
-          {children}
-        </StyledTreeItem>
+        <KeybindScope keybindRef={keybindRef}>
+          <StyledTreeItem
+            itemId={props.path}
+            label={
+              <DirectoryLabelOrRenamingInput
+                stat={stat.data}
+                isExpanded={props.expandedItems.includes(props.path)}
+                baseName={parsed.data.base}
+                renamingMode={renamingMode}
+                setRenamingMode={setRenamingMode}
+                submitRenaming={submitRenaming}
+              />
+            }
+            onDoubleClick={(e) => {
+              handle.moveActivePathTo(props.path);
+              e.stopPropagation();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handle.moveActivePathTo(props.path);
+                e.stopPropagation();
+              }
+            }}
+          >
+            {children}
+          </StyledTreeItem>
+        </KeybindScope>
       );
     } else {
       return <>{children}</>;
@@ -279,16 +266,30 @@ export function FileTreeItem(props: {
   } else {
     // File
     return (
-      <ContextMenu
-        items={
-          <FileTreeFileItemContextMenu filePath={props.path} stat={stat.data} />
-        }
-      >
+      <KeybindScope keybindRef={keybindRef}>
         <StyledTreeItem
           itemId={props.path}
-          label={<FileLabel stat={stat.data} baseName={props.baseName} />}
+          label={
+            <FileLabelOrRenamingInput
+              stat={stat.data}
+              baseName={parsed.data.base}
+              renamingMode={renamingMode}
+              setRenamingMode={setRenamingMode}
+              submitRenaming={submitRenaming}
+            />
+          }
+          onDoubleClick={(e) => {
+            handle.openFile(props.path);
+            e.stopPropagation();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handle.openFile(props.path);
+              e.stopPropagation();
+            }
+          }}
         />
-      </ContextMenu>
+      </KeybindScope>
     );
   }
 }

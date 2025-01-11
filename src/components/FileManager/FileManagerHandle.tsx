@@ -17,18 +17,25 @@ export interface FileManagerHandle {
   cutToInternalClipboard: (src: string) => void;
   cutSelectedToInternalClipboard: () => void;
   remove: (filePath: string) => void;
+  removeSelection: () => void;
   trash: (filePath: string) => void;
+  trashSelection: () => void;
   copy: (src: string, dest: string) => void;
   copyTo: (src: string, destDir: string) => void;
   copyStructural: (src: string[], destDir: string) => void;
   copyToInternalClipboard: (src: string) => void;
   copySelectionToInternalClipboard: () => void;
-  pasteFromInternalClipboard: () => void;
+  pasteFromInternalClipboard: (destDir?:string) => void;
+  startRenaming: (src: string) => void;
+  getRenamingPath: () => string | undefined;
+  submitRenaming(newBaseName: string): void;
+  cancelRenaming: () => void;
   selectItems: (items: string[]) => void;
   copyToOSClipboard: (text: string) => void;
   getFromOSClipboard: () => Promise<string>;
   getRelativePathFromActive: (path: string) => string;
   getSubPathList: (path: string) => Promise<string[]>;
+  openFile: (path: string) => void;
 }
 
 export const FileManagerHandleContext = createContext<

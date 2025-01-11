@@ -23,6 +23,8 @@
       }
     },
     "context": {
+      "openFile": "Open file",
+      "openDirectory": "Open directory",
       "newFile": "New file",
       "newDirectory": "New directory",
       "rename": "Rename",

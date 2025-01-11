@@ -8,6 +8,7 @@ import {
 } from "@/datatypes/PathAbstraction";
 import path from "node:path";
 import fs from "node:fs/promises";
+import { shell } from "electron";
 import { pathOf } from "@/server/ShellUtils/pathAbstractionUtil";
 import { chmod, chown } from "original-fs";
 
@@ -148,8 +149,18 @@ export const fileSystemRouter = server.router({
 
   remove: proc.input(z.string()).mutation(async (opts) => {
     const filePath = opts.input;
-    fs.rm(path.normalize(filePath), { recursive: true, force: true });
-    return;
+    fs.rm(path.normalize(filePath), { recursive: true, force: true }).then(
+      () => {
+        changeFileEvent(filePath);
+      }
+    );
+  }),
+
+  trash: proc.input(z.string()).mutation(async (opts) => {
+    const filePath = opts.input;
+    shell.trashItem(path.normalize(filePath)).then(() => {
+      changeFileEvent(filePath);
+    });
   }),
 
   copy: proc
