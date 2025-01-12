@@ -13,6 +13,7 @@ import { useLabels, useTheme } from "@/AppState";
 import { IconSubMenuItem, SubMenu, SubMenuItem } from "../Menu/SubMenu";
 import { Divider } from "@mui/material";
 import { EmptySpaceIcon } from "./FileIcon";
+import { log } from "@/datatypes/Logger";
 
 import FileOpenIcon from "@mui/icons-material/FileOpen";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";

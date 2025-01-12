@@ -16,7 +16,13 @@ export function FileKeybindings(props: { children: React.ReactNode }) {
     handle.copySelectionToInternalClipboard,
     keybindRef
   );
-  useKeybindOfCommand("Paste", handle.pasteFromInternalClipboard, keybindRef);
+  useKeybindOfCommand(
+    "Paste",
+    () => {
+      handle.pasteFromInternalClipboard();
+    },
+    keybindRef
+  );
   useKeybindOfCommand("Delete", handle.trashSelection, keybindRef);
 
   return <KeybindScope keybindRef={keybindRef}>{props.children}</KeybindScope>;
