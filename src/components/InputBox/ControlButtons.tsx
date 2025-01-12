@@ -13,9 +13,20 @@ import { PlayArrow, PlayCircle, Stop, Pause } from "@mui/icons-material";
 import styled from "@emotion/styled";
 import { useLabels, useTheme } from "@/AppState";
 
+import { TooltipHover } from "@/components/TooltipHover";
+
 import { InputText, usePid } from "@/SessionStates";
 import { useCallback, useState } from "react";
 import { useAtom } from "jotai";
+
+const iconWidth = "20px";
+const IconButton = styled(MuiIconButton)(({ theme }) => ({
+  color: theme.shell.textColor,
+  backgroundColor: theme.shell.backgroundColor,
+  width: iconWidth,
+  padding: "0px",
+  scale: 0.6,
+}));
 
 function Button(props: {
   icon: React.ReactNode;
@@ -23,17 +34,8 @@ function Button(props: {
   tooltip: string;
   onClick: () => void;
 }) {
-  const theme = useTheme();
-  const iconWidth = "20px";
-  const IconButton = styled(MuiIconButton)({
-    color: theme.shell.textColor,
-    backgroundColor: theme.shell.backgroundColor,
-    width: iconWidth,
-    padding: "0px",
-    scale: 0.6,
-  });
   return (
-    <Tooltip title={props.tooltip}>
+    <TooltipHover title={props.tooltip}>
       <IconButton onClick={props.onClick}>
         <span
           style={{
@@ -43,7 +45,7 @@ function Button(props: {
           {props.icon}
         </span>
       </IconButton>
-    </Tooltip>
+    </TooltipHover>
   );
 }
 
