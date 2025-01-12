@@ -1,4 +1,9 @@
-import { IconButton, Link, Breadcrumbs as MUIBreadcrumbs } from "@mui/material";
+import {
+  ClickAwayListener,
+  IconButton,
+  Link,
+  Breadcrumbs as MUIBreadcrumbs,
+} from "@mui/material";
 import styled from "@emotion/styled";
 
 import { AlignRight } from "@/components/AlignUtils";
@@ -9,6 +14,10 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { useFileManagerHandle } from "./FileManagerHandle";
 import { log } from "@/datatypes/Logger";
+import { useScrollIntoViewIfNeeded } from "@dnd-kit/core/dist/hooks/utilities";
+import { useState } from "react";
+import { BasicInput } from "../BasicInput";
+import { set } from "zod";
 
 function FileBreadcrumbElement(props: {
   name: string;
@@ -18,12 +27,13 @@ function FileBreadcrumbElement(props: {
   useIcon?: boolean;
 }) {
   // log.debug(`FileBreadcrumbElement: ${props.name} (${props.fullPath})`);
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
     props.moveToPath(props.fullPath);
+    e.stopPropagation();
   };
   if (props.useIcon) {
     return (
-      <Link color="inherit" onClick={handleClick}>
+      <Link color="inherit" onClick={handleClick} style={{ cursor: "pointer" }}>
         <IconForFileOrFolder
           name={props.name}
           isDir={props.isDir}
@@ -45,8 +55,9 @@ function FileBreadcrumbElement(props: {
 function AddBookmarkButton(props: { addBookmark: () => void }) {
   return (
     <IconButton
-      onClick={() => {
+      onClick={(e) => {
         props.addBookmark();
+        e.stopPropagation();
       }}
       sx={{
         scale: 0.9,
@@ -56,6 +67,44 @@ function AddBookmarkButton(props: { addBookmark: () => void }) {
     >
       <BookmarkBorderIcon fontSize="small" />
     </IconButton>
+  );
+}
+
+function NavigationInput(props: {
+  parsedPath: PathParsed;
+  setInputMode: (mode: boolean) => void;
+}) {
+  const handle = useFileManagerHandle();
+  const [text, setText] = useState(props.parsedPath.fullPath);
+  const [errorPath, setErrorPath] = useState<boolean>(false);
+
+  log.debug(`NavigationInput: text: ${text}`);
+  return (
+    <BasicInput
+      value={text}
+      style={{ width: "100%" }}
+      onChange={(e) => setText(e.target.value)}
+      autoFocus
+      error={errorPath}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          setErrorPath(false);
+          handle.moveActivePathTo(text).then((success) => {
+            if (success) {
+              props.setInputMode(false);
+            } else {
+              setErrorPath(true);
+              setTimeout(() => setErrorPath(false), 1000);
+            }
+          });
+          e.stopPropagation();
+        } else if (e.key === "Escape") {
+          props.setInputMode(false);
+          e.stopPropagation();
+        }
+      }}
+      onBlur={() => props.setInputMode(false)}
+    />
   );
 }
 
@@ -78,6 +127,7 @@ const Breadcrumbs = styled(MUIBreadcrumbs)(({ theme }) => ({
 
 export type FileBreadcrumbsProps = {
   parsedPath: PathParsed;
+  setInputMode: (mode: boolean) => void;
 };
 
 export function FileBreadcrumbs(props: FileBreadcrumbsProps) {
@@ -117,6 +167,11 @@ export function FileBreadcrumbs(props: FileBreadcrumbsProps) {
           width: "100%",
         }}
         separator={<NavigateNextIcon sx={{ fontSize: "small" }} />}
+        onClick={(e) => {
+          log.debug("Click on FileBreadcrumbs");
+          props.setInputMode(true);
+          e.stopPropagation();
+        }}
       >
         {elements}
       </Breadcrumbs>
@@ -128,5 +183,32 @@ export function FileBreadcrumbs(props: FileBreadcrumbsProps) {
         />
       </AlignRight>
     </FileBreadcrumbFrame>
+  );
+}
+
+export function FileNavigationBar(props: { parsedPath: PathParsed }) {
+  const [inputMode, setInputMode] = useState(false);
+
+  log.debug(
+    `FileBreadCrumbOrNavigationInput: ${props.parsedPath.fullPath} inputMode: ${inputMode}`
+  );
+  return (
+    <ClickAwayListener
+      onClickAway={() => {
+        setInputMode(false);
+      }}
+    >
+      {inputMode ? (
+        <NavigationInput
+          parsedPath={props.parsedPath}
+          setInputMode={setInputMode}
+        />
+      ) : (
+        <FileBreadcrumbs
+          parsedPath={props.parsedPath}
+          setInputMode={setInputMode}
+        />
+      )}
+    </ClickAwayListener>
   );
 }

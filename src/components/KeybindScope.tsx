@@ -24,11 +24,11 @@ export function useKeybindOfCommand(
 ) {
   const keys = useKeybindList().get(command);
   const keyList = keys?.map((key) => key.key).join(", ") || [];
-  for (const k of keys || []) {
-    log.debug(
-      `useKeybindOfCommand: name:${command} key: ${k.key} command: ${k.command}`
-    );
-  }
+  // for (const k of keys || []) {
+  //   log.debug(
+  //     `useKeybindOfCommand: name:${command} key: ${k.key} command: ${k.command}`
+  //   );
+  // }
   // TODO: how to support args?
   const ref = useHotkeys(
     keyList || "",

@@ -19,6 +19,7 @@ export const LabelsSchema = z.object({
         bookmark: z.string(),
         history: z.string(),
         search: z.string(),
+        addBookmark:z.string(),
       }),
     }),
     footer: z.object({

@@ -115,6 +115,7 @@ export function FileManager(props: FileManagerProps) {
 
   // File system mutators
   const parsePathAsync = api.fs.parsePathAsync.useMutation();
+  const pathExistsAsync = api.fs.pathExistsAsync.useMutation();
   const move = api.fs.move.useMutation();
   const moveTo = api.fs.moveTo.useMutation();
   const moveStructural = api.fs.moveStructural.useMutation();
@@ -204,11 +205,20 @@ export function FileManager(props: FileManagerProps) {
   const handle: FileManagerHandle = {
     getActivePath: () => currentPath,
     moveActivePathTo: (path) => {
-      log.debug(`Move to path: ${path}`);
-      if (currentPath != path) {
-        historyBack.push(currentPath);
-      }
-      setActivePath(path, true);
+      log.debug(`Try Move active to path: ${path}`);
+      return pathExistsAsync
+        .mutateAsync({ fullPath: path, fileOrDir: "directory" })
+        .then((exists) => {
+          if (exists) {
+            if (currentPath != path) {
+              historyBack.push(currentPath);
+            }
+            setActivePath(path, true);
+            return true;
+          }
+          return false;
+        })
+        .catch(() => false);
     },
     navigateForward: () => {
       log.debug("Navigate forward");

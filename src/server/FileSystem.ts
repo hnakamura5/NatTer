@@ -267,6 +267,37 @@ export const fileSystemRouter = server.router({
       return parsePath(fullPath, pathKind);
     }),
 
+  pathExistsAsync: proc
+    .input(
+      z.object({
+        fullPath: z.string(),
+        fileOrDir: z
+          .union([z.literal("file"), z.literal("directory")])
+          .optional(),
+      })
+    )
+    .output(z.boolean())
+    .mutation(async (opts) => {
+      const { fullPath, fileOrDir } = opts.input;
+      return pathExists(fullPath)
+        .then((exists) => {
+          if (!exists) {
+            return false;
+          }
+          if (!fileOrDir) {
+            return true;
+          }
+          return fs.stat(fullPath).then((stats) => {
+            if (fileOrDir === "file") {
+              return stats.isFile();
+            } else {
+              return stats.isDirectory();
+            }
+          });
+        })
+        .catch(() => false);
+    }),
+
   pollChange: proc.input(z.string()).subscription(async (opts) => {
     const filePath = opts.input;
     const isDir = (await fs.stat(filePath)).isDirectory();
@@ -319,9 +350,9 @@ export function structuralSrcToDest(
   return result;
 }
 
-async function exists(dir: string): Promise<boolean> {
+async function pathExists(fullPath: string): Promise<boolean> {
   return fs
-    .access(dir)
+    .access(fullPath)
     .then(() => true)
     .catch(() => false);
 }
@@ -336,7 +367,7 @@ async function operationStructural(
   for (const [srcPath, destPath] of srcToDest) {
     if (srcPath !== destPath) {
       const destPathDir = path.dirname(destPath);
-      if (!(await exists(destPathDir))) {
+      if (!(await pathExists(destPathDir))) {
         await fs.mkdir(destPathDir, { recursive: true });
       }
       log.debug(`${logName} ${srcPath} -> ${destPath}`);

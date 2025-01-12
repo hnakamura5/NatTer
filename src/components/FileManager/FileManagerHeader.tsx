@@ -5,7 +5,8 @@ import { api } from "@/api";
 
 import { AlignRight } from "@/components/AlignUtils";
 import { PathParsed } from "@/datatypes/PathAbstraction";
-import { FileBreadcrumbs } from "./FileBreadcrumbs";
+import { FileBreadcrumbs, FileNavigationBar } from "./FileNavigationBar";
+import { TooltipHover } from "@/components/TooltipHover";
 
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
@@ -17,92 +18,121 @@ import HistoryIcon from "@mui/icons-material/History";
 
 import { useFileManagerHandle } from "./FileManagerHandle";
 import { log } from "@/datatypes/Logger";
+import { useLabels } from "@/AppState";
+import { LabelsSchema, Labels } from "@/datatypes/Labels";
+
+type tooltipLabelType = Labels["fileManager"]["header"]["tooltip"];
 
 function NavigationForwardButton(props: {
-  parsedPath: PathParsed;
   navigateForward: () => void;
+  tooltipLabels: tooltipLabelType;
 }) {
   return (
-    <IconButton
-      onClick={() => {
-        props.navigateForward();
-      }}
-    >
-      <NavigateNextIcon fontSize="small" />
-    </IconButton>
+    <TooltipHover title={props.tooltipLabels.forward}>
+      <IconButton
+        onClick={() => {
+          props.navigateForward();
+        }}
+      >
+        <NavigateNextIcon fontSize="small" />
+      </IconButton>
+    </TooltipHover>
   );
 }
 
 function NavigationBackButton(props: {
-  parsedPath: PathParsed;
   navigateBack: () => void;
+  tooltipLabels: tooltipLabelType;
 }) {
   return (
-    <IconButton
-      onClick={() => {
-        props.navigateBack();
-      }}
-    >
-      <NavigateBeforeIcon fontSize="small" />
-    </IconButton>
+    <TooltipHover title={props.tooltipLabels.back}>
+      <IconButton
+        onClick={() => {
+          props.navigateBack();
+        }}
+      >
+        <NavigateBeforeIcon fontSize="small" />
+      </IconButton>
+    </TooltipHover>
   );
 }
 
 function KeepTrackCurrentToggleButton(props: {
   trackingCurrent: () => boolean;
   toggleKeepTrackCurrent: () => void;
+  tooltipLabels: tooltipLabelType;
 }) {
   const color = props.trackingCurrent() ? "warning" : "disabled";
   return (
-    <IconButton
-      onClick={() => {
-        props.toggleKeepTrackCurrent();
-      }}
-    >
-      <LinkIcon fontSize="small" color={color} />
-    </IconButton>
+    <TooltipHover title={props.tooltipLabels.linkToCurrent}>
+      <IconButton
+        onClick={() => {
+          props.toggleKeepTrackCurrent();
+        }}
+      >
+        <LinkIcon fontSize="small" color={color} />
+      </IconButton>
+    </TooltipHover>
   );
 }
 
-function BookmarksButton(props: { bookmarks: () => void }) {
+function BookmarksButton(props: {
+  bookmarks: () => void;
+  tooltipLabels: tooltipLabelType;
+}) {
   return (
-    <IconButton
-      onClick={() => {
-        console.log("TODO: Bookmarks");
-        // TODO: implement bookmarks
-      }}
-    >
-      <BookmarksIcon fontSize="small" />
-    </IconButton>
+    <TooltipHover title={props.tooltipLabels.bookmark}>
+      <IconButton
+        onClick={() => {
+          console.log("TODO: Bookmarks");
+          // TODO: implement bookmarks
+        }}
+      >
+        <BookmarksIcon fontSize="small" />
+      </IconButton>
+    </TooltipHover>
   );
 }
 
-function RecentHistoryButton(props: { recent: () => void }) {
+function RecentHistoryButton(props: {
+  recent: () => void;
+  tooltipLabels: tooltipLabelType;
+}) {
   return (
-    <IconButton
-      onClick={() => {
-        console.log("TODO: Recent");
-        // TODO: implement recent
-      }}
-    >
-      <HistoryIcon fontSize="small" />
-    </IconButton>
+    <TooltipHover title={props.tooltipLabels.history}>
+      <IconButton
+        onClick={() => {
+          console.log("TODO: Recent");
+          // TODO: implement recent
+        }}
+      >
+        <HistoryIcon fontSize="small" />
+      </IconButton>
+    </TooltipHover>
   );
 }
 
-function SearchButton(props: { search: () => void }) {
+function SearchButton(props: {
+  search: () => void;
+  tooltipLabels: tooltipLabelType;
+}) {
   return (
-    <IconButton
-      onClick={() => {
-        console.log("TODO: Search");
-      }}
-    >
-      <SearchIcon fontSize="small" />
-    </IconButton>
+    <TooltipHover title={props.tooltipLabels.search}>
+      <IconButton
+        onClick={() => {
+          console.log("TODO: Search");
+        }}
+      >
+        <SearchIcon fontSize="small" />
+      </IconButton>
+    </TooltipHover>
   );
 }
 
-function SplitButton(props: { split: () => void }) {
+function SplitButton(props: {
+  split: () => void;
+  tooltipLabels: tooltipLabelType;
+}) {
   return (
     <IconButton
       onClick={() => {
@@ -135,6 +165,9 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
   const [parsedPath, setParsedPath] = useState<PathParsed | undefined>(
     undefined
   );
+  const labels = useLabels();
+  const tooltipLabels = labels.fileManager.header.tooltip;
+
   useEffect(() => {
     if (parsedPath?.fullPath != fullPath) {
       setParsedPath(undefined);
@@ -151,6 +184,7 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
       },
     }
   );
+
   if (!parsedPath && parsed.data) {
     setParsedPath(parsed.data);
   }
@@ -161,28 +195,36 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
     `FileManagerHeader: ${parsed.data.fullPath}: `,
     parsed.data.dirHier
   );
+
   return (
     <FileManagerHeaderFrame>
       <NavigationBackButton
-        parsedPath={parsed.data}
         navigateBack={handle.navigateBack}
+        tooltipLabels={tooltipLabels}
       />
       <NavigationForwardButton
-        parsedPath={parsed.data}
         navigateForward={handle.navigateForward}
+        tooltipLabels={tooltipLabels}
       />
       <KeepTrackCurrentToggleButton
         trackingCurrent={handle.trackingCurrent}
         toggleKeepTrackCurrent={() => {
           handle.setKeepTrackCurrent(!handle.trackingCurrent());
         }}
+        tooltipLabels={tooltipLabels}
       />
-      <FileBreadcrumbs parsedPath={parsed.data} />
+      <FileNavigationBar parsedPath={parsed.data} />
       <AlignRight>
-        <BookmarksButton bookmarks={handle.getBookmarks} />
+        <BookmarksButton
+          bookmarks={handle.getBookmarks}
+          tooltipLabels={tooltipLabels}
+        />
       </AlignRight>
       <AlignRight>
-        <RecentHistoryButton recent={handle.getRecentDirectories} />
+        <RecentHistoryButton
+          recent={handle.getRecentDirectories}
+          tooltipLabels={tooltipLabels}
+        />
       </AlignRight>
       <AlignRight>
         <SearchButton
@@ -190,10 +232,11 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
             // TODO: implement search
             () => console.log("TODO: search")
           }
+          tooltipLabels={tooltipLabels}
         />
       </AlignRight>
       <AlignRight>
-        <SplitButton split={handle.splitPane} />
+        <SplitButton split={handle.splitPane} tooltipLabels={tooltipLabels} />
       </AlignRight>
     </FileManagerHeaderFrame>
   );

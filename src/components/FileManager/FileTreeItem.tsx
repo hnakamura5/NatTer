@@ -23,14 +23,7 @@ import {
   useKeybindOfCommandScopeRef,
 } from "@/components/KeybindScope";
 import { ListItemIcon } from "@mui/material";
-
-const StyledInput = styled(Input)(({ theme }) => ({
-  color: theme.system.textColor,
-  backgroundColor: theme.system.backgroundColor,
-  fontFamily: theme.system.font,
-  fontSize: theme.system.fontSize,
-  width: "100%",
-}));
+import { BasicInput } from "../BasicInput";
 
 function RenamingInput(props: {
   currentName: string;
@@ -46,9 +39,10 @@ function RenamingInput(props: {
         name={props.currentName}
         style={InlineIconAdjustStyle}
       />
-      <StyledInput
+      <BasicInput
         value={baseName}
         onChange={(e) => setBaseName(e.target.value)}
+        style={{ width: "100%" }}
         autoFocus
         onBlur={() => {
           props.cancel();

@@ -15,6 +15,7 @@
         "bookmark": "Bookmark",
         "history": "History",
         "search": "Search",
+        "addBookmark": "Add to bookmark",
       }
     },
     "footer": {

@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 
 export interface FileManagerHandle {
   getActivePath: () => string;
-  moveActivePathTo: (path: string) => void;
+  moveActivePathTo: (path: string) => Promise<boolean>;
   navigateForward: () => void;
   navigateBack: () => void;
   trackingCurrent: () => boolean;
@@ -25,7 +25,7 @@ export interface FileManagerHandle {
   copyStructural: (src: string[], destDir: string) => void;
   copyToInternalClipboard: (src: string) => void;
   copySelectionToInternalClipboard: () => void;
-  pasteFromInternalClipboard: (destDir?:string) => void;
+  pasteFromInternalClipboard: (destDir?: string) => void;
   startRenaming: (src: string) => void;
   getRenamingPath: () => string | undefined;
   submitRenaming(newBaseName: string): void;
