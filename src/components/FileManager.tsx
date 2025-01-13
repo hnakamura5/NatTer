@@ -39,8 +39,8 @@ import { useAtom } from "jotai";
 import { parse } from "path";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.system.backgroundColor,
   color: theme.system.textColor,
+  backgroundColor: theme.system.backgroundColor,
   fontFamily: theme.system.font,
   fontSize: theme.system.fontSize,
   width: `calc(100vw - ${theme.system.hoverMenuWidth} - 15px)`,

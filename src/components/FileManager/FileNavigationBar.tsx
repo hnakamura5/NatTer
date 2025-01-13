@@ -110,7 +110,7 @@ function NavigationInput(props: {
 
 const FileBreadcrumbFrame = styled.div(({ theme }) => ({
   color: theme.system.textColor,
-  backgroundColor: theme.system.backgroundColor,
+  backgroundColor: theme.system.inputBackgroundColor,
   fontSize: theme.system.fontSize,
   width: "100%",
   display: "flex",
@@ -118,7 +118,7 @@ const FileBreadcrumbFrame = styled.div(({ theme }) => ({
 
 const Breadcrumbs = styled(MUIBreadcrumbs)(({ theme }) => ({
   color: theme.system.textColor,
-  backgroundColor: theme.system.backgroundColor,
+  backgroundColor: theme.system.inputBackgroundColor,
   fontFamily: theme.system.font,
   fontSize: theme.system.fontSize,
   padding: "3px 7px 3px 7px", // top right bottom left
