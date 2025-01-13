@@ -43,7 +43,7 @@ const FileManagerFrame = styled(Box)(({ theme }) => ({
   color: theme.system.textColor,
   fontFamily: theme.system.font,
   fontSize: theme.system.fontSize,
-  width: `calc(100vw - ${theme.system.hoverMenuWidth} - 10px)`,
+  width: `calc(100vw - ${theme.system.hoverMenuWidth} - 15px)`,
 }));
 
 const FileTreeFrame = styled(Box)(({ theme }) => ({

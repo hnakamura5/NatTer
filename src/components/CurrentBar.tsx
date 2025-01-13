@@ -23,7 +23,7 @@ const CurrentBarStyle = styled(Box)(({ theme }) => ({
   fontFamily: theme.shell.font,
   fontSize: theme.shell.fontSize,
   textAlign: "left",
-  padding: "3px 0px 0px 5px", // top right bottom left
+  padding: "3px 8px 0px 5px", // top right bottom left
   overflow: "hidden",
 }));
 
@@ -34,7 +34,6 @@ const CurrentDirStyle = styled.span(({ theme }) => ({
 const UserStyle = styled.span(({ theme }) => ({
   color: theme.shell.userColor,
   float: "right",
-  marginRight: "5px",
 }));
 
 interface CurrentBarProps {}

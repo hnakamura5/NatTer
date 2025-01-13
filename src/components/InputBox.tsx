@@ -64,7 +64,7 @@ const Paper = styled(Box)(({ theme }) => ({
 
 const OverToLeft = styled(Box)(({ theme }) => ({
   position: "relative",
-  left: `calc(-${theme.system.hoverMenuWidth} + 5px)`,
+  left: `calc(-${theme.system.hoverMenuWidth})`,
   width: `calc(100% + ${theme.system.hoverMenuWidth})`,
 }));
 

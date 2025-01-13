@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import React from "react";
-import { Box } from "@mui/material";
+import { Box, BoxProps } from "@mui/material";
 
 type DivProps = React.DetailedHTMLProps<
   React.HTMLAttributes<HTMLDivElement>,
@@ -19,6 +19,7 @@ export default function FocusBoundary(props: {
   children: React.ReactNode;
   defaultBorderColor: string;
   boundaryRef?: React.Ref<HTMLElement>;
+  sx?: BoxProps["sx"];
 }) {
   const { children, defaultBorderColor, ...others } = props;
 
@@ -32,6 +33,7 @@ export default function FocusBoundary(props: {
         ":not(:focus-within)": {
           border: `2px solid ${defaultBorderColor}`,
         },
+        ...props.sx,
       }}
     >
       {children}

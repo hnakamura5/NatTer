@@ -113,13 +113,14 @@ export function Input(props: {
           id = {`input-${pid}`}
           inputRef={props.inputBoxRef}
           style={{
-            width: `calc(100% - 10px)`,
+            width: `calc(100% - 8px)`,
             backgroundColor: theme.shell.secondaryBackgroundColor,
             color: theme.shell.textColor,
             fontFamily: theme.shell.font,
             fontSize: theme.shell.fontSize,
+            borderRadius: "5px",
             marginLeft: "0px",
-            paddingLeft: "10px",
+            paddingLeft: "5px",
           }}
           value={text}
           // autoFocus={true} // TODO: problem

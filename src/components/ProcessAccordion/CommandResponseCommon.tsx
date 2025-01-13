@@ -10,7 +10,7 @@ const CurrentDirStyle = styled.span(({ theme }) => ({
 const UserStyle = styled.span(({ theme }) => ({
   color: theme.shell.userColor,
   float: "right",
-  marginRight: "10px",
+  marginRight: "2px",
 }));
 const TimeStyle = styled.span(({ theme }) => ({
   color: theme.shell.timeColor,
@@ -27,6 +27,7 @@ export const ResponseStyle = styled(ResponseAlign)(({ theme }) => ({
   maxHeight: "calc(50vh - 50px)",
   backgroundColor: theme.shell.secondaryBackgroundColor,
   paddingBottom: "5px",
+  borderRadius: "3px",
 }));
 
 export const colorLine = (color: string) => {
@@ -44,22 +45,26 @@ const colorSection = (color: string) => {
   };
 };
 
+const CommandStyle = styled(Box)(({ theme }) => ({
+  backgroundColor: theme.shell.secondaryBackgroundColor,
+  marginBottom: "8px",
+  borderRadius: "3px",
+  padding: "3px 5px 3px 5px",
+}));
+
 export function CommandHeader(props: { command: Command }) {
   const { command } = props;
   const theme = useTheme();
   return (
     <ResponseAlign>
-      <Box sx={colorSection(theme.shell.useCommandColor)}>
-        <span>
-          <TimeStyle>{command.startTime}</TimeStyle>
-          <CurrentDirStyle>{command.currentDirectory}</CurrentDirStyle>
-          <UserStyle>{command.user}</UserStyle>
-          <br />
-          <span>
-            {command.styledCommand ? command.styledCommand : command.command}
-          </span>
-        </span>
-      </Box>
+      <span>
+        <TimeStyle>{command.startTime}</TimeStyle>
+        <CurrentDirStyle>{command.currentDirectory}</CurrentDirStyle>
+        <UserStyle>{command.user}</UserStyle>
+      </span>
+      <CommandStyle sx={colorSection(theme.shell.useCommandColor)}>
+        {command.styledCommand ? command.styledCommand : command.command}
+      </CommandStyle>
     </ResponseAlign>
   );
 }

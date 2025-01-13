@@ -58,6 +58,7 @@ const AccordionStyle = styled(Box)(({ theme }) => ({
   textAlign: "left",
   overflow: "hidden",
   overflowWrap: "anywhere",
+  borderRadius: "3px",
 }));
 
 function SummarySelector(props: { cid: CommandID }) {
@@ -228,7 +229,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       setTimeout(() => {
         bottom.current?.scrollIntoView({ behavior: "auto" });
         top.current?.scrollIntoView({ behavior: "auto" });
-      }, 500); // TODO: Adhoc time?
+      }, 300); // TODO: Adhoc time?
       setScrollIntoView(false);
     }
   }, [scrollIntoView]);
@@ -338,6 +339,10 @@ function ProcessAccordion(props: ProcessAccordionProps) {
           <FocusBoundary
             defaultBorderColor={theme.shell.backgroundColor}
             boundaryRef={boundaryRef}
+            sx={{
+              borderRadius: "5px",
+              marginBottom: "8px",
+            }}
           >
             <EasyFocus.Land
               focusTarget={focalPoint}
@@ -356,9 +361,6 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                 <Accordion
                   expanded={expanded}
                   onChange={handleChange}
-                  sx={{
-                    margin: "0px !important", //TODO: better way?
-                  }}
                   slotProps={{
                     transition: { timeout: 300 },
                   }}

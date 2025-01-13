@@ -7,6 +7,7 @@ import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
 import { usePid } from "@/SessionStates";
 
 import { log } from "@/datatypes/Logger";
+import { hasScrollbarY } from "./AlignUtils";
 
 interface SessionProps {}
 
@@ -16,6 +17,9 @@ function Session(props: SessionProps) {
   const [length, setLength] = useState<number>(0);
   // Ref to scroll to the bottom of the session. (Now not used.)
   const bottom = useRef<HTMLDivElement>(null);
+  // Ref to the box containing all the process accordions.
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [boxHasScrollbarY, setBoxHasScrollbarY] = useState<boolean>(false);
   // Handle to focus on the last command.
   const handleGFM = GFM.useHandle();
   // Effect on the length change, that is, new command is added.
@@ -24,6 +28,15 @@ function Session(props: SessionProps) {
     // ProcessAccordion will switch focus to the input box if it is the last command.
     handleGFM.focus(GFM.GlobalKey.LastCommand);
   }, [handleGFM, length]);
+  // Detecting scrollbar.
+  useEffect(() => {
+    if (!boxRef.current) {
+      return;
+    }
+    new ResizeObserver(() => {
+      setBoxHasScrollbarY(hasScrollbarY(boxRef.current));
+    }).observe(boxRef.current);
+  }, [boxRef]);
 
   // Fetching commands.
   const numCommands = api.shell.numCommands.useQuery(pid, {
@@ -55,8 +68,13 @@ function Session(props: SessionProps) {
       <Box
         sx={{
           maxHeight: "calc(100vh - 50px)", // TODO: calculate using actual height.
-          overflow: "auto",
+          overflowX: "auto",
+          overflowY: "auto",
+          padding: `0px ${
+            boxHasScrollbarY ? "3px" : "8px" // right
+          } 0px 8px`, // top right bottom left
         }}
+        ref={boxRef}
       >
         {processAccordions}
         <div ref={bottom} />

@@ -79,7 +79,7 @@ function RecordedCommandResponse(props: { cid: CommandID }) {
   }
 
   return (
-    <Box>
+    <Box sx={{marginRight: "10px", marginBottom: "2px"}}>
       <CommandHeader command={command.data} />
       <ResponseStyleWithScroll>
         <Box sx={colorLine(theme.shell.stdoutColor)}>

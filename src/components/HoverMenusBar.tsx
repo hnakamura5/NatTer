@@ -78,7 +78,12 @@ function Item(props: {
   return (
     <div ref={props.anchorRef}>
       <BlockListItem>
-        <ListItemButton onClick={props.handleClick}>
+        <ListItemButton
+          onClick={props.handleClick}
+          sx={{
+            padding: "6px 0px 6px 5px", // top right bottom left
+          }}
+        >
           <ListItemIcon>{props.children}</ListItemIcon>
         </ListItemButton>
       </BlockListItem>
@@ -98,7 +103,6 @@ function HoverMenuItem(props: {
   focusRef?: React.RefObject<HTMLElement>;
 }) {
   const theme = useTheme();
-  const iconSize = theme.system.hoverMenuIconSize;
 
   const anchorRef = React.useRef<HTMLDivElement>(null);
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
@@ -143,7 +147,14 @@ function HoverMenuItem(props: {
           </Popper>
           <Item handleClick={handleClick} anchorRef={anchorRef}>
             <props.icon
-              sx={{ color: theme.system.defaultIconColor, fontSize: iconSize }}
+              sx={{
+                color: theme.system.defaultIconColor,
+                fontSize: theme.system.hoverMenuIconSize,
+                margin: 0,
+                "& .MuiListItemIcon-root": {
+                  margin: 0,
+                },
+              }}
             />
           </Item>
         </div>
@@ -154,7 +165,7 @@ function HoverMenuItem(props: {
 const VerticalList = styled(List)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
-  marginLeft: "-5px",
+  padding: 0,
   backgroundColor: theme.system.secondaryBackgroundColor,
 }));
 

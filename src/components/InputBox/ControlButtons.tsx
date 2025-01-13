@@ -25,7 +25,7 @@ const IconButton = styled(MuiIconButton)(({ theme }) => ({
   backgroundColor: theme.shell.backgroundColor,
   width: iconWidth,
   padding: "0px",
-  scale: 0.6,
+  scale: 0.8,
 }));
 
 function Button(props: {
@@ -69,12 +69,13 @@ export function ControlButtons(props: { submit: (command: string) => void }) {
         tooltip={`${labels.input.tooltip.run} (Ctrl+Enter)`}
         onClick={run}
       />
-      <Button
-        icon={<PlayCircle />}
-        color={theme.shell.runBackgroundButtonColor}
-        tooltip={`${labels.input.tooltip.runBackground} (Ctrl+Alt+Enter)`}
-        onClick={run}
-      />
     </IconBox>
   );
 }
+
+// <Button
+//   icon={<PlayCircle />}
+//   color={theme.shell.runBackgroundButtonColor}
+//   tooltip={`${labels.input.tooltip.runBackground} (Ctrl+Alt+Enter)`}
+//   onClick={run}
+// />

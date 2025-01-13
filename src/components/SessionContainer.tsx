@@ -10,7 +10,12 @@ import CurrentBar from "@/components/CurrentBar";
 
 import { api } from "@/api";
 import { ProcessID } from "@/datatypes/Command";
-import { InputText, SessionStateJotaiStore, pidContext, usePid } from "@/SessionStates";
+import {
+  InputText,
+  SessionStateJotaiStore,
+  pidContext,
+  usePid,
+} from "@/SessionStates";
 import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
 import { useConfig, useTheme } from "@/AppState";
@@ -33,13 +38,11 @@ const HorizontalFromBottomBox = styled(Box)({
   height: "100%",
 });
 
-const FullWidthBox = styled(Box)({
-  display: "block",
-  width: "calc(100vw - 50px)",
+const FullWidthBox = styled(Box)(({ theme }) => ({
+  width: `calc(100vw - ${theme.system.hoverMenuWidth} - 10px)`,
   margin: 0,
-  marginLeft: 0,
   padding: 0,
-});
+}));
 
 function getDefaultShell(config: Config): ShellConfig {
   if (config.defaultShell) {

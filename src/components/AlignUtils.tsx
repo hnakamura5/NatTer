@@ -1,5 +1,19 @@
 import { ReactNode } from "react";
 
+export function hasScrollbarX(element?: HTMLElement | null) {
+  if (!element) {
+    return false;
+  }
+  return element.scrollWidth > element.clientWidth;
+}
+
+export function hasScrollbarY(element?: HTMLElement | null) {
+  if (!element) {
+    return false;
+  }
+  return element.scrollHeight > element.clientHeight;
+}
+
 /**
  * Use under the element with style display: flex and flex: 1 to fill the remaining space
  */

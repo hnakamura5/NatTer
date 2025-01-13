@@ -11,38 +11,28 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 
 import { Command, summarizeCommand } from "@/datatypes/Command";
 
-function statusIcon(command: Command, theme: Theme) {
+function statusIconSx(color: string) {
   const marginTop = -0.4;
   const marginLeft = -1.0;
+  return {
+    color: color,
+    scale: 0.7,
+    verticalAlign: "-2px",
+    marginTop: marginTop,
+    marginLeft: marginLeft,
+  };
+}
+
+function statusIcon(command: Command, theme: Theme) {
   if (command.exitStatusIsOK === undefined) {
-    return (
-      <LoopICon
-        sx={{ scale: 0.7, marginTop: marginTop, marginLeft: marginLeft }}
-      />
-    );
+    return <LoopICon sx={statusIconSx(theme.shell.thinTextColor)} />;
   }
   if (command.exitStatusIsOK) {
     return (
-      <CheckCircleOutlineIcon
-        sx={{
-          color: theme.shell.stdoutColor,
-          scale: 0.7,
-          marginTop: marginTop,
-          marginLeft: marginLeft,
-        }}
-      />
+      <CheckCircleOutlineIcon sx={statusIconSx(theme.shell.stdoutColor)} />
     );
   }
-  return (
-    <ErrorOutlineIcon
-      sx={{
-        color: theme.shell.stderrColor,
-        scale: 0.7,
-        marginTop: marginTop,
-        marginLeft: marginLeft,
-      }}
-    />
-  );
+  return <ErrorOutlineIcon sx={statusIconSx(theme.shell.stderrColor)} />;
 }
 
 interface CommandSummaryProps {
@@ -52,11 +42,12 @@ interface CommandSummaryProps {
 const CommandStyle = styled(Box)(({ theme }) => ({
   width: "100%",
   backgroundColor: theme.shell.backgroundColor,
-  paddingLeft: "0px",
+  paddingTop: "3px",
 }));
-const CommandIndexStyle = styled.span(({ theme }) => ({
+
+const FloatRight = styled.span(({ theme }) => ({
   float: "right",
-  marginRight: "20px",
+  marginRight: "10px",
 }));
 
 export function CommandSummary(props: CommandSummaryProps) {
@@ -64,10 +55,18 @@ export function CommandSummary(props: CommandSummaryProps) {
   const command = props.command;
   return (
     <>
-      {statusIcon(command, theme)}
       <CommandStyle>
-        <span>{summarizeCommand(command, 40)}</span>
-        <CommandIndexStyle>#{command.cid}</CommandIndexStyle>
+        <span style={{ verticalAlign: "5px" }}>
+          {summarizeCommand(command, 40)}
+        </span>
+        <FloatRight>
+          {statusIcon(command, theme)}
+          <span
+            style={{ verticalAlign: "5px", color: theme.shell.thinTextColor }}
+          >
+            #{command.cid}
+          </span>
+        </FloatRight>
       </CommandStyle>
     </>
   );
