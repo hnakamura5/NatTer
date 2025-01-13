@@ -7,10 +7,7 @@ import { router } from "@/server/tRPCRouter";
 import { setupShellProcess, shutdownShellProcess } from "@/server/ShellProcess";
 
 import * as log from "electron-log/main";
-
 import * as logRenderer from "electron-log/renderer";
-
-logRenderer.transports.console.format = "[{level}:main] > {text}";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -41,6 +38,7 @@ process.env.MATERIAL_ICON_THEME_PATH = app.isPackaged
   : path.join("./node_modules/material-icon-theme/icons");
 // In non-packaged mode, the absolute path is blocked by security policy.
 
+logRenderer.transports.console.format = "[{level}:main] > {text}";
 log.debug(`APP_ROOT: ${process.env.APP_ROOT}`);
 log.debug(`VITE_PUBLIC: ${process.env.VITE_PUBLIC}`);
 log.debug(`MATERIAL_ICON_THEME_PATH: ${process.env.MATERIAL_ICON_THEME_PATH}`);

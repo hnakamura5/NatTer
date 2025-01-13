@@ -25,6 +25,7 @@ import {
 } from "@/components/KeybindScope";
 
 import { log } from "@/datatypes/Logger";
+import MonacoInput from "./MonacoInput";
 
 export function Input(props: {
   key: string;
@@ -107,10 +108,20 @@ export function Input(props: {
   log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
 
   return (
+    <MonacoInput
+      value={text}
+      onChange={(v, e) => {
+        setText(v || "");
+      }}
+      maxHeight={200}
+    />
+  );
+
+  return (
     <ErrorBoundary fallback={<InputBoxError />}>
       <KeybindScope keybindRef={keybindRef}>
         <MuiInputBase
-          id = {`input-${pid}`}
+          id={`input-${pid}`}
           inputRef={props.inputBoxRef}
           style={{
             width: `calc(100% - 8px)`,
