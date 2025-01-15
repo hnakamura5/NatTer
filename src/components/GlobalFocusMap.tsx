@@ -11,7 +11,9 @@ import { log } from "@/datatypes/Logger";
 
 type FocusTarget = {
   focusRef?: RefObject<HTMLElement>;
-  callBeforeFocus?: (focusRef?: RefObject<HTMLElement>) => Promise<boolean>;
+  callBeforeFocus?: (
+    focusRef?: RefObject<HTMLElement>
+  ) => Promise<boolean>;
 };
 
 // Helper context to manage focus target globally.
@@ -30,7 +32,7 @@ class GlobalFocusMapHandle {
   }
   focus(key: GlobalFocusMap.Key) {
     const target = this.map.get(key);
-    // log.debug(`GlobalFocusMap.focus: ${key}`);
+    log.debug(`GlobalFocusMap.focus: ${key}`);
     if (target) {
       if (target.callBeforeFocus) {
         target.callBeforeFocus(target.focusRef).then((prevent) => {
@@ -42,9 +44,9 @@ class GlobalFocusMapHandle {
           }
         });
       } else if (target.focusRef?.current) {
-        // log.debug(
-        //   `GlobalFocusMap.focus: focusing ${key} ${target.focusRef.current}`
-        // );
+        log.debug(
+          `GlobalFocusMap.focus: focusing ${key} ${target.focusRef.current}#${target.focusRef.current.id}.${target.focusRef.current.className}`
+        );
         target.focusRef.current.focus();
       } else {
         log.debug(
@@ -93,6 +95,7 @@ export module GlobalFocusMap {
   export function Target(props: {
     focusKey?: Key;
     focusRef?: RefObject<HTMLElement>;
+    // Return false to prevent the focus to the ref.
     callBeforeFocus?: (focusRef?: RefObject<HTMLElement>) => Promise<boolean>;
     children: React.ReactNode;
   }) {

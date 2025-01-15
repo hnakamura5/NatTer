@@ -13,7 +13,7 @@ import styled from "@emotion/styled";
 import { useTheme } from "@/AppState";
 
 import { api } from "@/api";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "@/components/FocusBoundary";
 import React from "react";
@@ -73,12 +73,16 @@ interface InputBoxProps {}
 function InputBox(props: InputBoxProps) {
   const theme = useTheme();
   const pid = usePid();
-  const inputBoxRef = React.createRef<HTMLInputElement>();
+  const inputBoxRef = React.useRef<HTMLElement>(null);
 
   const execute = api.shell.execute.useMutation();
   const submit = useCallback(
     (command: string) => {
-      const encoded = new TextEncoder().encode(command);
+      if (command === "") {
+        log.debug("InputBox: empty command submitted");
+        return;
+      }
+      log.debug(`InputBox: command submitted: ${command}`);
       execute.mutate(
         { pid: pid, command: command },
         {
@@ -121,6 +125,7 @@ function InputBox(props: InputBoxProps) {
           <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox-${pid}`}>
             <GlobalFocusMap.Target
               focusKey={GlobalFocusMap.GlobalKey.InputBox}
+              callBeforeFocus={()=>{return Promise.resolve(false)}}
               focusRef={inputBoxRef}
             >
               <Paper>
@@ -128,7 +133,10 @@ function InputBox(props: InputBoxProps) {
                 <ContextMenu items={<InputBoxContextMenuContents />}>
                   <Input
                     key={`input-${pid}`}
-                    inputBoxRef={inputBoxRef}
+                    inputBoxRef={
+                      // TODO: any better way?
+                      inputBoxRef as React.MutableRefObject<HTMLElement>
+                    }
                     submit={submit}
                   />
                 </ContextMenu>

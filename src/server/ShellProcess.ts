@@ -252,7 +252,7 @@ export const shellRouter = server.router({
     .output(CommandSchema)
     .mutation(async (opts) => {
       const { pid, command, isSilent, styledCommand } = opts.input;
-      log.debug(`executeのAPIが呼ばれた ${pid} ${command}`);
+      log.debug(`execute APIが呼ばれた ${pid} ${command}`);
       const process = getProcess(pid);
       return executeCommand(
         process,

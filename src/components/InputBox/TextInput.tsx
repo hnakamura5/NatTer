@@ -26,11 +26,12 @@ import {
 
 import { log } from "@/datatypes/Logger";
 import MonacoInput from "./MonacoInput";
+import { setMonacoInputTheme } from "./MonacoInputTheme";
 
 export function Input(props: {
   key: string;
   submit: (command: string) => void;
-  inputBoxRef: React.RefObject<HTMLInputElement>;
+  inputBoxRef: React.MutableRefObject<{ focus: () => void }>;
 }) {
   const pid = usePid();
   const numCommands = api.shell.numCommands.useQuery(pid).data;
@@ -106,14 +107,46 @@ export function Input(props: {
   // That is, we lose the focus when the component re-rendered (e.g.on input change).
   // Even styled component causes this problem.
   log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
+  setMonacoInputTheme(theme, "TextInput");
 
   return (
     <MonacoInput
       value={text}
-      onChange={(v, e) => {
-        setText(v || "");
-      }}
       maxHeight={200}
+      monacoTheme="TextInput"
+      style={{
+        padding: "3px 8px 3px 8px",
+        borderRadius: "5px",
+        backgroundColor: theme.shell.secondaryBackgroundColor,
+        margin: "0px 5px 0px 3px", // top right bottom left
+      }}
+      onChange={(v, e) => {
+        log.debug(`Input changed to ${v}`);
+        setText(v);
+      }}
+      onKeyDown={(e) => {
+        if (e.ctrlKey && e.key === "Enter") {
+          if (e.altKey) {
+            // Run background
+            props.submit(text);
+            setText("");
+            e.preventDefault();
+          } else {
+            // Run
+            log.debug(`Input submit ctrl+enter: ${text}`);
+            props.submit(text);
+            setText("");
+            e.preventDefault();
+          }
+        }
+      }}
+      onDidMount={(editor) => {
+        const domNode = editor.getDomNode();
+        if (domNode) {
+          log.debug(`Input mounted: ${domNode}`);
+          props.inputBoxRef.current = domNode;
+        }
+      }}
     />
   );
 
