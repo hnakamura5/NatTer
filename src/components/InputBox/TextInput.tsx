@@ -12,10 +12,10 @@ import { useTheme } from "@/AppState";
 
 import { api } from "@/api";
 import { ErrorBoundary } from "react-error-boundary";
-import React, { useEffect, useState } from "react";
+import React, { RefObject, useEffect, useState } from "react";
 import { EasyFocus } from "@/components/EasyFocus";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
-import { InputText, usePid } from "@/SessionStates";
+import { InputText, MonacoEditorAtom, usePid } from "@/SessionStates";
 import { useAtom } from "jotai";
 import { CommandID } from "@/datatypes/Command";
 import {
@@ -25,13 +25,13 @@ import {
 } from "@/components/KeybindScope";
 
 import { log } from "@/datatypes/Logger";
-import MonacoInput from "./MonacoInput";
+import { MonacoInput } from "./MonacoInput";
 import { setMonacoInputTheme } from "./MonacoInputTheme";
 
 export function Input(props: {
   key: string;
   submit: (command: string) => void;
-  inputBoxRef: React.MutableRefObject<{ focus: () => void }>;
+  inputBoxRef: React.MutableRefObject<HTMLElement>;
 }) {
   const pid = usePid();
   const numCommands = api.shell.numCommands.useQuery(pid).data;
@@ -109,6 +109,8 @@ export function Input(props: {
   log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
   setMonacoInputTheme(theme, "TextInput");
 
+  const [monacoInputAtom, setMonacoInputAtom] = useAtom(MonacoEditorAtom);
+
   return (
     <MonacoInput
       value={text}
@@ -120,6 +122,11 @@ export function Input(props: {
         backgroundColor: theme.shell.secondaryBackgroundColor,
         margin: "0px 5px 0px 3px", // top right bottom left
       }}
+      ref={
+        props.inputBoxRef
+          ? (props.inputBoxRef as RefObject<HTMLDivElement>)
+          : undefined
+      }
       onChange={(v, e) => {
         log.debug(`Input changed to ${v}`);
         setText(v);
@@ -141,11 +148,19 @@ export function Input(props: {
         }
       }}
       onDidMount={(editor) => {
-        const domNode = editor.getDomNode();
+        const domNode = editor.getContainerDomNode();
         if (domNode) {
-          log.debug(`Input mounted: ${domNode}`);
-          props.inputBoxRef.current = domNode;
+          log.debug(
+            `Input mounted: ${domNode}#${domNode.id}.${domNode.className}`
+          );
+          //  props.inputBoxRef.current = domNode;
         }
+        setMonacoInputAtom(editor);
+        editor.onDidFocusEditorText(() => {
+          log.debug(
+            `Input focused: ${domNode}#${domNode.id}.${domNode.className}`
+          );
+        });
       }}
     />
   );

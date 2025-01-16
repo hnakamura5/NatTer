@@ -4,6 +4,8 @@ import { ProcessID } from "@/datatypes/Command";
 import { FileManagerState } from "@/components/FileManager";
 import { log } from "@/datatypes/Logger";
 
+import * as monaco from "monaco-editor";
+
 // Defines the state with scope of one session
 
 // ProcessID is the identifier of the process.
@@ -23,6 +25,11 @@ export const SessionStateJotaiStore = createStore();
 // InputText is the text in the command input box.
 export const InputText = atom("");
 SessionStateJotaiStore.set(InputText, "");
+
+export const MonacoEditorAtom = atom<monaco.editor.IStandaloneCodeEditor | null>(
+  null
+);
+SessionStateJotaiStore.set(MonacoEditorAtom, null);
 
 // State of the file manager.
 export const FileManagerStateAtom = atom<FileManagerState | undefined>(

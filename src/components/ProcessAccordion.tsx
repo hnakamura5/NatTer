@@ -38,6 +38,8 @@ import {
   isFixedKeyboardEvent,
 } from "@/datatypes/Keybind";
 import { set } from "zod";
+import { MonacoEditorAtom } from "@/SessionStates";
+import { useAtom } from "jotai";
 
 // import { log } from "@/datatypes/Logger";
 import { log } from "@/datatypes/Logger";
@@ -274,11 +276,14 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       isFinished.data &&
       handleGFM.isFocused(GlobalFocusMap.GlobalKey.LastCommand)
     ) {
+      log.debug("ProcessAccordion: focus back to input box");
       handleGFM.focus(GlobalFocusMap.GlobalKey.InputBox);
       bottom.current?.scrollIntoView({ behavior: "auto" });
     }
   }, [handleGFM, props.isLast, isFinished.data, isComplete.data]);
   const focalPoint = useRef<HTMLDivElement>(null);
+
+  const [monacoInputAtom, setMonacoInputAtom] = useAtom(MonacoEditorAtom);
 
   // Keybind definitions.
   // Global keybinds

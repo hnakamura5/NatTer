@@ -1,4 +1,4 @@
-import { test, _electron as electron, expect } from "@playwright/test";
+cumport { test, _electron as electron, expect } from "@playwright/test";
 import { generateManifest } from "material-icon-theme";
 
 // ./node_modules/material-icon-theme/icons/*.svg
