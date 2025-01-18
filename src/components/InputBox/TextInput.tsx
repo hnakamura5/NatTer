@@ -107,7 +107,7 @@ export function Input(props: {
   // That is, we lose the focus when the component re-rendered (e.g.on input change).
   // Even styled component causes this problem.
   log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
-  setMonacoInputTheme(theme, "TextInput");
+  //setMonacoInputTheme(theme, "TextInput");
 
   const [monacoInputAtom, setMonacoInputAtom] = useAtom(MonacoEditorAtom);
 
@@ -115,11 +115,11 @@ export function Input(props: {
     <MonacoInput
       value={text}
       maxHeight={200}
-      monacoTheme="TextInput"
+      monacoTheme="vitesse-black"
+      language="powershell"
       style={{
         padding: "3px 8px 3px 8px",
         borderRadius: "5px",
-        backgroundColor: theme.shell.secondaryBackgroundColor,
         margin: "0px 5px 0px 3px", // top right bottom left
       }}
       ref={

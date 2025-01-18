@@ -3,11 +3,15 @@ import * as monaco from "monaco-editor";
 import React, { forwardRef, useEffect, useRef, useState } from "react";
 import { log } from "@/datatypes/Logger";
 
+import { shikiToMonaco } from "@shikijs/monaco";
+import { highlighter } from "./MonacoHighlight";
+
 export type MonacoEditorProps = {
   value: string;
   maxHeight?: number;
   style?: React.CSSProperties;
   monacoTheme?: string;
+  language?: string;
   onDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
   onChange?: (
     value: string,
@@ -85,9 +89,20 @@ export const MonacoInput = forwardRef<HTMLDivElement, MonacoEditorProps>(
       }
     }, [props]);
 
+    useEffect(() => {
+      shikiToMonaco(highlighter, monaco);
+    }, [props.monacoTheme]);
+
+    const inputStyle = props.monacoTheme
+      ? {
+          backgroundColor: highlighter.getTheme(props.monacoTheme).bg,
+          ...props.style,
+        }
+      : props.style;
+
     return (
       <div
-        style={props.style}
+        style={inputStyle}
         className="MonacoInput"
         ref={ref}
         tabIndex={-1}
@@ -101,7 +116,7 @@ export const MonacoInput = forwardRef<HTMLDivElement, MonacoEditorProps>(
         }}
       >
         <Monaco
-          defaultLanguage="plain"
+          defaultLanguage={props.language || "plain"}
           value={props.value}
           onChange={(value, event) => {
             if (props.onChange) {
