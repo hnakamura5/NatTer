@@ -69,6 +69,5 @@ export function executeCommandByEcho(
     isSilent,
     onEnd
   );
-  log.debug(`Executed command ${command} in process ${process.id}`);
   return process.currentCommand;
 }

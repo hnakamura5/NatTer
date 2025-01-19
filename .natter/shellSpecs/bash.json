@@ -45,7 +45,8 @@
   },
   "promptCommands": {
     "get": "echo $PS1",
-    "set": "PS1=\"${prompt}\""
+    "set": "PS1=\"${prompt}\"",
+    "setContinuation": "PS2=\"${prompt}\""
   },
   "boundaryDetectorCharSet": {
     "boundary": "@#",

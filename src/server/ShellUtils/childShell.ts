@@ -103,7 +103,7 @@ export class ChildShellStream {
   }
 
   execute(command: string) {
-    log.debug(`childShell executing command: ${command}`);
+    log.debug(`childShell executing command:\n*****\n${command}\n*****`);
     if (this.usePty) {
       // TODO: snap the size for silent command.
       this.pty?.write(command + "\r");

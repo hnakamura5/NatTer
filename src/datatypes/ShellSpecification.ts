@@ -70,6 +70,8 @@ export const ShellSpecificationSchema = z
         get: z.string(),
         // Change the prompt command.
         set: z.string(),
+        // Set the continuation prompt.
+        setContinuation: z.string().optional(),
       })
       .optional(),
 
@@ -115,6 +117,16 @@ export function setPromptCommand(
   prompt: string
 ) {
   return shellSpec.promptCommands?.set.replace("${prompt}", prompt);
+}
+
+export function setContinuationPromptCommand(
+  shellSpec: ShellSpecification,
+  prompt: string
+) {
+  return shellSpec.promptCommands?.setContinuation?.replace(
+    "${prompt}",
+    prompt
+  );
 }
 
 export function isExitCodeOK(shellSpec: ShellSpecification, exitCode: string) {

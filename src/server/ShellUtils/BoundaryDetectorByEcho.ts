@@ -1,6 +1,7 @@
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
 import {
   ShellSpecification,
+  setContinuationPromptCommand,
   setPromptCommand,
 } from "@/datatypes/ShellSpecification";
 import {
@@ -29,9 +30,10 @@ function startEchoCommand(
   lineIgnoreMarker: string
 ) {
   const quote = shellSpec.quoteLivesInString ? "" : '"';
-  return `${setPromptCommand(shellSpec, lineIgnoreMarker)}${
-    shellSpec.delimiter
-  }echo ${quote}${boundaryDetector}${quote}`;
+  const delimiter = shellSpec.delimiter;
+  return `${setPromptCommand(shellSpec, lineIgnoreMarker) || ""}${delimiter}${
+    setContinuationPromptCommand(shellSpec, lineIgnoreMarker) || ""
+  }${delimiter}echo ${quote}${boundaryDetector}${quote}`;
 }
 
 function endEchoCommand(
@@ -66,13 +68,14 @@ export function extendCommandWithBoundaryDetectorByEcho(
     ? shellSpec.delimiter
     : "";
   const commandSeparator = command.includes("\n") ? shellSpec.lineEnding : " ";
+  const delimiterBeforeCommand = !command.includes("\n") ? shellSpec.delimiter : "";
   const startEcho = startEchoCommand(
     shellSpec,
     boundaryDetector,
     lineIgnoreMarker
   );
   const endEcho = endEchoCommand(shellSpec, boundaryDetector);
-  const newCommand = `${startEcho}${shellSpec.delimiter}${commandSeparator}${command}${commandSeparator}${delimiterAfterCommand}${endEcho}`;
+  const newCommand = `${startEcho}${delimiterBeforeCommand}${commandSeparator}${command}${commandSeparator}${commandSeparator}${delimiterAfterCommand}${endEcho}`;
   return {
     // Sandwich the exit status with the end detector.
     newCommand: newCommand,

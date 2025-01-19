@@ -55,6 +55,7 @@
   "promptCommands": {
     "get": "prompt",
     "set": "function prompt{ return \"${prompt}\"; }",
+    "setContinuation": "Set-PSReadLineOption -ContinuationPrompt \"${prompt}\""
   },
   "boundaryDetectorCharSet": {
     "boundary": "@#",
