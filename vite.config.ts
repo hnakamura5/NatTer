@@ -9,6 +9,11 @@ console.log(__dirname);
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  esbuild: {
+    supported: {
+      'top-level-await': true
+    },
+  },
   plugins: [
     tsconfigPaths(),
     react(),
