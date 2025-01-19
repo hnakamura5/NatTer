@@ -32,6 +32,7 @@ export const ShellSpecificationSchema = z
     lineComments: z.array(z.string()),
     lineContinuations: z.array(z.string()),
     delimiter: z.string(),
+    lineEnding: z.string(),
     exitCodeVariable: z.string(),
     // For some shell, quotation itself lives in string. e.g. cmd.
     quoteLivesInString: z.boolean().optional(),

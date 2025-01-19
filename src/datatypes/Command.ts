@@ -24,12 +24,15 @@ export const CommandSchema = z.object({
   clock: z.number().int().min(0),
 
   isFinished: z.boolean(),
+  responseStarted: z.boolean(),
   stdout: z.string(),
   stderr: z.string(),
   exitStatus: z.string().optional(),
   exitStatusIsOK: z.boolean().optional(),
   stdoutResponse: z.string(),
+  stdoutIgnoringLine: z.boolean().optional(),
   boundaryDetector: z.string(),
+  lineIgnoreMarker: z.string().optional(),
   outputCompleted: z.boolean().optional(),
   stdoutHTML: z.string().optional(),
   stderrHTML: z.string().optional(),
@@ -54,12 +57,14 @@ export function emptyCommand(pid: ProcessID, cid: CommandID): Command {
     startTime: new Date().toLocaleString(),
     clock: 0,
     isFinished: false,
+    responseStarted: false,
     stdout: "",
     stderr: "",
     exitStatus: undefined,
     exitStatusIsOK: undefined,
     stdoutResponse: "",
     boundaryDetector: "",
+    lineIgnoreMarker: "",
   };
 }
 
@@ -71,6 +76,7 @@ export function newCommand(
   currentDirectory: string,
   user: string,
   boundaryDetector: string,
+  lineIgnoreMarker?: string,
   styledCommand?: string,
   terminalSize?: { cols: number; rows: number }
 ): Command {
@@ -80,6 +86,7 @@ export function newCommand(
   result.currentDirectory = currentDirectory;
   result.user = user;
   result.boundaryDetector = boundaryDetector;
+  result.lineIgnoreMarker = lineIgnoreMarker;
   result.styledCommand = styledCommand;
   result.terminalSize = terminalSize;
   return result;

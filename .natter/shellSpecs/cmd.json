@@ -42,6 +42,7 @@
   // In cmd, the quotation itself is included in the string
   "quoteLivesInString": true,
   "delimiter": "&",
+  "lineEnding": "\r\n",
   "exitCodeVariable": "%ERRORLEVEL%",
   "exitCodeOK": "0",
   "directoryCommands": {

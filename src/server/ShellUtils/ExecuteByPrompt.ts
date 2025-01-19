@@ -6,7 +6,7 @@ import {
   newCommand,
 } from "@/datatypes/Command";
 import { ShellConfig } from "@/datatypes/Config";
-import { detectCommandResponseAndExitCodeByPrompt } from "@/server/ShellUtils/BoundaryDetectorByPrompt";
+import { runOnStdoutAndDetectExitCodeByPrompt } from "@/server/ShellUtils/BoundaryDetectorByPrompt";
 import {
   defaultRandomBoundaryDetector,
   isCommandEchoBackToStdout,
@@ -93,6 +93,7 @@ export function executeCommandByPrompt(
     process.currentDirectory,
     process.user,
     boundaryDetector,
+    undefined,
     styledCommand,
     process.handle.getSize()
   );
@@ -100,7 +101,8 @@ export function executeCommandByPrompt(
     // Execute the command and receive the response.
     receiveCommandResponse(
       process,
-      detectCommandResponseAndExitCodeByPrompt,
+      boundaryDetector,
+      runOnStdoutAndDetectExitCodeByPrompt,
       isSilent,
       onEnd
     ).then(() => {

@@ -43,6 +43,7 @@
     "`"
   ],
   "delimiter": ";",
+  "lineEnding": "\r\n",
   "exitCodeVariable": "$?",
   "exitCodeOK": "True",
   "directoryCommands": {

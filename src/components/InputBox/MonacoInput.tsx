@@ -32,7 +32,7 @@ export const MonacoInput = forwardRef<HTMLDivElement, MonacoEditorProps>(
     const handlersRef = useRef(props);
     handlersRef.current = props;
 
-    log.debug(`MonacoInput value: ${props.value}`);
+    // log.debug(`MonacoInput value: ${props.value}`);
     // // Disable Ctrl+Enter key behavior.
     // monaco.editor.addKeybindingRules([
     //   {
@@ -52,9 +52,6 @@ export const MonacoInput = forwardRef<HTMLDivElement, MonacoEditorProps>(
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {});
       // Editor event handlers.
       editor.onKeyDown((e) => {
-        log.debug(
-          `Editor keydown: ${e.browserEvent.key} value: ${editor.getValue()}`
-        );
         const handlers = handlersRef.current;
         if (handlers.onKeyDown) {
           handlers.onKeyDown(e.browserEvent);

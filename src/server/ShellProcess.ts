@@ -296,9 +296,9 @@ export const shellRouter = server.router({
             if (firstEmit) {
               // Emit the all existing stdout.
               log.debug(
-                `onStdout first emit: event:${data.stdout} all:${process.currentCommand.stdout}`
+                `onStdout first emit: event:${data.stdout} all:${process.currentCommand.stdoutResponse}`
               );
-              data.stdout = process.currentCommand.stdout;
+              data.stdout = process.currentCommand.stdoutResponse;
             } else {
               log.debug(`onStdout emit: event:${data.stdout}`);
             }

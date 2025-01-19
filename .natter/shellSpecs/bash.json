@@ -34,6 +34,7 @@
   "lineComments": ["#"],
   "lineContinuations": ["\\"],
   "delimiter": ";",
+  "lineEnding": "\n",
   "exitCodeVariable": "$?",
   "exitCodeOK": "0",
   "directoryCommands": {

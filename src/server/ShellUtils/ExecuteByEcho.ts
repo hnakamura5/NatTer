@@ -10,7 +10,7 @@ import {
 } from "@/datatypes/Command";
 import { ShellConfig } from "@/datatypes/Config";
 import {
-  detectCommandResponseAndExitCodeByEcho,
+  runOnStdoutAndDetectExitCodeByEcho,
   extendCommandWithBoundaryDetectorByEcho,
 } from "./BoundaryDetectorByEcho";
 import { receiveCommandResponse } from "@/server/ShellUtils/ExecuteUtils";
@@ -26,7 +26,8 @@ export function executeCommandAndReceiveResponseByEcho(
   // TODO: prompt detection have to set the prompt before the command.
   receiveCommandResponse(
     process,
-    detectCommandResponseAndExitCodeByEcho,
+    exactCommand.boundaryDetector,
+    runOnStdoutAndDetectExitCodeByEcho,
     isSilent,
     onEnd
   ).then(() => {
@@ -48,7 +49,7 @@ export function executeCommandByEcho(
     process.shellSpec,
     command
   );
-  log.debugTrace(`Execute command ${command}`);
+  log.debug(`executeCommandByEcho: ${command}`);
   // Set new current command.
   process.currentCommand = newCommand(
     process.id,
@@ -58,6 +59,7 @@ export function executeCommandByEcho(
     process.currentDirectory,
     process.user,
     exactCommand.boundaryDetector,
+    exactCommand.lineIgnoreMarker,
     styledCommand,
     process.handle.getSize()
   );

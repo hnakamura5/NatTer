@@ -112,16 +112,13 @@ export async function getStdoutOutputPartInPlain(
   return result.slice(sliceStart).trim();
 }
 
-function addStdout(config: ShellConfig, current: Command, response: string) {
-  current.stdout = current.stdout.concat(response);
-}
-
-export type detectCommandResponseAndExitCodeFunctionType = (
+export type runOnStdoutAndDetectExitCodeFuncType = (
+  process: Process,
+  current: Command,
   shellSpec: ShellSpecification,
-  interact: ShellInteractKind,
-  stdout: string,
+  stdoutData: string,
   boundaryDetector: string
-) => { response: string; exitStatus: string } | undefined;
+) => string | undefined;
 
 async function resizeAndWait(process: Process, cols: number, rows: number) {
   // TODO: Too a dirty hack to detect the end of the resizing.
@@ -178,9 +175,31 @@ async function withCanonicalTerminalSizeTemporarily(
   };
 }
 
+export function addStdout(current: Command, response: string) {
+  current.stdout = current.stdout.concat(response);
+}
+
+export function addStdoutResponse(
+  process: Process,
+  current: Command,
+  response: string
+) {
+  current.stdoutResponse = current.stdoutResponse.concat(response);
+  // Stdout handling. Emit the event, add to the command, and increment the clock.
+  // Note stdout is concatenated in the command before emitting the event.
+  // See onStdout in ShellProcess.ts.
+  process.event.emit("stdout", {
+    cid: current.cid,
+    stdout: response,
+    isFinished: current.isFinished,
+    clock: process.clock,
+  });
+}
+
 export async function receiveCommandResponse(
   process: Process,
-  detectCommandResponseAndExitCode: detectCommandResponseAndExitCodeFunctionType,
+  boundaryDetector: string,
+  runOnStdoutAndDetectExitCode: runOnStdoutAndDetectExitCodeFuncType,
   isSilent?: boolean,
   onEnd?: (command: Command) => void
 ) {
@@ -199,22 +218,13 @@ export async function receiveCommandResponse(
       return true;
     }
     log.debug(`onStdout end.`);
-    addStdout(process.config, current, response);
     clockIncrement(process);
-    // Stdout handling. Emit the event, add to the command, and increment the clock.
-    // Note stdout is concatenated in the command before emitting the event.
-    // See onStdout in ShellProcess.ts.
-    process.event.emit("stdout", {
-      cid: current.cid,
-      stdout: response,
-      isFinished: current.isFinished,
-      clock: process.clock,
-    });
     // Check if the command is finished.
-    const detected = detectCommandResponseAndExitCode(
+    const detected = runOnStdoutAndDetectExitCode(
+      process,
+      current,
       process.shellSpec,
-      process.config.interact,
-      current.stdout,
+      response,
       current.boundaryDetector
     );
     const commandFinished = detected !== undefined;
@@ -222,14 +232,13 @@ export async function receiveCommandResponse(
       return false;
     }
     // Finish the command.
-    const exitStatus = detected.exitStatus;
+    const exitStatus = detected;
     current.isFinished = true;
     current.exitStatus = exitStatus;
     current.exitStatusIsOK = isExitCodeOK(process.shellSpec, exitStatus);
     log.debug(
       `Finished ${process.id}-${current.cid} ${current.command} by status ${current.exitStatus} in process ${process.id}`
     );
-    current.stdoutResponse = detected.response;
     log.debug(
       `detect stdoutResponse: ${current.stdoutResponse}, exitStatus: ${exitStatus}`
     );

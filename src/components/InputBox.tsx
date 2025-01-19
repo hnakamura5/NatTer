@@ -116,8 +116,6 @@ function InputBox(props: InputBoxProps) {
     keybindRef
   );
 
-  log.debug("InputBox rendered");
-
   return (
     <ErrorBoundary fallbackRender={InputBoxError}>
       <OverToLeft>
@@ -125,7 +123,9 @@ function InputBox(props: InputBoxProps) {
           <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox-${pid}`}>
             <GlobalFocusMap.Target
               focusKey={GlobalFocusMap.GlobalKey.InputBox}
-              callBeforeFocus={()=>{return Promise.resolve(false)}}
+              callBeforeFocus={() => {
+                return Promise.resolve(false);
+              }}
               focusRef={inputBoxRef}
             >
               <Paper>

@@ -106,7 +106,7 @@ export function Input(props: {
   // TODO: Input must be on top level of the component to avoid the focus problem.
   // That is, we lose the focus when the component re-rendered (e.g.on input change).
   // Even styled component causes this problem.
-  log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
+  // log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
   //setMonacoInputTheme(theme, "TextInput");
 
   const [monacoInputAtom, setMonacoInputAtom] = useAtom(MonacoEditorAtom);
@@ -128,7 +128,7 @@ export function Input(props: {
           : undefined
       }
       onChange={(v, e) => {
-        log.debug(`Input changed to ${v}`);
+        // log.debug(`Input changed to ${v}`);
         setText(v);
       }}
       onKeyDown={(e) => {

@@ -8,10 +8,15 @@ import {
   getCommandWithDelimiterSandwichOnDemand,
   isCommandEchoBackToStdout,
 } from "@/server/ShellUtils/BoundaryDetectorUtils";
-import { detectCommandResponseAndExitCodeFunctionType } from "@/server/ShellUtils/ExecuteUtils";
+import {
+  addStdout,
+  runOnStdoutAndDetectExitCodeFuncType,
+} from "@/server/ShellUtils/ExecuteUtils";
 import stripAnsi from "strip-ansi";
 
 import { log } from "@/datatypes/Logger";
+import { Command } from "@/datatypes/Command";
+import { Process } from "../types/Process";
 
 // Implement detection algorithm using prompt.
 // This is suitable for terminal shells with prompt.
@@ -32,20 +37,22 @@ export function extendCommandWithBoundaryDetectorByPrompt(
   };
 }
 
-export const detectCommandResponseAndExitCodeByPrompt: detectCommandResponseAndExitCodeFunctionType =
+export const runOnStdoutAndDetectExitCodeByPrompt: runOnStdoutAndDetectExitCodeFuncType =
   (
+    process: Process,
+    current: Command,
     shellSpec: ShellSpecification,
-    interact: ShellInteractKind,
-    stdout: string,
+    stdoutData: string,
     boundaryDetector: string
   ) => {
+    addStdout(current, stdoutData);
     // Find the first boundary detector, that is the next prompt.
-    const first = stdout.indexOf(boundaryDetector);
+    const first = stdoutData.indexOf(boundaryDetector);
     log.debug(`detectCommandResponseAndExitCodeByPrompt first: ${first}`);
     if (first === -1) {
       return undefined;
     }
-    const second = stdout.indexOf(
+    const second = stdoutData.indexOf(
       boundaryDetector,
       first + boundaryDetector.length
     );
@@ -53,10 +60,5 @@ export const detectCommandResponseAndExitCodeByPrompt: detectCommandResponseAndE
     if (second === -1) {
       return undefined;
     }
-    return {
-      response: stdout.slice(0, first),
-      exitStatus: stripAnsi(
-        stdout.slice(first + boundaryDetector.length, second)
-      ),
-    };
+    return stripAnsi(stdoutData.slice(first + boundaryDetector.length, second));
   };
