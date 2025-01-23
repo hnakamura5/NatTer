@@ -52,7 +52,7 @@ export const DefaultDarkTheme: Theme = {
   shell: {
     // font: "Consolas",
     font: "PlemolJP Console NF",
-    fontSize: "12px",
+    fontSize: "13px",
     textColor: "#EEEEEE",
     thinTextColor: "#BDBDBD",
     backgroundColor: "#424242",

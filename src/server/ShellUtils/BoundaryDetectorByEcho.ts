@@ -31,9 +31,18 @@ function startEchoCommand(
 ) {
   const quote = shellSpec.quoteLivesInString ? "" : '"';
   const delimiter = shellSpec.delimiter;
-  return `${setPromptCommand(shellSpec, lineIgnoreMarker) || ""}${delimiter}${
-    setContinuationPromptCommand(shellSpec, lineIgnoreMarker) || ""
-  }${delimiter}echo ${quote}${boundaryDetector}${quote}`;
+  // TODO: setContinuationPromptCommand does not work in powershell.
+  // TODO: We have to save to temporary file and source it.
+  const setPrompt = setPromptCommand(shellSpec, lineIgnoreMarker);
+  const setContinuationPrompt = setContinuationPromptCommand(
+    shellSpec,
+    lineIgnoreMarker
+  );
+  return `${setPrompt || ""}${setPrompt ? delimiter : ""}${
+    setContinuationPrompt || ""
+  }${
+    setContinuationPrompt ? delimiter : ""
+  }echo ${quote}${boundaryDetector}${quote}`;
 }
 
 function endEchoCommand(
@@ -68,14 +77,14 @@ export function extendCommandWithBoundaryDetectorByEcho(
     ? shellSpec.delimiter
     : "";
   const commandSeparator = command.includes("\n") ? shellSpec.lineEnding : " ";
-  const delimiterBeforeCommand = !command.includes("\n") ? shellSpec.delimiter : "";
+  const delimiterBeforeCommand = shellSpec.delimiter;
   const startEcho = startEchoCommand(
     shellSpec,
     boundaryDetector,
     lineIgnoreMarker
   );
   const endEcho = endEchoCommand(shellSpec, boundaryDetector);
-  const newCommand = `${startEcho}${delimiterBeforeCommand}${commandSeparator}${command}${commandSeparator}${commandSeparator}${delimiterAfterCommand}${endEcho}`;
+  const newCommand = `${startEcho}${delimiterBeforeCommand}${command}${commandSeparator}${commandSeparator}${delimiterAfterCommand}${endEcho}`;
   return {
     // Sandwich the exit status with the end detector.
     newCommand: newCommand,
@@ -102,14 +111,20 @@ function detectStartOfResponseByEcho(
 function detectEndOfResponseByEcho(
   shellSpec: ShellSpecification,
   boundaryDetector: string,
-  target: string
+  target: string,
+  responseHead: boolean
 ) {
-  const endDetect = target.indexOf(shellSpec.lineEnding + boundaryDetector);
+  const toDetect = responseHead
+    ? boundaryDetector
+    : shellSpec.lineEnding + boundaryDetector;
+  const endDetect = target.indexOf(toDetect);
+  log.debug(
+    `detectEndOfResponseByEcho: ${target} detector:${boundaryDetector} endDetect:${endDetect} toDetect:${toDetect} responseHead:${responseHead}`
+  );
   if (endDetect === -1) {
     return undefined;
   }
-  const exitStatusStart =
-    endDetect + shellSpec.lineEnding.length + boundaryDetector.length;
+  const exitStatusStart = endDetect + toDetect.length;
   const exitStatusDetect = target
     .slice(exitStatusStart)
     .indexOf(boundaryDetector);
@@ -217,7 +232,7 @@ export const runOnStdoutAndDetectExitCodeByEcho: runOnStdoutAndDetectExitCodeFun
       }
       current.responseStarted = true;
       log.debug(
-        `Response started in command ${current.command} with index ${startDetect} in ${current.stdout}`
+        `Response started in command ${current.command} with index ${startDetect} in ${current.stdout}@(${current.stdout.slice(0, startDetect)})`
       );
     }
     const startInThisData = startDetect !== undefined;
@@ -228,7 +243,8 @@ export const runOnStdoutAndDetectExitCodeByEcho: runOnStdoutAndDetectExitCodeFun
     const result = detectEndOfResponseByEcho(
       shellSpec,
       boundaryDetector,
-      extendedResponse
+      extendedResponse,
+      startInThisData || current.stdoutResponse.length === 0
     );
     // log.debug(
     //   `  detectEndOfResponseByEcho extendedResponse: ${extendedResponse}, result: `,

@@ -52,10 +52,11 @@
     "list": "ls \"${path}\"",
     "getUser": "whoami",
   },
+  "sourceCommand": "source \"${path}\"",
   "promptCommands": {
     "get": "prompt",
     "set": "function prompt{ return \"${prompt}\"; }",
-    "setContinuation": "Set-PSReadLineOption -ContinuationPrompt \"${prompt}\""
+    // "setContinuation": "Set-PSReadLineOption -ContinuationPrompt \"${prompt}\"" // This does not work in non-interactive mode.
   },
   "boundaryDetectorCharSet": {
     "boundary": "@#",

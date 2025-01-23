@@ -52,6 +52,15 @@ const CommandStyle = styled(Box)(({ theme }) => ({
   padding: "3px 5px 3px 5px",
 }));
 
+const StyledCommandStyle = styled.div(({ theme }) => ({
+  fontFamily: `${theme.system.font}`,
+  fontSize: `theme.system.fontSize`,
+  whiteSpace: "pre-wrap",
+  "& span": {
+    fontWeight: "600",
+  },
+}));
+
 export function CommandHeader(props: { command: Command }) {
   const { command } = props;
   const theme = useTheme();
@@ -63,7 +72,13 @@ export function CommandHeader(props: { command: Command }) {
         <UserStyle>{command.user}</UserStyle>
       </span>
       <CommandStyle sx={colorSection(theme.shell.useCommandColor)}>
-        {command.styledCommand ? command.styledCommand : command.command}
+        {command.styledCommand ? (
+          <StyledCommandStyle
+            dangerouslySetInnerHTML={{ __html: command.styledCommand }}
+          ></StyledCommandStyle>
+        ) : (
+          command.command
+        )}
       </CommandStyle>
     </ResponseAlign>
   );

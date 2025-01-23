@@ -38,7 +38,6 @@ import {
   isFixedKeyboardEvent,
 } from "@/datatypes/Keybind";
 import { set } from "zod";
-import { MonacoEditorAtom } from "@/SessionStates";
 import { useAtom } from "jotai";
 
 // import { log } from "@/datatypes/Logger";
@@ -282,8 +281,6 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     }
   }, [handleGFM, props.isLast, isFinished.data, isComplete.data]);
   const focalPoint = useRef<HTMLDivElement>(null);
-
-  const [monacoInputAtom, setMonacoInputAtom] = useAtom(MonacoEditorAtom);
 
   // Keybind definitions.
   // Global keybinds

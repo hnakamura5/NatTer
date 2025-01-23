@@ -77,14 +77,14 @@ function InputBox(props: InputBoxProps) {
 
   const execute = api.shell.execute.useMutation();
   const submit = useCallback(
-    (command: string) => {
+    (command: string, styledCommand?: string) => {
       if (command === "") {
         log.debug("InputBox: empty command submitted");
         return;
       }
       log.debug(`InputBox: command submitted: ${command}`);
       execute.mutate(
-        { pid: pid, command: command },
+        { pid: pid, command: command, styledCommand: styledCommand },
         {
           onError: (error) => {
             log.error(`failed to execute: ${error}`);
@@ -135,7 +135,7 @@ function InputBox(props: InputBoxProps) {
                     key={`input-${pid}`}
                     inputBoxRef={
                       // TODO: any better way?
-                      inputBoxRef as React.MutableRefObject<HTMLElement>
+                      inputBoxRef
                     }
                     submit={submit}
                   />

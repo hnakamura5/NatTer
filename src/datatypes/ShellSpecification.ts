@@ -62,6 +62,8 @@ export const ShellSpecificationSchema = z
         getUser: z.string(),
       })
       .optional(),
+    // Command like source in bash
+    sourceCommand: z.string().optional(),
 
     // Prompt control (optional functionality for terminal).
     promptCommands: z

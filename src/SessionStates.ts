@@ -26,11 +26,6 @@ export const SessionStateJotaiStore = createStore();
 export const InputText = atom("");
 SessionStateJotaiStore.set(InputText, "");
 
-export const MonacoEditorAtom = atom<monaco.editor.IStandaloneCodeEditor | null>(
-  null
-);
-SessionStateJotaiStore.set(MonacoEditorAtom, null);
-
 // State of the file manager.
 export const FileManagerStateAtom = atom<FileManagerState | undefined>(
   undefined

@@ -2,8 +2,13 @@
   // Specification for the bash shell
   "name": "bash",
   "pathKind": "posix",
-  "supportedInteractions": ["command", "terminal"],
-  "escapes": ["\\"],
+  "supportedInteractions": [
+    "command",
+    "terminal"
+  ],
+  "escapes": [
+    "\\"
+  ],
   "scope": [
     {
       "opener": "{",
@@ -31,8 +36,12 @@
       "containsEscape": true
     }
   ],
-  "lineComments": ["#"],
-  "lineContinuations": ["\\"],
+  "lineComments": [
+    "#"
+  ],
+  "lineContinuations": [
+    "\\"
+  ],
   "delimiter": ";",
   "lineEnding": "\n",
   "exitCodeVariable": "$?",
@@ -43,6 +52,7 @@
     "list": "ls -lA \"${directory}\"",
     "getUser": "whoami"
   },
+  "sourceCommand": "source \"${path}\"",
   "promptCommands": {
     "get": "echo $PS1",
     "set": "PS1=\"${prompt}\"",
