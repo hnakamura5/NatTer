@@ -37,36 +37,77 @@ function setPromptIsFinished(
   return result !== -1;
 }
 
-async function setPrompt(process: Process, boundaryDetector: string) {
+async function setPrompt(
+  process: Process,
+  cid: CommandID,
+  boundaryDetector: string,
+  onEnd?: (command: Command) => void
+) {
   // Set detector to the prompt.
   if (!process.shellSpec.promptCommands) {
     throw new Error("Prompt commands are not defined.");
   }
-  let stdout = "";
-  let finished = false;
-  process.handle.onStdout((data: Buffer) => {
-    if (finished) {
-      return;
-    }
-    stdout = stdout.concat(data.toString());
-    if (setPromptIsFinished(process, boundaryDetector, stdout)) {
-      finished = true;
-    }
-  });
+
   const promptText = `${boundaryDetector}${process.shellSpec.exitCodeVariable}${boundaryDetector}`;
   const setCommand = setPromptCommand(process.shellSpec, promptText);
+  if (!setCommand) {
+    throw new Error("Prompt command is not defined.");
+  }
   log.debug(`setPrompt: ${setCommand}`);
-  process.handle.execute(setCommand!);
-  return new Promise<void>((resolve) => {
-    // Wait until finished is set to true.
-    const interval = setInterval(() => {
-      if (finished) {
-        clearInterval(interval);
-        resolve();
-      }
-    }, 100);
+  process.currentCommand = newCommand(
+    process.id,
+    cid,
+    setCommand,
+    setCommand,
+    process.currentDirectory,
+    process.user,
+    boundaryDetector,
+    undefined,
+    undefined,
+    process.handle.getSize()
+  );
+  receiveCommandResponse(
+    process,
+    boundaryDetector,
+    runOnStdoutAndDetectExitCodeByPrompt,
+    true, // silent
+    onEnd
+  ).then(() => {
+    process.handle.execute(setCommand!);
   });
 }
+
+function executeExactCommand(
+  process: Process,
+  command: Command,
+  boundaryDetector: string,
+  isSilent?: boolean,
+  onEnd?: (command: Command) => void
+) {
+  log.debug(
+    `Execute exact command ${command.exactCommand} in process ${process.id}`
+  );
+  process.currentCommand = command;
+  receiveCommandResponse(
+    process,
+    boundaryDetector,
+    runOnStdoutAndDetectExitCodeByPrompt,
+    isSilent,
+    onEnd
+  ).then(() => {
+    process.handle.execute(command.exactCommand);
+  });
+}
+
+function executeCommandAndReceiveResponseByPrompt(
+  process: Process,
+  command: string,
+  cid: CommandID,
+  boundaryDetector: string,
+  styledCommand?: string,
+  isSilent?: boolean,
+  onEnd?: (command: Command) => void
+) {}
 
 export function executeCommandByPrompt(
   process: Process,
@@ -81,11 +122,12 @@ export function executeCommandByPrompt(
     process.config.interact === "terminal",
     process.shellSpec
   );
-  const exactCommand = command.toString();
+  const exactCommand = command;
   log.debug(
     `Execute command by prompt ${command} (exact: ${exactCommand}) in process ${process.id} cid: ${cid}`
   );
-  process.currentCommand = newCommand(
+  // Command to execute the command. setCommand uses another command.
+  const currentCommand = newCommand(
     process.id,
     cid,
     exactCommand,
@@ -97,16 +139,24 @@ export function executeCommandByPrompt(
     styledCommand,
     process.handle.getSize()
   );
-  setPrompt(process, boundaryDetector).then(() => {
-    // Execute the command and receive the response.
-    receiveCommandResponse(
-      process,
-      boundaryDetector,
-      runOnStdoutAndDetectExitCodeByPrompt,
-      isSilent,
-      onEnd
-    ).then(() => {
-      process.handle.execute(exactCommand);
-    });
-  });
+  // First, set the prompt and wait it to finish. Then, execute the command.
+  setPrompt(
+    process,
+    cid,
+    boundaryDetector,
+    /* onEnd */ () => {
+      log.debug(
+        `setPrompt finished. Execute command ${exactCommand} in process ${process.id} cid: ${cid}`
+      );
+      // Execute the command and receive the response.
+      executeExactCommand(
+        process,
+        currentCommand,
+        boundaryDetector,
+        isSilent,
+        onEnd
+      );
+    }
+  );
+  return currentCommand;
 }

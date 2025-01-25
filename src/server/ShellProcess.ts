@@ -159,7 +159,7 @@ function startProcess(config: ShellConfig): ProcessID {
   const executer =
     config.interact === "terminal"
       ? executeCommandByPrompt
-      : executeCommandByEcho;
+      : executeCommandByPrompt; // [HN] executeCommandByEcho;
   executer(process, ``, getNumCommands(pid), undefined, false, (command) => {
     log.debug(`First command ${command.exactCommand}`);
     // Memorize the shell execution command.
@@ -181,8 +181,9 @@ function executeCommand(
   onEnd?: (command: Command) => void
 ): Command {
   const cid = isSilent ? -1 : getNumCommands(process.id);
+  let currentCommand = undefined;
   if (process.config.interact === "terminal") {
-    executeCommandByPrompt(
+    currentCommand = executeCommandByPrompt(
       process,
       command,
       cid,
@@ -191,12 +192,20 @@ function executeCommand(
       onEnd
     );
   } else {
-    executeCommandByEcho(process, command, cid, styledCommand, isSilent, onEnd);
+    // [HN]executeCommandByEcho(process, command, cid, styledCommand, isSilent, onEnd);
+    currentCommand = executeCommandByPrompt(
+      process,
+      command,
+      cid,
+      styledCommand,
+      isSilent,
+      onEnd
+    );
   }
   if (!isSilent) {
-    addCommand(process.id, process.currentCommand);
+    addCommand(process.id, currentCommand);
   }
-  return process.currentCommand;
+  return currentCommand;
 }
 
 function sendKey(process: Process, key: string) {

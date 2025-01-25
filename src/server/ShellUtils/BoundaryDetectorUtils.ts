@@ -1,5 +1,7 @@
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
+import { Command } from "@/datatypes/Command";
+import { log } from "@/datatypes/Logger";
 
 function stringToList(s: string): string[] {
   return s.split("");
@@ -70,4 +72,57 @@ export function isCommandEchoBackToStdout(
     return true;
   }
   return !shellSpec.commandNotEchoBack;
+}
+
+export function handleIgnoreLine(
+  current: Command,
+  shellSpec: ShellSpecification,
+  response: string,
+  responseHead: boolean // If the response start at now.
+): string {
+  const lineIgnoreMarker = current.lineIgnoreMarker;
+  if (lineIgnoreMarker === undefined) {
+    return response;
+  }
+  let target = response;
+  if (current.stdoutIgnoringLine) {
+    const lineEndingIndex = response.indexOf(shellSpec.lineEnding);
+    if (lineEndingIndex === -1) {
+      log.debug(`handleIgnoreLine: No line ending found. ignoring: ${target}`);
+      return "";
+    }
+    log.debug(
+      `handleIgnoreLine: Found line ending. ignoring: ${target.slice(
+        0,
+        lineEndingIndex
+      )}`
+    );
+    current.stdoutIgnoringLine = undefined;
+    target = response.slice(lineEndingIndex + shellSpec.lineEnding.length);
+  }
+  const ignoreStart = responseHead
+    ? target.indexOf(lineIgnoreMarker)
+    : target.indexOf(shellSpec.lineEnding + lineIgnoreMarker);
+  if (ignoreStart === -1) {
+    // log.debug(
+    //   `handleIgnoreLine: no ignore ${target} responseHead:${responseHead}`
+    // );
+    return target;
+  }
+  log.debug(
+    `handleIgnoreLine: ignoring start ${ignoreStart} after: ${target.slice(
+      0,
+      ignoreStart
+    )}`
+  );
+  current.stdoutIgnoringLine = true;
+  return (
+    target.slice(0, ignoreStart) +
+    handleIgnoreLine(
+      current,
+      shellSpec,
+      target.slice(ignoreStart + lineIgnoreMarker.length),
+      false
+    )
+  );
 }

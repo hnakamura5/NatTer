@@ -340,9 +340,9 @@ export module EasyFocus {
       if (!isVisible) {
         return;
       }
-      log.debug(
-        `EasyFocus.Land: register key=${props.name} ref=${props.focusTarget}`
-      );
+      // log.debug(
+      //   `EasyFocus.Land: register key=${props.name} ref=${props.focusTarget}`
+      // );
       manager.addLand(props.focusTarget, setJumpTag, props.onBeforeFocus);
       return () => manager.removeLand(props.focusTarget);
     }, [ref, isVisible]);

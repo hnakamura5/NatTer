@@ -43,7 +43,7 @@
     "`"
   ],
   "delimiter": ";",
-  "lineEnding": "\r\n",
+  "lineEnding": "\n",
   "exitCodeVariable": "$?",
   "exitCodeOK": "True",
   "directoryCommands": {
@@ -52,7 +52,7 @@
     "list": "ls \"${path}\"",
     "getUser": "whoami",
   },
-  "sourceCommand": "source \"${path}\"",
+  "sourceCommand": ". \"${path}\"",
   "promptCommands": {
     "get": "prompt",
     "set": "function prompt{ return \"${prompt}\"; }",
