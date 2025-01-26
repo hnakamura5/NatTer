@@ -211,6 +211,25 @@ export function addStdoutResponse(
   });
 }
 
+export function replaceStdoutResponse(
+  current: Command,
+  responseToReplaceFromLast: string,
+  responseNew: string
+) {
+  log.debug(
+    `replaceStdoutResponse: current.stdoutResponse=${current.stdoutResponse}, responseToReplaceFromLast=${responseToReplaceFromLast}, responseNew=${responseNew}`
+  );
+  if (responseToReplaceFromLast === "") {
+    current.stdoutResponse += responseNew;
+    return;
+  }
+  const last = current.stdoutResponse.lastIndexOf(responseToReplaceFromLast);
+  current.stdoutResponse =
+    current.stdoutResponse.slice(0, last) +
+    responseNew +
+    current.stdoutResponse.slice(last + responseToReplaceFromLast.length);
+}
+
 export function commandFinishedHandler(
   process: Process,
   current: Command,
@@ -338,12 +357,15 @@ export async function saveCommandToTempFile(process: Process, command: string) {
   const filePath =
     spec.temporalFilePath ||
     path.join(app.getPath("temp"), `temp-${process.id}${spec.defaultExt}`);
-  return fs.writeFile(filePath, command).then(() => {
-    log.debug(`Saved command to ${filePath}`);
-    return filePath;
-  }).catch(() => {
-    const message = `Failed to save command to ${filePath}`;
-    log.debugTrace(message);
-    throw new Error(message);
-  });
+  return fs
+    .writeFile(filePath, command)
+    .then(() => {
+      log.debug(`Saved command to ${filePath}`);
+      return filePath;
+    })
+    .catch(() => {
+      const message = `Failed to save command to ${filePath}`;
+      log.debugTrace(message);
+      throw new Error(message);
+    });
 }

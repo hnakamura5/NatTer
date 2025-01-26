@@ -118,6 +118,7 @@ async function executePartialLine(
         resolve(true);
       }
     );
+    log.debug(`executePartialLine: ${line} in process ${process.id}`);
     process.handle.execute(line);
   });
 }
@@ -201,6 +202,16 @@ function executeExactCommand(
     `Execute single line exact command ${command.exactCommand} in process ${process.id}`
   );
   // Otherwise, run the command directly.
+  if (true /* for test */) {
+    return executeMultilineCommandLineByLine(
+      process,
+      command,
+      command.exactCommand,
+      boundaryDetector,
+      continuationDetector,
+      onEnd
+    );
+  }
   return receiveCommandResponse(
     process,
     boundaryDetector,

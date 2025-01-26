@@ -12,6 +12,7 @@ import {
 import {
   addStdout,
   addStdoutResponse,
+  replaceStdoutResponse,
   runOnStdoutAndDetectExitCodeFuncType,
   runOnStdoutAndDetectPartialLineEndFuncType,
 } from "@/server/ShellUtils/ExecuteUtils";
@@ -50,7 +51,7 @@ function detectStartOfResponseByPrompt(
   log.debug(
     `detectStartOfResponseByPrompt: ${target} startDetect:${startDetect} newlineDetect:${target.indexOf(
       "\n"
-    )} returnDetect: ${target.indexOf("\r")}`
+    )} \\rDetect: ${target.indexOf("\r")}`
   );
   if (startDetect === -1) {
     return undefined;
@@ -214,7 +215,7 @@ export const runOnStdoutAndDetectPartialLineFinishByPrompt: () => runOnStdoutAnd
         startDetect = detectStartOfResponseByPrompt(
           shellSpec,
           boundaryDetector,
-          current.stdout
+          stdoutForThisLine,
         );
         if (startDetect === undefined) {
           return false;
@@ -226,7 +227,7 @@ export const runOnStdoutAndDetectPartialLineFinishByPrompt: () => runOnStdoutAnd
             current.command
           } with index ${startDetect} in ${
             current.stdout
-          }@(${current.stdout.slice(0, startDetect)})`
+          } at after (${stdoutForThisLine.slice(0, startDetect)})`
         );
       }
       const startInThisData = startDetect !== undefined;
@@ -252,11 +253,17 @@ export const runOnStdoutAndDetectPartialLineFinishByPrompt: () => runOnStdoutAnd
         stdoutResponseForThisLine += response;
         return false;
       }
-      addStdoutResponse(
-        process,
+      const totalResponse =
+        extendedResponse.slice(0, result.responseEndIndex);
+      replaceStdoutResponse(
         current,
-        extendedResponse.slice(0, result.responseEndIndex)
+        stdoutResponseForThisLine,
+        totalResponse,
       );
+      // TODO: Ad hoc newline.
+      if (current.exactCommand.length > 0 && totalResponse.length > 0) {
+        current.stdoutResponse += shellSpec.lineEnding;
+      }
       // Found exit status. Memorize it in current. (Possibly overwritten by others.)
       if (result.exitStatus !== undefined) {
         current.exitStatus = result.exitStatus;

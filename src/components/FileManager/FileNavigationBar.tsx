@@ -198,17 +198,19 @@ export function FileNavigationBar(props: { parsedPath: PathParsed }) {
         setInputMode(false);
       }}
     >
-      {inputMode ? (
-        <NavigationInput
-          parsedPath={props.parsedPath}
-          setInputMode={setInputMode}
-        />
-      ) : (
-        <FileBreadcrumbs
-          parsedPath={props.parsedPath}
-          setInputMode={setInputMode}
-        />
-      )}
+      <div style={{ width: "100%" }}>
+        {inputMode ? (
+          <NavigationInput
+            parsedPath={props.parsedPath}
+            setInputMode={setInputMode}
+          />
+        ) : (
+          <FileBreadcrumbs
+            parsedPath={props.parsedPath}
+            setInputMode={setInputMode}
+          />
+        )}
+      </div>
     </ClickAwayListener>
   );
 }

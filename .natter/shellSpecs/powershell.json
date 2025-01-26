@@ -56,7 +56,7 @@
   "promptCommands": {
     "get": "prompt",
     "set": "function prompt{ return \"${prompt}\"; }",
-    // "setContinuation": "Set-PSReadLineOption -ContinuationPrompt \"${prompt}\"" // This does not work in non-interactive mode.
+    "setContinuation": "Set-PSReadLineOption -ContinuationPrompt \"${prompt}\"" // This does not work in non-interactive mode.
   },
   "boundaryDetectorCharSet": {
     "boundary": "@#",
