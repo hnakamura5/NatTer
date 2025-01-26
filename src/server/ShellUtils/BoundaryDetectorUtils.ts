@@ -38,6 +38,18 @@ export function defaultRandomBoundaryDetector(
   return result;
 }
 
+export function nonDuplicateDefaultRandomBoundaryDetector(
+  usePty: boolean,
+  shellSpec: ShellSpecification,
+  currentDetector: string
+): string {
+  let result = defaultRandomBoundaryDetector(usePty, shellSpec);
+  while (result === currentDetector) {
+    result = defaultRandomBoundaryDetector(usePty, shellSpec);
+  }
+  return result;
+}
+
 export function getCommandWithDelimiterAfterOnDemand(
   shellSpec: ShellSpecification,
   command: string

@@ -2,7 +2,10 @@
   // Specification for the bash shell
   "name": "cmd",
   "pathKind": "win32",
-  "supportedInteractions": ["command", "terminal"],
+  "supportedInteractions": [
+    "command",
+    "terminal"
+  ],
   "escapes": [
     "^"
   ],
@@ -59,4 +62,5 @@
     "boundary": "@#",
     "placer": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   },
+  "defaultExt": ".bat"
 }

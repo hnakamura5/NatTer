@@ -62,4 +62,5 @@
     "boundary": "@#",
     "placer": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   },
+  "defaultExt": ".ps1",
 }

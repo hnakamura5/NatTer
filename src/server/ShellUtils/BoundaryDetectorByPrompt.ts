@@ -13,6 +13,7 @@ import {
   addStdout,
   addStdoutResponse,
   runOnStdoutAndDetectExitCodeFuncType,
+  runOnStdoutAndDetectPartialLineEndFuncType,
 } from "@/server/ShellUtils/ExecuteUtils";
 import stripAnsi from "strip-ansi";
 
@@ -84,6 +85,35 @@ function detectEndOfResponseByPrompt(
     exitStatus: stripAnsi(
       target.slice(exitStatusStart, exitStatusStart + exitStatusDetect)
     ),
+  };
+}
+
+function detectEndOfPartialLineResponseByPrompt(
+  shellSpec: ShellSpecification,
+  boundaryDetector: string,
+  continuationLineDetector: string,
+  target: string,
+  responseHead: boolean
+) {
+  const endDetect = detectEndOfResponseByPrompt(
+    shellSpec,
+    boundaryDetector,
+    target,
+    responseHead
+  );
+  if (endDetect) {
+    return endDetect;
+  }
+  const toDetect = responseHead
+    ? continuationLineDetector
+    : shellSpec.lineEnding + continuationLineDetector;
+  const continuationLineDetect = target.indexOf(toDetect);
+  if (continuationLineDetect === -1) {
+    return undefined;
+  }
+  return {
+    responseEndIndex: continuationLineDetect,
+    exitStatus: undefined,
   };
 }
 
@@ -161,4 +191,76 @@ export const runOnStdoutAndDetectExitCodeByPrompt: runOnStdoutAndDetectExitCodeF
     log.debug(`runOnStdoutAndDetectExitCode total response: `, totalResponse);
     current.stdoutResponse = totalResponse;
     return result.exitStatus;
+  };
+
+export const runOnStdoutAndDetectPartialLineFinishByPrompt: () => runOnStdoutAndDetectPartialLineEndFuncType =
+  () => {
+    let started = false;
+    let stdoutForThisLine = "";
+    let stdoutResponseForThisLine = "";
+
+    return (
+      process: Process,
+      current: Command,
+      shellSpec: ShellSpecification,
+      stdoutData: string,
+      boundaryDetector: string,
+      continuationLineDetector: string
+    ) => {
+      addStdout(current, stdoutData);
+      stdoutForThisLine += stdoutData;
+      let startDetect: number | undefined = undefined;
+      if (!started) {
+        startDetect = detectStartOfResponseByPrompt(
+          shellSpec,
+          boundaryDetector,
+          current.stdout
+        );
+        if (startDetect === undefined) {
+          return false;
+        }
+        started = true;
+        current.responseStarted = true;
+        log.debug(
+          `Response started in multiline command line: ${
+            current.command
+          } with index ${startDetect} in ${
+            current.stdout
+          }@(${current.stdout.slice(0, startDetect)})`
+        );
+      }
+      const startInThisData = startDetect !== undefined;
+      const extendedResponse = startInThisData
+        ? // Start is detected in this part. stdoutResponse is empty now.
+          stdoutForThisLine.slice(startDetect)
+        : stdoutResponseForThisLine + stdoutData;
+      const result = detectEndOfPartialLineResponseByPrompt(
+        shellSpec,
+        boundaryDetector,
+        continuationLineDetector,
+        extendedResponse,
+        startInThisData || stdoutResponseForThisLine.length === 0
+      );
+      if (!result) {
+        const response = startInThisData
+          ? // stdoutResponse is empty now.
+            // Not all the stdout is in the response. It may contain the part before start.
+            extendedResponse
+          : stdoutData;
+        // Ignore the line beginning with the ignoreLineMarker.
+        addStdoutResponse(process, current, response);
+        stdoutResponseForThisLine += response;
+        return false;
+      }
+      addStdoutResponse(
+        process,
+        current,
+        extendedResponse.slice(0, result.responseEndIndex)
+      );
+      // Found exit status. Memorize it in current. (Possibly overwritten by others.)
+      if (result.exitStatus !== undefined) {
+        current.exitStatus = result.exitStatus;
+      }
+      return true;
+    };
   };

@@ -6,15 +6,32 @@ import {
   newCommand,
 } from "@/datatypes/Command";
 import { ShellConfig } from "@/datatypes/Config";
-import { runOnStdoutAndDetectExitCodeByPrompt } from "@/server/ShellUtils/BoundaryDetectorByPrompt";
+import {
+  runOnStdoutAndDetectExitCodeByPrompt,
+  runOnStdoutAndDetectPartialLineFinishByPrompt,
+} from "@/server/ShellUtils/BoundaryDetectorByPrompt";
 import {
   defaultRandomBoundaryDetector,
   isCommandEchoBackToStdout,
+  nonDuplicateDefaultRandomBoundaryDetector,
 } from "@/server/ShellUtils/BoundaryDetectorUtils";
-import { receiveCommandResponse } from "@/server/ShellUtils/ExecuteUtils";
+import {
+  addStdout,
+  commandFinishedHandler,
+  commandToHtml,
+  receiveCommandResponse,
+  receivePartialLineResponse,
+  saveCommandToTempFile,
+} from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
-import { setPromptCommand } from "@/datatypes/ShellSpecification";
+import {
+  ShellSpecification,
+  isExitCodeOK,
+  setContinuationPromptCommand,
+  setPromptCommand,
+  sourceCommand,
+} from "@/datatypes/ShellSpecification";
 
 function setPromptIsFinished(
   process: Process,
@@ -41,24 +58,31 @@ async function setPrompt(
   process: Process,
   cid: CommandID,
   boundaryDetector: string,
+  ignoreLineMarker: string,
   onEnd?: (command: Command) => void
 ) {
   // Set detector to the prompt.
   if (!process.shellSpec.promptCommands) {
     throw new Error("Prompt commands are not defined.");
   }
-
   const promptText = `${boundaryDetector}${process.shellSpec.exitCodeVariable}${boundaryDetector}`;
+  const continuationPrompt = setContinuationPromptCommand(
+    process.shellSpec,
+    ignoreLineMarker
+  );
   const setCommand = setPromptCommand(process.shellSpec, promptText);
   if (!setCommand) {
     throw new Error("Prompt command is not defined.");
   }
+  const setBothCommand = `${setCommand}${
+    continuationPrompt ? process.shellSpec.delimiter : ""
+  }${continuationPrompt || ""}`;
   log.debug(`setPrompt: ${setCommand}`);
   process.currentCommand = newCommand(
     process.id,
     cid,
-    setCommand,
-    setCommand,
+    setBothCommand,
+    setBothCommand,
     process.currentDirectory,
     process.user,
     boundaryDetector,
@@ -77,18 +101,107 @@ async function setPrompt(
   });
 }
 
+async function executePartialLine(
+  process: Process,
+  line: string,
+  boundaryDetector: string,
+  ignoreLineMarker: string
+) {
+  // Promise waiting for the end of the line.
+  return new Promise((resolve) => {
+    receivePartialLineResponse(
+      process,
+      boundaryDetector,
+      ignoreLineMarker,
+      runOnStdoutAndDetectPartialLineFinishByPrompt(),
+      /* onFinished */ () => {
+        resolve(true);
+      }
+    );
+    process.handle.execute(line);
+  });
+}
+
+async function executeMultilineCommandLineByLine(
+  process: Process,
+  current: Command,
+  command: string,
+  boundaryDetector: string,
+  continuationDetector: string,
+  onEnd?: (command: Command) => void
+) {
+  if (!process.shellSpec.promptCommands?.setContinuation) {
+    log.debugTrace(
+      `executeMultilineCommandLineByLine: setContinuation is not defined: ${process.shellSpec.name}`
+    );
+    throw new Error("Prompt commands are not defined.");
+  }
+  for (const line of command.split("\n")) {
+    await executePartialLine(
+      process,
+      line,
+      boundaryDetector,
+      continuationDetector
+    );
+  }
+  commandFinishedHandler(process, current, onEnd);
+  return true;
+}
+
 function executeExactCommand(
   process: Process,
   command: Command,
   boundaryDetector: string,
+  continuationDetector: string,
   isSilent?: boolean,
   onEnd?: (command: Command) => void
 ) {
   log.debug(
     `Execute exact command ${command.exactCommand} in process ${process.id}`
   );
+  const shellSpec = process.shellSpec;
   process.currentCommand = command;
-  receiveCommandResponse(
+  const isMultiline = command.exactCommand.includes("\n");
+  if (isMultiline) {
+    if (shellSpec.promptCommands?.setContinuation) {
+      // When the command is multiline, run it one line by one.
+      log.debug(
+        `Execute multiline command line by line ${command.exactCommand} in process ${process.id}`
+      );
+      return executeMultilineCommandLineByLine(
+        process,
+        command,
+        command.exactCommand,
+        boundaryDetector,
+        continuationDetector,
+        onEnd
+      );
+    } else if (shellSpec.sourceCommand) {
+      // When the command is multiline and has source command, run it by source command.
+      return saveCommandToTempFile(process, command.exactCommand).then(
+        (filePath) => {
+          const source = sourceCommand(shellSpec, filePath);
+          log.debug(
+            `Execute multiline command by source ${command.exactCommand} with source command ${sourceCommand} in process ${process.id}`
+          );
+          return receiveCommandResponse(
+            process,
+            boundaryDetector,
+            runOnStdoutAndDetectExitCodeByPrompt,
+            isSilent,
+            onEnd
+          ).then(() => {
+            process.handle.execute(source || command.exactCommand);
+          });
+        }
+      );
+    }
+  }
+  log.debug(
+    `Execute single line exact command ${command.exactCommand} in process ${process.id}`
+  );
+  // Otherwise, run the command directly.
+  return receiveCommandResponse(
     process,
     boundaryDetector,
     runOnStdoutAndDetectExitCodeByPrompt,
@@ -98,16 +211,6 @@ function executeExactCommand(
     process.handle.execute(command.exactCommand);
   });
 }
-
-function executeCommandAndReceiveResponseByPrompt(
-  process: Process,
-  command: string,
-  cid: CommandID,
-  boundaryDetector: string,
-  styledCommand?: string,
-  isSilent?: boolean,
-  onEnd?: (command: Command) => void
-) {}
 
 export function executeCommandByPrompt(
   process: Process,
@@ -121,6 +224,11 @@ export function executeCommandByPrompt(
   const boundaryDetector = defaultRandomBoundaryDetector(
     process.config.interact === "terminal",
     process.shellSpec
+  );
+  const continuationDetector = nonDuplicateDefaultRandomBoundaryDetector(
+    process.config.interact === "terminal",
+    process.shellSpec,
+    boundaryDetector
   );
   const exactCommand = command;
   log.debug(
@@ -144,6 +252,7 @@ export function executeCommandByPrompt(
     process,
     cid,
     boundaryDetector,
+    continuationDetector,
     /* onEnd */ () => {
       log.debug(
         `setPrompt finished. Execute command ${exactCommand} in process ${process.id} cid: ${cid}`
@@ -153,6 +262,7 @@ export function executeCommandByPrompt(
         process,
         currentCommand,
         boundaryDetector,
+        continuationDetector,
         isSilent,
         onEnd
       );

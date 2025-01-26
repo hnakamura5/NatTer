@@ -79,6 +79,9 @@ export const ShellSpecificationSchema = z
 
     // The command is not echo back to stdout unless tty. e.g. bash
     commandNotEchoBack: z.boolean().optional(),
+
+    defaultExt: z.string(),
+    temporalFilePath: z.string().optional(),
   })
   .refine((spec) => {
     // TODO: refine
@@ -131,6 +134,10 @@ export function setContinuationPromptCommand(
   );
 }
 
+export function sourceCommand(shellSpec: ShellSpecification, path: string) {
+  return shellSpec.sourceCommand?.replace("${path}", path);
+}
+
 export function isExitCodeOK(shellSpec: ShellSpecification, exitCode: string) {
   return exitCode === shellSpec.exitCodeOK;
 }
@@ -153,3 +160,4 @@ export function shellSpecListToMap(
   }
   return map;
 }
+

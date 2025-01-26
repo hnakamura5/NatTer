@@ -87,6 +87,7 @@ function createWindow() {
   createIPCHandler({ router, windows: [win] });
   log.debug(`exe: ${app.getPath("module")}`);
   log.debug(`home: ${app.getPath("home")}`);
+  log.debug(`appData: ${app.getPath("appData")}`);
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

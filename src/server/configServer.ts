@@ -9,7 +9,7 @@ import {
 } from "@/datatypes/Keybind";
 import fs from "node:fs/promises";
 import Electron from "electron";
-import path from "node:path";
+import path, { parse } from "node:path";
 
 import { log } from "@/datatypes/Logger";
 import {
@@ -43,15 +43,25 @@ const labelsDir = path.join(
   "language"
 );
 
-function readConfig() {
-  const configRead = fs.readFile(configFilePath, "utf-8");
-  log.debug("Reading config from: ", configFilePath);
-  return configRead.then((config) => {
-    const parsed = parseConfig(config);
-    if (parsed) {
-      return parsed;
+let parsedConfig: Config | undefined;
+let configReadTime: number | undefined;
+export function readConfig() {
+  return fs.stat(configFilePath).then((stats) => {
+    const lastUpdateTime = stats.mtime.getTime();
+    if (lastUpdateTime === configReadTime && parsedConfig) {
+      return parsedConfig;
     }
-    throw new Error("Failed to parse config");
+    const configRead = fs.readFile(configFilePath, "utf-8");
+    log.debug("Reading config from: ", configFilePath);
+    return configRead.then((config) => {
+      const parsed = parseConfig(config);
+      parsedConfig = parsed;
+      configReadTime = lastUpdateTime;
+      if (parsed) {
+        return parsed;
+      }
+      throw new Error("Failed to parse config");
+    });
   });
 }
 

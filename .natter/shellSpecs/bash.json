@@ -63,5 +63,6 @@
     "placer": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   },
   // bash does not echo user input back to the console unless using tty
-  "commandNotEchoBack": true
+  "commandNotEchoBack": true,
+  "defaultExt": ".sh"
 }

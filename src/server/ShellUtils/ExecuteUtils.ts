@@ -1,3 +1,6 @@
+import path from "node:path";
+import fs from "node:fs/promises";
+
 import { Process, clockIncrement } from "@/server/types/Process";
 import {
   Command,
@@ -19,6 +22,9 @@ import DOMPurify from "dompurify";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 
 import { log } from "@/datatypes/Logger";
+import { api } from "@/api";
+import { readConfig } from "../configServer";
+import { app } from "electron";
 
 const Cols = 512;
 const Rows = 64;
@@ -120,6 +126,15 @@ export type runOnStdoutAndDetectExitCodeFuncType = (
   boundaryDetector: string
 ) => string | undefined;
 
+export type runOnStdoutAndDetectPartialLineEndFuncType = (
+  process: Process,
+  current: Command,
+  shellSpec: ShellSpecification,
+  stdoutData: string,
+  boundaryDetector: string,
+  continuationLineDetector: string
+) => boolean;
+
 async function resizeAndWait(process: Process, cols: number, rows: number) {
   // TODO: Too a dirty hack to detect the end of the resizing.
   let completed = false;
@@ -196,6 +211,36 @@ export function addStdoutResponse(
   });
 }
 
+export function commandFinishedHandler(
+  process: Process,
+  current: Command,
+  onEnd?: (command: Command) => void
+) {
+  current.isFinished = true;
+  current.exitStatusIsOK = current.exitStatus
+    ? isExitCodeOK(process.shellSpec, current.exitStatus)
+    : false;
+  log.debug(
+    `Finished ${process.id}-${current.cid} ${current.command} by status ${current.exitStatus} in process ${process.id}`
+  );
+  log.debug(
+    `detect stdoutResponse: ${current.stdoutResponse}, exitStatus: ${current.exitStatus}`
+  );
+  commandToHtml(process, current).then(({ stdoutHTML, stderrHTML }) => {
+    current.stdoutHTML = stdoutHTML;
+    current.stderrHTML = stderrHTML;
+    current.outputCompleted = true;
+  });
+  process.handle.clear();
+  process.event.emit("finish", current);
+  if (onEnd !== undefined) {
+    log.debug(
+      `Call onEnd in process ${process.id} for command ${current.exactCommand}`
+    );
+    onEnd(current);
+  }
+}
+
 export async function receiveCommandResponse(
   process: Process,
   boundaryDetector: string,
@@ -233,28 +278,8 @@ export async function receiveCommandResponse(
     }
     // Finish the command.
     const exitStatus = detected;
-    current.isFinished = true;
     current.exitStatus = exitStatus;
-    current.exitStatusIsOK = isExitCodeOK(process.shellSpec, exitStatus);
-    log.debug(
-      `Finished ${process.id}-${current.cid} ${current.command} by status ${current.exitStatus} in process ${process.id}`
-    );
-    log.debug(
-      `detect stdoutResponse: ${current.stdoutResponse}, exitStatus: ${exitStatus}`
-    );
-    commandToHtml(process, current).then(({ stdoutHTML, stderrHTML }) => {
-      current.stdoutHTML = stdoutHTML;
-      current.stderrHTML = stderrHTML;
-      current.outputCompleted = true;
-    });
-    process.handle.clear(); // TODO: Is this required?
-    process.event.emit("finish", current);
-    if (onEnd !== undefined) {
-      log.debug(
-        `Call onEnd in process ${process.id} for command ${current.exactCommand}`
-      );
-      onEnd(current);
-    }
+    commandFinishedHandler(process, current, onEnd);
     return true;
   });
   // stderr handling.
@@ -267,5 +292,58 @@ export async function receiveCommandResponse(
     current.stderr = current.stderr.concat(response);
     process.event.emit("stderr", response);
     clockIncrement(process);
+  });
+}
+
+export async function receivePartialLineResponse(
+  process: Process,
+  boundaryDetector: string,
+  continuationLineDetector: string,
+  runOnStdoutAndDetectExitCode: runOnStdoutAndDetectPartialLineEndFuncType,
+  onFinished: () => void
+) {
+  const current = process.currentCommand;
+  // stdout handling.
+  process.handle.onStdout((data: Buffer) => {
+    const response = data.toString();
+    clockIncrement(process);
+    // Check if the command is finished.
+    const partialLineFinished = runOnStdoutAndDetectExitCode(
+      process,
+      current,
+      process.shellSpec,
+      response,
+      boundaryDetector,
+      continuationLineDetector
+    );
+    if (partialLineFinished) {
+      onFinished();
+    }
+  });
+  // stderr handling.
+  process.handle.onStderr((data: Buffer) => {
+    if (current.isFinished) {
+      return;
+    }
+    const response = data.toString();
+    //log.debug(`stderr: ${response}`);
+    current.stderr = current.stderr.concat(response);
+    process.event.emit("stderr", response);
+    clockIncrement(process);
+  });
+}
+
+export async function saveCommandToTempFile(process: Process, command: string) {
+  const spec = process.shellSpec;
+  const filePath =
+    spec.temporalFilePath ||
+    path.join(app.getPath("temp"), `temp-${process.id}${spec.defaultExt}`);
+  return fs.writeFile(filePath, command).then(() => {
+    log.debug(`Saved command to ${filePath}`);
+    return filePath;
+  }).catch(() => {
+    const message = `Failed to save command to ${filePath}`;
+    log.debugTrace(message);
+    throw new Error(message);
   });
 }
