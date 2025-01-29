@@ -1,7 +1,4 @@
-import {
-  Process,
-  clockIncrement,
-} from "@/server/types/Process";
+import { Process, clockIncrement } from "@/server/types/Process";
 import {
   Command,
   CommandID,
@@ -45,6 +42,7 @@ export function executeCommandByEcho(
   onEnd?: (command: Command) => void
 ): Command {
   // The command including the detector.
+  // TODO: In order to deal with syntax error, We have to use save file mode.
   const exactCommand = extendCommandWithBoundaryDetectorByEcho(
     process.shellSpec,
     command

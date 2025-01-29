@@ -66,6 +66,7 @@ export class ChildShellStream {
       this.childProcess?.stdout
         .pipe(iconv.decodeStream(options?.encoding || "utf8"))
         .on("data", (data) => {
+          log.debug(`childShell stdout: ${data}`);
           for (const callback of this.onStdoutCallBacks) {
             callback(data);
           }
@@ -73,6 +74,7 @@ export class ChildShellStream {
       this.childProcess?.stderr
         .pipe(iconv.decodeStream(options?.encoding || "utf8"))
         .on("data", (data) => {
+          log.debug(`childShell stderr: ${data}`);
           for (const callback of this.onStderrCallBacks) {
             callback(data);
           }
@@ -111,6 +113,10 @@ export class ChildShellStream {
       if (this.options?.encoding) {
         const encoded = iconv.encode(command + "\n", this.options.encoding);
         log.debug(`childShell writing encoded: ${encoded}`);
+        if (!this.childProcess) {
+          log.debug("childProcess is not initialized");
+          throw new Error("Shell stream is not initialized");
+        }
         this.childProcess?.stdin.write(encoded);
       } else {
         this.childProcess?.stdin.write(command + "\n");
@@ -187,21 +193,25 @@ export class ChildShellStream {
   }
 
   onStdout(callback: (data: Buffer) => void) {
+    log.debug("onStdout registered");
     if (this.usePty) {
       this.onStdoutCallBacks = [callback];
     } else if (this.childProcess) {
       this.onStdoutCallBacks = [callback];
     } else {
+      log.debug("childProcess is not initialized");
       throw new Error("Shell stream is not initialized");
     }
   }
 
   onStderr(callback: (data: Buffer) => void) {
+    log.debug("onStderr registered");
     if (this.usePty) {
       // node-pty does not support stderr
     } else if (this.childProcess) {
       this.onStderrCallBacks = [callback];
     } else {
+      log.debug("childProcess is not initialized");
       throw new Error("Shell stream is not initialized");
     }
   }

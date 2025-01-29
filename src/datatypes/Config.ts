@@ -6,7 +6,7 @@ export const ShellConfigSchema = z.object({
   name: z.string(),
   executable: z.string(),
   args: z.array(z.string()).optional(),
-  kind: z.enum(["bash", "cmd", "powershell"]),
+  kind: z.string(),
   encoding: z.string().optional(),
   interact: ShellInteractKindSchema,
   virtualPath: z.object({

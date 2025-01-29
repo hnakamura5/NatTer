@@ -25,7 +25,7 @@
       "args": [
         "-e",
         "/usr/bin/bash",
-        "-l"
+        "-l",
       ],
       "kind": "bash",
       "encoding": "utf-8",
@@ -43,7 +43,7 @@
         "/usr/bin/bash",
         "-l"
       ],
-      "kind": "bash",
+      "kind": "bash-interactive",
       "encoding": "utf-8",
       "interact": "terminal",
       "virtualPath": {
@@ -60,8 +60,8 @@
       "interact": "command",
     }
   ],
-  "defaultShell": "PowerShell",
+  // "defaultShell": "PowerShell",
   //"defaultShell": "PowerShell Terminal",
-  //"defaultShell": "WSL Bash",
+  "defaultShell": "WSL Bash",
   //"defaultShell": "Cmd",
 }

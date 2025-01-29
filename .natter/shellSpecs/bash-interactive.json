@@ -53,12 +53,14 @@
     "getUser": "whoami"
   },
   "sourceCommand": "source \"${path}\"",
-  // Bash non-interactive mode does not support prompts.
+  "promptCommands": {
+    "get": "echo $PS1",
+    "set": "PS1=\"${prompt}\"",
+    "setContinuation": "PS2=\"${prompt}\""
+  },
   "boundaryDetectorCharSet": {
     "boundary": "@#",
     "placer": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   },
-  // bash does not echo user input back to the console unless using tty
-  "commandNotEchoBack": true,
   "defaultExt": ".sh"
 }

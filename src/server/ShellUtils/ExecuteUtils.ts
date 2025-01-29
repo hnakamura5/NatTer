@@ -307,8 +307,8 @@ export async function receiveCommandResponse(
       return;
     }
     const response = data.toString();
-    //log.debug(`stderr: ${response}`);
-    current.stderr = current.stderr.concat(response);
+    log.debug(`stderr response: ${response}`);
+    // current.stderr = current.stderr.concat(response);
     process.event.emit("stderr", response);
     clockIncrement(process);
   });

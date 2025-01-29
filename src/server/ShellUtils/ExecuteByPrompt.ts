@@ -76,8 +76,8 @@ async function setPrompt(
   }
   const setBothCommand = `${setCommand}${
     continuationPrompt ? process.shellSpec.delimiter : ""
-  }${continuationPrompt || ""}`;
-  log.debug(`setPrompt: ${setCommand}`);
+  }${continuationPrompt || ""} ;echo "echotest"`;
+  log.debug(`setPrompt: ${setBothCommand}`);
   process.currentCommand = newCommand(
     process.id,
     cid,
@@ -90,6 +90,11 @@ async function setPrompt(
     undefined,
     process.handle.getSize()
   );
+  const continuationDetector = nonDuplicateDefaultRandomBoundaryDetector(
+    process.config.interact === "terminal",
+    process.shellSpec,
+    boundaryDetector
+  );
   receiveCommandResponse(
     process,
     boundaryDetector,
@@ -97,7 +102,7 @@ async function setPrompt(
     true, // silent
     onEnd
   ).then(() => {
-    process.handle.execute(setCommand!);
+    process.handle.execute(setBothCommand!);
   });
 }
 

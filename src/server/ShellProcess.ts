@@ -131,6 +131,25 @@ function currentSetter(process: Process) {
   };
 }
 
+// Select the appropriate executor.
+function selectExecutor(shellSpec: ShellSpecification, config: ShellConfig) {
+  if (config.interact === "terminal") {
+    if (!shellSpec.promptCommands) {
+      log.debug(
+        `terminal interact but promptCommands is not defined: ${shellSpec.name}`
+      );
+      throw new Error("Prompt commands are not defined.");
+    }
+    return executeCommandByPrompt;
+  } else {
+    if (shellSpec.promptCommands) {
+      return executeCommandByPrompt;
+    } else {
+      return executeCommandByEcho;
+    }
+  }
+}
+
 function startProcess(config: ShellConfig): ProcessID {
   const { name, executable, args, kind, encoding } = config;
   const shellSpec = ProcessSpecs.get(kind);
@@ -151,22 +170,26 @@ function startProcess(config: ShellConfig): ProcessID {
     childShell,
     config,
     shellSpec,
-    emptyCommand(pid, -1)
+    emptyCommand(pid, -1),
+    selectExecutor(shellSpec, config)
   );
   addProcess(process);
   log.debug(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
-  const executer =
-    config.interact === "terminal"
-      ? executeCommandByPrompt
-      : executeCommandByPrompt; // [HN] executeCommandByEcho;
-  executer(process, ``, getNumCommands(pid), undefined, false, (command) => {
-    log.debug(`First command ${command.exactCommand}`);
-    // Memorize the shell execution command.
-    command.command = `"${config.executable}" ${config.args?.join(" ")}`;
-    addCommand(pid, command);
-    currentSetter(process)();
-  });
+  process.executor(
+    process,
+    ``,
+    getNumCommands(pid),
+    undefined,
+    false,
+    (command) => {
+      log.debug(`First command ${command.exactCommand}`);
+      // Memorize the shell execution command.
+      command.command = `"${config.executable}" ${config.args?.join(" ")}`;
+      addCommand(pid, command);
+      currentSetter(process)();
+    }
+  );
   log.debug(
     `Started process ${pid} with command "${process.currentCommand.exactCommand}" detector ${process.currentCommand.boundaryDetector}`
   );
@@ -181,27 +204,15 @@ function executeCommand(
   onEnd?: (command: Command) => void
 ): Command {
   const cid = isSilent ? -1 : getNumCommands(process.id);
-  let currentCommand = undefined;
-  if (process.config.interact === "terminal") {
-    currentCommand = executeCommandByPrompt(
-      process,
-      command,
-      cid,
-      styledCommand,
-      isSilent,
-      onEnd
-    );
-  } else {
-    // [HN]executeCommandByEcho(process, command, cid, styledCommand, isSilent, onEnd);
-    currentCommand = executeCommandByPrompt(
-      process,
-      command,
-      cid,
-      styledCommand,
-      isSilent,
-      onEnd
-    );
-  }
+  const shellSpec = process.shellSpec;
+  const currentCommand = process.executor(
+    process,
+    command,
+    cid,
+    styledCommand,
+    isSilent,
+    onEnd
+  );
   if (!isSilent) {
     addCommand(process.id, currentCommand);
   }

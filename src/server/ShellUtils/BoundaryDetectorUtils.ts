@@ -15,6 +15,7 @@ export function defaultRandomBoundaryDetector(
   const ENQ = String.fromCharCode(5);
   const ACK = String.fromCharCode(6);
   let Additional = [EOT, ENQ, ACK];
+  //let Additional = ["~", "@", "%"];
   if (usePty) {
     // With PTY, control characters are displayed in escaped form.
     Additional = ["@", "%", "~"]; // TODO: temporary.

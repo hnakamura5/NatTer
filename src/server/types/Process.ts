@@ -21,6 +21,14 @@ export type Process = {
   user: string;
   clock: number;
   event: EventEmitter;
+  executor: (
+    process: Process,
+    command: string,
+    cid: CommandID,
+    styledCommand?: string,
+    isSilent?: boolean,
+    onEnd?: (command: Command) => void
+  ) => Command;
 };
 
 export function newProcess(
@@ -28,7 +36,8 @@ export function newProcess(
   handle: ChildShellStream,
   config: ShellConfig,
   shellSpec: ShellSpecification,
-  currentCommand: Command
+  currentCommand: Command,
+  executor: Process["executor"]
 ): Process {
   return {
     id: pid,
@@ -40,6 +49,7 @@ export function newProcess(
     user: "",
     clock: 0,
     event: new EventEmitter(),
+    executor: executor,
   };
 }
 
