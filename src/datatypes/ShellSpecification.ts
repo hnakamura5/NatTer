@@ -64,6 +64,8 @@ export const ShellSpecificationSchema = z
       .optional(),
     // Command like source in bash
     sourceCommand: z.string().optional(),
+    // Paren to group commands
+    paren: z.string().optional(),
 
     // Prompt control (optional functionality for terminal).
     promptCommands: z
@@ -138,6 +140,10 @@ export function sourceCommand(shellSpec: ShellSpecification, path: string) {
   return shellSpec.sourceCommand?.replace("${path}", path);
 }
 
+export function parenCommand(shellSpec: ShellSpecification, command: string) {
+  return shellSpec.paren?.replace("${command}", command) || command;
+}
+
 export function isExitCodeOK(shellSpec: ShellSpecification, exitCode: string) {
   return exitCode === shellSpec.exitCodeOK;
 }
@@ -160,4 +166,3 @@ export function shellSpecListToMap(
   }
   return map;
 }
-

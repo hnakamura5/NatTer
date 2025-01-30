@@ -53,6 +53,7 @@
     "getUser": "whoami"
   },
   "sourceCommand": "source \"${path}\"",
+  "paren": "$(${command})",
   "promptCommands": {
     "get": "echo $PS1",
     "set": "PS1=\"${prompt}\"",

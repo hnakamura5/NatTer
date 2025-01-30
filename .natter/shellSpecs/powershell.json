@@ -53,6 +53,7 @@
     "getUser": "whoami",
   },
   "sourceCommand": ". \"${path}\"",
+  "paren": "$(${command})",
   "promptCommands": {
     "get": "prompt",
     "set": "function prompt{ return \"${prompt}\"; }",

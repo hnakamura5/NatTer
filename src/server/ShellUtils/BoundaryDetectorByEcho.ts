@@ -51,8 +51,8 @@ function endEchoCommand(
   boundaryDetector: string
 ) {
   const quote = shellSpec.quoteLivesInString ? "" : '"';
-  // Add a space at the end of the command for the case quote is empty.
-  return `echo ${quote}${quote}${shellSpec.delimiter} echo ${quote}${boundaryDetector}${shellSpec.exitCodeVariable}${boundaryDetector}${quote} `;
+  // NOTE:Add a space at the end of the command for the case quote is empty. for the case multiline execution.
+  return `echo ${quote}${boundaryDetector}${shellSpec.exitCodeVariable}${boundaryDetector}${quote} `;
 }
 
 // Extend the command with the boundary detector.
@@ -65,13 +65,10 @@ function endEchoCommand(
  */
 export function extendCommandWithBoundaryDetectorByEcho(
   shellSpec: ShellSpecification,
-  command: string
+  command: string,
+  boundaryDetector: string,
+  lineIgnoreMarker: string
 ) {
-  const boundaryDetector = defaultRandomBoundaryDetector(false, shellSpec);
-  let lineIgnoreMarker = defaultRandomBoundaryDetector(false, shellSpec);
-  while (lineIgnoreMarker === boundaryDetector) {
-    lineIgnoreMarker = defaultRandomBoundaryDetector(false, shellSpec);
-  }
   const needDelimiterAfterCommand =
     command.length > 0 && !command.trim().endsWith(shellSpec.delimiter);
   const delimiterAfterCommand = needDelimiterAfterCommand
@@ -86,12 +83,7 @@ export function extendCommandWithBoundaryDetectorByEcho(
   );
   const endEcho = endEchoCommand(shellSpec, boundaryDetector);
   const newCommand = `${startEcho}${delimiterBeforeCommand}${command}${commandSeparator}${commandSeparator}${delimiterAfterCommand}${endEcho}`;
-  return {
-    // Sandwich the exit status with the end detector.
-    newCommand: newCommand,
-    boundaryDetector: boundaryDetector,
-    lineIgnoreMarker: lineIgnoreMarker,
-  };
+  return newCommand;
 }
 
 function detectStartOfResponseByEcho(

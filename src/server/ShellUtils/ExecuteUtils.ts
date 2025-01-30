@@ -8,10 +8,11 @@ import {
   emptyCommand,
   newCommand,
 } from "@/datatypes/Command";
-import { ShellConfig } from "@/datatypes/Config";
+import { ShellConfig, encodeOSPathToVirtual } from "@/datatypes/Config";
 import {
   ShellSpecification,
   isExitCodeOK,
+  parenCommand,
 } from "@/datatypes/ShellSpecification";
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
 import { Terminal } from "@xterm/headless";
@@ -353,14 +354,20 @@ export async function receivePartialLineResponse(
 }
 
 export async function saveCommandToTempFile(process: Process, command: string) {
-  const spec = process.shellSpec;
+  const shellSpec = process.shellSpec;
   const filePath =
-    spec.temporalFilePath ||
-    path.join(app.getPath("temp"), `temp-${process.id}${spec.defaultExt}`);
+    shellSpec.temporalFilePath ||
+    path.join(app.getPath("temp"), `temp-${process.id}${shellSpec.defaultExt}`);
   return fs
     .writeFile(filePath, command)
     .then(() => {
       log.debug(`Saved command to ${filePath}`);
+      if (process.config.virtualPath) {
+        return parenCommand(
+          shellSpec,
+          encodeOSPathToVirtual(process.config, filePath)
+        );
+      }
       return filePath;
     })
     .catch(() => {

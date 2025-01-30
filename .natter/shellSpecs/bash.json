@@ -53,6 +53,7 @@
     "getUser": "whoami"
   },
   "sourceCommand": "source \"${path}\"",
+  "paren": "$(${command})",
   // Bash non-interactive mode does not support prompts.
   "boundaryDetectorCharSet": {
     "boundary": "@#",
