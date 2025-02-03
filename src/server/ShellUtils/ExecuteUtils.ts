@@ -286,7 +286,7 @@ export async function receiveCommandResponse(
   process: Process,
   boundaryDetector: string,
   runOnStdoutAndDetectExitCode: runOnStdoutAndDetectExitCodeFuncType,
-  runOnStderrAndDetectExitCode?: runOnStderrAndDetectExitCodeFuncType,
+  runOnStderrAndDetectExitCode?: runOnStderrAndDetectEndFuncType,
   isSilent?: boolean,
   onEnd?: (command: Command) => void
 ) {
