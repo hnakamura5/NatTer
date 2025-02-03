@@ -54,6 +54,10 @@
   },
   "sourceCommand": "source \"${path}\"",
   "paren": "$(${command})",
+  "echoCommands": {
+    "toStdout": "echo \"${message}\"",
+    "toStderr": "echo \"${message}\" >&2"
+  },
   // Bash non-interactive mode does not support prompts.
   "boundaryDetectorCharSet": {
     "boundary": "@#",

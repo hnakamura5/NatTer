@@ -76,7 +76,7 @@ async function setPrompt(
   }
   const setBothCommand = `${setCommand}${
     continuationPrompt ? process.shellSpec.delimiter : ""
-  }${continuationPrompt || ""} ;echo "echotest"`;
+  }${continuationPrompt || ""}`;
   log.debug(`setPrompt: ${setBothCommand}`);
   process.currentCommand = newCommand(
     process.id,
@@ -99,6 +99,7 @@ async function setPrompt(
     process,
     boundaryDetector,
     runOnStdoutAndDetectExitCodeByPrompt,
+    /* runOnStderrAndDetectExitCode */ undefined,
     true, // silent
     onEnd
   ).then(() => {
@@ -167,6 +168,27 @@ function executeExactCommand(
   );
   const shellSpec = process.shellSpec;
   process.currentCommand = command;
+  if (shellSpec.sourceCommand) {
+    // Source command is the best way now. Robust for syntax error and multiline.
+    return saveCommandToTempFile(process, command.exactCommand).then(
+      (filePath) => {
+        const source = sourceCommand(shellSpec, filePath);
+        log.debug(
+          `Execute multiline command by source ${command.exactCommand} with source command ${sourceCommand} in process ${process.id}`
+        );
+        return receiveCommandResponse(
+          process,
+          boundaryDetector,
+          runOnStdoutAndDetectExitCodeByPrompt,
+          /* runOnStderrAndDetectExitCode */ undefined,
+          isSilent,
+          onEnd
+        ).then(() => {
+          process.handle.execute(source || command.exactCommand);
+        });
+      }
+    );
+  }
   const isMultiline = command.exactCommand.includes("\n");
   if (isMultiline) {
     if (shellSpec.promptCommands?.setContinuation) {
@@ -182,45 +204,17 @@ function executeExactCommand(
         continuationDetector,
         onEnd
       );
-    } else if (shellSpec.sourceCommand) {
-      // When the command is multiline and has source command, run it by source command.
-      return saveCommandToTempFile(process, command.exactCommand).then(
-        (filePath) => {
-          const source = sourceCommand(shellSpec, filePath);
-          log.debug(
-            `Execute multiline command by source ${command.exactCommand} with source command ${sourceCommand} in process ${process.id}`
-          );
-          return receiveCommandResponse(
-            process,
-            boundaryDetector,
-            runOnStdoutAndDetectExitCodeByPrompt,
-            isSilent,
-            onEnd
-          ).then(() => {
-            process.handle.execute(source || command.exactCommand);
-          });
-        }
-      );
     }
   }
   log.debug(
     `Execute single line exact command ${command.exactCommand} in process ${process.id}`
   );
-  // Otherwise, run the command directly.
-  if (true /* for test */) {
-    return executeMultilineCommandLineByLine(
-      process,
-      command,
-      command.exactCommand,
-      boundaryDetector,
-      continuationDetector,
-      onEnd
-    );
-  }
+  // Otherwise, run the command directly. This is not robust.
   return receiveCommandResponse(
     process,
     boundaryDetector,
     runOnStdoutAndDetectExitCodeByPrompt,
+    /* runOnStderrAndDetectExitCode */ undefined,
     isSilent,
     onEnd
   ).then(() => {

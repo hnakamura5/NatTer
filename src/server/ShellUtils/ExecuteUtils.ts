@@ -123,9 +123,17 @@ export type runOnStdoutAndDetectExitCodeFuncType = (
   process: Process,
   current: Command,
   shellSpec: ShellSpecification,
-  stdoutData: string,
+  outputData: string,
   boundaryDetector: string
 ) => string | undefined;
+
+export type runOnStderrAndDetectEndFuncType = (
+  process: Process,
+  current: Command,
+  shellSpec: ShellSpecification,
+  outputData: string,
+  boundaryDetector: string
+) => boolean;
 
 export type runOnStdoutAndDetectPartialLineEndFuncType = (
   process: Process,
@@ -207,7 +215,21 @@ export function addStdoutResponse(
   process.event.emit("stdout", {
     cid: current.cid,
     stdout: response,
-    isFinished: current.isFinished,
+    stdoutIsFinished: current.stdoutIsFinished,
+    clock: process.clock,
+  });
+}
+
+export function addStderr(
+  process: Process,
+  current: Command,
+  response: string
+) {
+  current.stderr = current.stderr.concat(response);
+  process.event.emit("stderr", {
+    cid: current.cid,
+    stderr: response,
+    stderrIsFinished: current.stderrIsFinished,
     clock: process.clock,
   });
 }
@@ -236,7 +258,6 @@ export function commandFinishedHandler(
   current: Command,
   onEnd?: (command: Command) => void
 ) {
-  current.isFinished = true;
   current.exitStatusIsOK = current.exitStatus
     ? isExitCodeOK(process.shellSpec, current.exitStatus)
     : false;
@@ -265,6 +286,7 @@ export async function receiveCommandResponse(
   process: Process,
   boundaryDetector: string,
   runOnStdoutAndDetectExitCode: runOnStdoutAndDetectExitCodeFuncType,
+  runOnStderrAndDetectExitCode?: runOnStderrAndDetectExitCodeFuncType,
   isSilent?: boolean,
   onEnd?: (command: Command) => void
 ) {
@@ -274,15 +296,15 @@ export async function receiveCommandResponse(
   }
   // stdout handling.
   process.handle.onStdout((data: Buffer) => {
-    // log.debug(
-    //   `Received data in command ${current.command} in process ${process.id} data: ${data} len: ${data.length}`
-    // );
-    const response = data.toString();
-    if (current.isFinished) {
+    if (current.stdoutIsFinished) {
       log.debug(`onStdout for finished end.`);
       return true;
     }
-    log.debug(`onStdout end.`);
+    const response = data.toString();
+    // log.debug(
+    //   `Received data in command ${current.command} in process ${process.id} data: ${data} len: ${data.length}`
+    // );
+    // log.debug(`onStdout end.`);
     clockIncrement(process);
     // Check if the command is finished.
     const detected = runOnStdoutAndDetectExitCode(
@@ -299,19 +321,44 @@ export async function receiveCommandResponse(
     // Finish the command.
     const exitStatus = detected;
     current.exitStatus = exitStatus;
+    current.stdoutIsFinished = true;
+    if (runOnStderrAndDetectExitCode && !current.stderrIsFinished) {
+      // If there is stderr handler, we have to wait for the stderr to finish.
+      return false;
+    }
     commandFinishedHandler(process, current, onEnd);
     return true;
   });
+
   // stderr handling.
   process.handle.onStderr((data: Buffer) => {
-    if (current.isFinished) {
+    if (current.stderrIsFinished) {
       return;
     }
     const response = data.toString();
     log.debug(`stderr response: ${response}`);
-    // current.stderr = current.stderr.concat(response);
-    process.event.emit("stderr", response);
-    clockIncrement(process);
+    if (runOnStderrAndDetectExitCode !== undefined) {
+      const finished = runOnStderrAndDetectExitCode(
+        process,
+        current,
+        process.shellSpec,
+        response,
+        current.boundaryDetector
+      );
+      if (finished) {
+        current.stderrIsFinished = true;
+        // We have to wait for the stdout to finish.
+        if (!current.stdoutIsFinished) {
+          return false;
+        }
+        commandFinishedHandler(process, current, onEnd);
+        return true;
+      }
+    } else {
+      addStderr(process, current, response);
+      clockIncrement(process);
+    }
+    return false;
   });
 }
 
@@ -342,7 +389,7 @@ export async function receivePartialLineResponse(
   });
   // stderr handling.
   process.handle.onStderr((data: Buffer) => {
-    if (current.isFinished) {
+    if (current.stderrIsFinished) {
       return;
     }
     const response = data.toString();

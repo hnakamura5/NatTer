@@ -8,6 +8,7 @@ import {
 import { ShellConfig } from "@/datatypes/Config";
 import {
   runOnStdoutAndDetectExitCodeByEcho,
+  runOnStderrAndDetectExitCodeByEcho,
   extendCommandWithBoundaryDetectorByEcho,
 } from "./BoundaryDetectorByEcho";
 import {
@@ -22,7 +23,7 @@ import {
   nonDuplicateDefaultRandomBoundaryDetector,
 } from "./BoundaryDetectorUtils";
 
-export function executeCommandAndReceiveResponseByEcho(
+function executeCommandAndReceiveResponseByEcho(
   process: Process,
   current: Command,
   command: string,
@@ -38,13 +39,14 @@ export function executeCommandAndReceiveResponseByEcho(
     boundaryDetector,
     lineContinuationDetector
   );
-  log.debug(`executeCommandByEcho: ${command}`);
+  log.debug(`executeCommandByEcho: ${command} exact: ${exactCommand}`);
   // Set new current command.
   process.currentCommand = current;
   return receiveCommandResponse(
     process,
     boundaryDetector,
     runOnStdoutAndDetectExitCodeByEcho,
+    runOnStderrAndDetectExitCodeByEcho,
     isSilent,
     onEnd
   ).then(() => {

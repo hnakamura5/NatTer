@@ -108,7 +108,7 @@ function ProcessAccordionSummary(props: { cid: CommandID }) {
 function ResponseSelector(props: { cid: CommandID }) {
   const pid = usePid();
   const cid = props.cid;
-  const isFinished = api.shell.isFinished.useQuery(
+  const stdoutIsFinished = api.shell.stdoutIsFinished.useQuery(
     {
       pid: pid,
       cid: cid,
@@ -116,15 +116,11 @@ function ResponseSelector(props: { cid: CommandID }) {
     queryOption
   );
   const interactMode = api.shell.interactMode.useQuery(pid);
-  // if (isFinished.data) {
-  //   log.debug(`finished mode`);
-  //   return <FinishedCommandResponse cid={cid} />;
-  // } else {
   if (interactMode.data == "terminal") {
     //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
     return <XtermCustom pid={pid} cid={cid} />;
   } else {
-    if (isFinished.data) {
+    if (stdoutIsFinished.data) {
       return <FinishedCommandResponse cid={cid} />;
     } else {
       return <AliveCommandResponse cid={cid} />;
@@ -161,7 +157,7 @@ function ProcessKeySender(props: {
 }) {
   const pid = usePid();
   const sendKey = api.shell.sendKey.useMutation();
-  const isFinished = api.shell.isFinished.useQuery(
+  const stdoutIsFinished = api.shell.stdoutIsFinished.useQuery(
     {
       pid: pid,
       cid: props.cid,
@@ -175,7 +171,7 @@ function ProcessKeySender(props: {
         log.debug(
           `ProcessKeySender get key: ${e.key}, code: ${e.code}, keyCode: ${e.keyCode}, which: ${e.which}, charCode: ${e.charCode}, ctrl: ${e.ctrlKey}, alt: ${e.altKey}, shift: ${e.shiftKey}, meta: ${e.metaKey}`
         );
-        if (isFinished.data) {
+        if (stdoutIsFinished.data) {
           return;
         }
         // Ignore fixed keybinds.
@@ -254,7 +250,7 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       handleGFM.delete(idStr);
     };
   }, [handleGFM, idStr]);
-  const isFinished = api.shell.isFinished.useQuery(
+  const isFinished = api.shell.stdoutIsFinished.useQuery(
     {
       pid: pid,
       cid: cid,

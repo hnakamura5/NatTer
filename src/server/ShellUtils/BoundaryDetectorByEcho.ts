@@ -1,6 +1,8 @@
 import { ShellInteractKind } from "@/datatypes/ShellInteract";
 import {
   ShellSpecification,
+  echoToStderr,
+  echoToStdout,
   setContinuationPromptCommand,
   setPromptCommand,
 } from "@/datatypes/ShellSpecification";
@@ -10,9 +12,10 @@ import {
   isCommandEchoBackToStdout,
 } from "@/server/ShellUtils/BoundaryDetectorUtils";
 import {
-  runOnStdoutAndDetectExitCodeFuncType,
   addStdout,
   addStdoutResponse,
+  runOnStdoutAndDetectExitCodeFuncType,
+  runOnStderrAndDetectEndFuncType,
 } from "@/server/ShellUtils/ExecuteUtils";
 import stripAnsi from "strip-ansi";
 
@@ -30,7 +33,6 @@ function startEchoCommand(
   boundaryDetector: string,
   lineIgnoreMarker: string
 ) {
-  const quote = shellSpec.quoteLivesInString ? "" : '"';
   const delimiter = shellSpec.delimiter;
   // TODO: setContinuationPromptCommand does not work in powershell.
   // TODO: We have to save to temporary file and source it.
@@ -39,20 +41,26 @@ function startEchoCommand(
     shellSpec,
     lineIgnoreMarker
   );
+  const echoStdout = echoToStdout(shellSpec, boundaryDetector);
   return `${setPrompt || ""}${setPrompt ? delimiter : ""}${
     setContinuationPrompt || ""
-  }${
-    setContinuationPrompt ? delimiter : ""
-  }echo ${quote}${boundaryDetector}${quote}`;
+  }${setContinuationPrompt ? delimiter : ""}${echoStdout || ""}`;
 }
 
 function endEchoCommand(
   shellSpec: ShellSpecification,
   boundaryDetector: string
 ) {
-  const quote = shellSpec.quoteLivesInString ? "" : '"';
   // NOTE:Add a space at the end of the command for the case quote is empty. for the case multiline execution.
-  return `echo ${quote}${boundaryDetector}${shellSpec.exitCodeVariable}${boundaryDetector}${quote} `;
+  const delimiter = shellSpec.delimiter;
+  const echoStdErr = echoToStderr(shellSpec, boundaryDetector);
+  const echoStdout = echoToStdout(
+    shellSpec,
+    `${boundaryDetector}${shellSpec.exitCodeVariable}${boundaryDetector}`
+  );
+  return `${echoStdout || ""}${echoStdout && echoStdErr ? delimiter : ""}${
+    echoStdErr || ""
+  }`;
 }
 
 // Extend the command with the boundary detector.
@@ -190,6 +198,7 @@ export const runOnStdoutAndDetectExitCodeByEcho: runOnStdoutAndDetectExitCodeFun
       extendedResponse,
       startInThisData || current.stdoutResponse.length === 0
     );
+    // TODO: Boundary detector for stderr.
     // log.debug(
     //   `  detectEndOfResponseByEcho extendedResponse: ${extendedResponse}, result: `,
     //   result
@@ -225,4 +234,21 @@ export const runOnStdoutAndDetectExitCodeByEcho: runOnStdoutAndDetectExitCodeFun
     log.debug(`runOnStdoutAndDetectExitCode total response: `, totalResponse);
     current.stdoutResponse = totalResponse;
     return result.exitStatus;
+  };
+
+export const runOnStderrAndDetectExitCodeByEcho: runOnStderrAndDetectEndFuncType =
+  (
+    process: Process,
+    current: Command,
+    shellSpec: ShellSpecification,
+    stderrData: string,
+    boundaryDetector: string
+  ) => {
+    const extendedStderr = current.stderr + stderrData;
+    const endDetect = extendedStderr.indexOf(boundaryDetector);
+    if (endDetect === -1) {
+      return false;
+    }
+    current.stderr = extendedStderr.slice(0, endDetect);
+    return true;
   };

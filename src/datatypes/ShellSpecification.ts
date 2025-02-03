@@ -67,6 +67,13 @@ export const ShellSpecificationSchema = z
     // Paren to group commands
     paren: z.string().optional(),
 
+    echoCommands: z
+      .object({
+        toStdout: z.string(),
+        toStderr: z.string().optional(),
+      })
+      .optional(),
+
     // Prompt control (optional functionality for terminal).
     promptCommands: z
       .object({
@@ -142,6 +149,14 @@ export function sourceCommand(shellSpec: ShellSpecification, path: string) {
 
 export function parenCommand(shellSpec: ShellSpecification, command: string) {
   return shellSpec.paren?.replace("${command}", command) || command;
+}
+
+export function echoToStdout(shellSpec: ShellSpecification, message: string) {
+  return shellSpec.echoCommands?.toStdout.replace("${message}", message);
+}
+
+export function echoToStderr(shellSpec: ShellSpecification, message: string) {
+  return shellSpec.echoCommands?.toStderr?.replace("${message}", message);
 }
 
 export function isExitCodeOK(shellSpec: ShellSpecification, exitCode: string) {

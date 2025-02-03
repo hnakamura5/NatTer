@@ -54,6 +54,11 @@
   },
   "sourceCommand": ". \"${path}\"",
   "paren": "$(${command})",
+  "echoCommands": {
+    "toStdout": "echo \"${message}\"",
+    // Write-Error outputs "Write-Error: ${message}". This is not what I want.
+    // "toStderr": "Write-Error \"${message}\""
+  },
   "promptCommands": {
     "get": "prompt",
     "set": "function prompt{ return \"${prompt}\"; }",

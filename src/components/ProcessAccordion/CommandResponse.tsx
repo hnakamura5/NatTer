@@ -148,9 +148,9 @@ export function AliveCommandResponse(props: { cid: CommandID }) {
       },
       onData: (data) => {
         log.debug(
-          `stdout onData: cid: ${data.cid} isFinished: ${data.isFinished}, stdout: ${data.stdout} in pid-${pid} cid-${cid}`
+          `stdout onData: cid: ${data.cid} isFinished: ${data.stdoutIsFinished}, stdout: ${data.stdout} in pid-${pid} cid-${cid}`
         );
-        if (data.cid === cid && !data.isFinished) {
+        if (data.cid === cid && !data.stdoutIsFinished) {
           setStdoutHTML((prev) => {
             return (
               prev + ansiUp.ansi_to_html(data.stdout).replace(/\n/g, "<br />")

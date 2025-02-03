@@ -93,10 +93,18 @@ const ProcessIDScheme = ProcessIDSchemaRaw.refine((value) => {
 export const StdoutEventSchema = z.object({
   cid: CommandIDSchema,
   stdout: z.string(),
-  isFinished: z.boolean(),
+  stdoutIsFinished: z.boolean(),
   clock: z.number().int(),
 });
 export type StdoutEvent = z.infer<typeof StdoutEventSchema>;
+
+export const StderrEventSchema = z.object({
+  cid: CommandIDSchema,
+  stderr: z.string(),
+  stderrIsFinished: z.boolean(),
+  clock: z.number().int(),
+});
+export type StderrEvent = z.infer<typeof StderrEventSchema>;
 
 // Re-set the current directory after the command.
 function currentSetter(process: Process) {
@@ -144,9 +152,11 @@ function selectExecutor(shellSpec: ShellSpecification, config: ShellConfig) {
   } else {
     if (shellSpec.promptCommands) {
       return executeCommandByPrompt;
-    } else {
+    } else if (shellSpec.echoCommands) {
       return executeCommandByEcho;
     }
+    // TODO: Any way in this case? Use default prompt?
+    throw new Error("No Executor available.");
   }
 }
 
@@ -221,7 +231,7 @@ function executeCommand(
 
 function sendKey(process: Process, key: string) {
   // TODO: handle the key code to appropriate code?
-  if (process.currentCommand.isFinished) {
+  if (process.currentCommand.stdoutIsFinished) {
     log.debug(`Send key ${key} to process ${process.id} finished command.`);
     return;
   }
@@ -332,18 +342,30 @@ export const shellRouter = server.router({
         };
       });
     }),
-  onStderr: proc
-    .input(ProcessIDScheme)
-    .output(z.string())
-    .subscription(async (opts) => {
-      const pid = opts.input;
-      const process = getProcess(pid);
-      return new Promise((resolve) => {
-        process.event.on("stderr", (e: string) => {
-          resolve(e);
-        });
-      });
-    }),
+  onStderr: proc.input(ProcessIDScheme).subscription(async (opts) => {
+    const pid = opts.input;
+    const process = getProcess(pid);
+    let firstEmit = true;
+    return observable<StderrEvent>((emit) => {
+      const onData = (data: StderrEvent) => {
+        if (firstEmit) {
+          // Emit the all existing stderr.
+          log.debug(
+            `onStderr first emit: event:${data.stderr} all:${process.currentCommand.stderr}`
+          );
+          data.stderr = process.currentCommand.stderr;
+        } else {
+          log.debug(`onStderr emit: event:${data.stderr}`);
+        }
+        firstEmit = false;
+        emit.next(data);
+      };
+      process.event.on("stderr", onData);
+      return () => {
+        process.event.off("stderr", onData);
+      };
+    });
+  }),
   onCommandFinish: proc
     .input(ProcessIDScheme)
     .output(CommandSchema)
@@ -405,7 +427,7 @@ export const shellRouter = server.router({
       const { pid, cid } = opts.input;
       return getCommand(pid, cid);
     }),
-  isFinished: proc
+  stdoutIsFinished: proc
     .input(
       z.object({
         pid: ProcessIDScheme.refine((value) => {
@@ -418,10 +440,21 @@ export const shellRouter = server.router({
     .output(z.boolean())
     .query(async (opts) => {
       const { pid, cid } = opts.input;
-      // log.debug(
-      //   `isFinished call ${pid} ${cid} ${commandsOfProcessID[pid][cid].isFinished}`
-      // );
-      return getCommand(pid, cid).isFinished;
+      return getCommand(pid, cid).stdoutIsFinished;
+    }),
+  stderrIsFinished: proc
+    .input(
+      z.object({
+        pid: ProcessIDScheme.refine((value) => {
+          return value < getNextProcessID();
+        }),
+        cid: CommandIDSchema,
+      })
+    )
+    .output(z.boolean())
+    .query(async (opts) => {
+      const { pid, cid } = opts.input;
+      return getCommand(pid, cid).stderrIsFinished;
     }),
   outputCompleted: proc
     .input(

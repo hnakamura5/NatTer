@@ -54,6 +54,10 @@
   },
   "sourceCommand": "source \"${path}\"",
   "paren": "$(${command})",
+  "echoCommands": {
+    "toStdout": "echo \"${message}\"",
+    "toStderr": "echo \"${message}\" >&2"
+  },
   "promptCommands": {
     "get": "echo $PS1",
     "set": "PS1=\"${prompt}\"",

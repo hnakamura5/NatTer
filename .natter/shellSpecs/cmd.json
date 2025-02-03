@@ -54,6 +54,10 @@
     "list": "dir \"${directory}\"",
     "getUser": "whoami",
   },
+  "echoCommands": {
+    "toStdout": "echo ${message}",
+    "toStderr": "echo ${message} >&2",
+  },
   "promptCommands": {
     "get": "echo %PROMPT%",
     "set": "PROMPT=\"${prompt}\"",
