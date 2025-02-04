@@ -101,9 +101,9 @@ export const MonacoInput = forwardRef<HTMLDivElement, MonacoEditorProps>(
 
     return (
       <div
-        style={inputStyle}
-        className={props.className}
         id={props.id}
+        className={props.className}
+        style={inputStyle}
         ref={ref}
         tabIndex={-1}
         onFocus={(e) => {

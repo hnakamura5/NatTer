@@ -8,7 +8,10 @@ import {
 } from "@/datatypes/PathAbstraction";
 import path from "node:path";
 import fs from "node:fs/promises";
+
+// Fix for  https://github.com/withastro/astro/issues/8660#issuecomment-1733313988
 import * as Electron from "electron";
+
 import { pathOf } from "@/server/ShellUtils/pathAbstractionUtil";
 import { chmod, chown } from "original-fs";
 
