@@ -8,7 +8,7 @@ import {
   KeybindList,
 } from "@/datatypes/Keybind";
 import fs from "node:fs/promises";
-import Electron from "electron";
+import { app } from "electron";
 import path, { parse } from "node:path";
 
 import { log } from "@/datatypes/Logger";
@@ -22,26 +22,14 @@ import { LabelsSchema, parseLabels } from "@/datatypes/Labels";
 const proc = server.procedure;
 
 //const configFilePath = Electron.app.getPath("home") + "/.natter/config.json";
-const configFilePath = path.join(
-  Electron.app.getPath("home"),
-  ".natter",
-  "config.json"
-);
+const configFilePath = path.join(app.getPath("home"), ".natter", "config.json");
 const keybindFilePath = path.join(
-  Electron.app.getPath("home"),
+  app.getPath("home"),
   ".natter",
   "keybind.json"
 );
-const shellSpecDir = path.join(
-  Electron.app.getPath("home"),
-  ".natter",
-  "shellSpecs"
-);
-const labelsDir = path.join(
-  Electron.app.getPath("home"),
-  ".natter",
-  "language"
-);
+const shellSpecDir = path.join(app.getPath("home"), ".natter", "shellSpecs");
+const labelsDir = path.join(app.getPath("home"), ".natter", "language");
 
 let parsedConfig: Config | undefined;
 let configReadTime: number | undefined;

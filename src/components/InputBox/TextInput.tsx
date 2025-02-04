@@ -127,7 +127,7 @@ export function Input(props: {
   // log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
   //setMonacoInputTheme(theme, "TextInput");
   const language = "powershell";
-  const monacoTheme ="vitesse-black";
+  const monacoTheme = "vitesse-black";
 
   return (
     <MonacoInput
@@ -135,6 +135,7 @@ export function Input(props: {
       maxHeight={200}
       monacoTheme={monacoTheme}
       language={language}
+      id={`input-${pid}`}
       style={{
         padding: "3px 8px 3px 8px",
         borderRadius: "5px",

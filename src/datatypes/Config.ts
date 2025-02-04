@@ -1,7 +1,6 @@
 import { z } from "zod";
 import JSON5 from "json5";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
-import { Shell } from "electron";
 
 export const ShellConfigSchema = z.object({
   name: z.string(),

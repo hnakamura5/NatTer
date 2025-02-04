@@ -4,7 +4,7 @@ import { ChildShellStream } from "@/server/ShellUtils/childShell";
 import { ShellConfig } from "@/datatypes/Config";
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { Command } from "@/datatypes/Command";
-import { ProcessID } from "@/datatypes/Command";
+import { ProcessID, CommandID } from "@/datatypes/Command";
 
 import { EventEmitter, on } from "node:events";
 import * as iconv from "iconv-lite";

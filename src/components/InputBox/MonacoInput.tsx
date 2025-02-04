@@ -12,6 +12,8 @@ export type MonacoEditorProps = {
   style?: React.CSSProperties;
   monacoTheme?: string;
   language?: string;
+  id?: string;
+  className?: string;
   onDidMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void;
   onChange?: (
     value: string,
@@ -100,7 +102,8 @@ export const MonacoInput = forwardRef<HTMLDivElement, MonacoEditorProps>(
     return (
       <div
         style={inputStyle}
-        className="MonacoInput"
+        className={props.className}
+        id={props.id}
         ref={ref}
         tabIndex={-1}
         onFocus={(e) => {
