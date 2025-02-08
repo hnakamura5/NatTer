@@ -1,5 +1,6 @@
 import Monaco from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
+// import * as monaco from "@codingame/monaco-vscode-editor-api";
 import React, { forwardRef, useEffect, useRef, useState } from "react";
 import { log } from "@/datatypes/Logger";
 

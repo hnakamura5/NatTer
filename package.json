@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@adobe/react-spectrum": "^3.38.1",
+    "@codingame/monaco-vscode-api": "^11.1.2",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
@@ -59,8 +60,9 @@
     "jotai": "^2.10.1",
     "json5": "^2.2.3",
     "material-icon-theme": "^5.15.0",
-    "monaco-editor": "^0.52.2",
-    "monaco-languageclient": "^9.1.0",
+    "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@^13.1.6",
+    "monaco-languageclient": "^9.2.4",
+    "monaco-original": "npm:monaco-editor@^0.52.2",
     "node-pty": "1.1.0-beta14",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -95,6 +97,9 @@
     "vite": "^5.1.6",
     "vite-plugin-electron": "^0.28.6",
     "vite-plugin-electron-renderer": "^0.14.5"
+  },
+  "overrides": {
+    "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@^13.1.6"
   },
   "main": "dist-electron/main.js"
 }
