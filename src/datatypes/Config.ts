@@ -24,6 +24,7 @@ export const ConfigSchema = z.object({
   theme: z.string().optional(),
   themePaths: z.array(z.string()).optional(),
   defaultShell: z.string().optional(),
+  editor: z.enum(["CodeMirror", "Monaco"]).optional(),
   shells: z.array(ShellConfigSchema).nonempty(),
 });
 

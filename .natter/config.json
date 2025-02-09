@@ -64,4 +64,5 @@
   //"defaultShell": "PowerShell Terminal",
   //"defaultShell": "WSL Bash",
   //"defaultShell": "Cmd",
+  "editor": "CodeMirror",
 }

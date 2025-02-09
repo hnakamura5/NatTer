@@ -8,7 +8,7 @@ import {
   Icon,
 } from "@mui/material";
 import styled from "@emotion/styled";
-import { useTheme } from "@/AppState";
+import { useConfig, useTheme } from "@/AppState";
 
 import { api } from "@/api";
 import { ErrorBoundary } from "react-error-boundary";
@@ -29,6 +29,8 @@ import { MonacoInput } from "./MonacoInput";
 import { setMonacoInputTheme } from "./MonacoInputTheme";
 import { codeToHtml } from "shiki";
 import { Theme } from "@/datatypes/Theme";
+import { CodeMirrorInput } from "./CodeMirrorInput";
+import { codeMirrorTheme } from "./CodeMirrorTheme";
 
 function codeToHTMLWithTheme(
   code: string,
@@ -46,12 +48,19 @@ function codeToHTMLWithTheme(
   });
 }
 
+const StyledCodeMirrorInput = styled(CodeMirrorInput)(({ theme }) => ({
+  "& .cm-editor": {
+    borderRadius: "5px",
+  },
+}));
+
 export function Input(props: {
   key: string;
   submit: (command: string, styledCommand?: string) => void;
   inputBoxRef: React.RefObject<HTMLElement>;
 }) {
   const pid = usePid();
+  const config = useConfig();
   const numCommands = api.shell.numCommands.useQuery(pid).data;
   const theme = useTheme();
   // const [text, setText] = useState<string>("");
@@ -121,13 +130,60 @@ export function Input(props: {
     },
     keybindRef
   );
+
+  const language = "powershell";
+  const monacoTheme = "vitesse-black";
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.ctrlKey && e.key === "Enter") {
+      if (e.altKey) {
+        // Run background
+        codeToHTMLWithTheme(text, monacoTheme, language, theme).then((html) => {
+          props.submit(text, html);
+        });
+        setText("");
+        e.preventDefault();
+      } else {
+        // Run
+        log.debug(`Input submit ctrl+enter: ${text}`);
+        codeToHTMLWithTheme(text, monacoTheme, language, theme).then((html) => {
+          log.debug(`Input submit ctrl+enter html: ${html}`);
+          props.submit(text, html);
+        });
+        setText("");
+        e.preventDefault();
+      }
+    }
+  };
+
+  if (config.editor === "CodeMirror") {
+    return (
+      <StyledCodeMirrorInput
+        id={`input-${pid}`}
+        // value={text} // No need.
+        codeMirrorTheme={codeMirrorTheme(theme)}
+        onChange={(value, update) => {
+          setText(value);
+        }}
+        ref={
+          props.inputBoxRef
+            ? (props.inputBoxRef as RefObject<HTMLDivElement>)
+            : undefined
+        }
+        style={{
+          padding: "1px 5px 1px 5px", // top right bottom left
+        }}
+        onKeyDown={(e) => {
+          handleKeyDown(e);
+        }}
+      />
+    );
+  }
   // TODO: Input must be on top level of the component to avoid the focus problem.
   // That is, we lose the focus when the component re-rendered (e.g.on input change).
   // Even styled component causes this problem.
   // log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
   //setMonacoInputTheme(theme, "TextInput");
-  const language = "powershell";
-  const monacoTheme = "vitesse-black";
 
   return (
     <MonacoInput
@@ -149,31 +205,9 @@ export function Input(props: {
       onChange={(v, e) => {
         setText(v);
       }}
-      onKeyDown={(e) => {
-        if (e.ctrlKey && e.key === "Enter") {
-          if (e.altKey) {
-            // Run background
-            codeToHTMLWithTheme(text, monacoTheme, language, theme).then(
-              (html) => {
-                props.submit(text, html);
-              }
-            );
-            setText("");
-            e.preventDefault();
-          } else {
-            // Run
-            log.debug(`Input submit ctrl+enter: ${text}`);
-            codeToHTMLWithTheme(text, monacoTheme, language, theme).then(
-              (html) => {
-                log.debug(`Input submit ctrl+enter html: ${html}`);
-                props.submit(text, html);
-              }
-            );
-            setText("");
-            e.preventDefault();
-          }
-        }
-      }}
+      onKeyDown={(e) =>
+        handleKeyDown(e as unknown as React.KeyboardEvent<HTMLDivElement>)
+      }
       onDidMount={(editor) => {
         const domNode = editor.getContainerDomNode();
         if (domNode) {
