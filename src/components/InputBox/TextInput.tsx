@@ -160,7 +160,8 @@ export function Input(props: {
     return (
       <StyledCodeMirrorInput
         id={`input-${pid}`}
-        // value={text} // No need.
+        value={text}
+        language={language}
         codeMirrorTheme={codeMirrorTheme(theme)}
         onChange={(value, update) => {
           setText(value);

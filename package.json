@@ -41,6 +41,7 @@
     "@trpc/client": "^10.45.2",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
+    "@uiw/codemirror-extensions-langs": "^4.23.8",
     "@uiw/codemirror-themes": "^4.23.8",
     "@uiw/react-codemirror": "^4.23.8",
     "@xterm/addon-attach": "^0.11.0",

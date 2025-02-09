@@ -4,7 +4,7 @@ import { Theme } from "@/datatypes/Theme";
 
 export function codeMirrorTheme(theme: Theme) {
   return createTheme({
-    theme: "light",
+    theme: "dark",
     settings: {
       fontFamily: theme.shell.font,
       fontSize: theme.shell.fontSize,

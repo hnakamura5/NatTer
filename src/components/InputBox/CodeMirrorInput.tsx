@@ -3,18 +3,27 @@ import { EditorView } from "@codemirror/view";
 import CodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
 import { Extension } from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { loadLanguage, LanguageName } from "@uiw/codemirror-extensions-langs";
 
 export type CodeMirrorInputProps = {
   id?: string;
   className?: string;
   codeMirrorTheme?: Extension;
   style?: React.CSSProperties;
+  language?: LanguageName;
 } & ReactCodeMirrorProps;
 
 export const CodeMirrorInput = forwardRef<HTMLDivElement, CodeMirrorInputProps>(
   (props, ref) => {
     const { id, className, codeMirrorTheme, style, ...codeMirrorProps } = props;
     const viewRef = useRef<EditorView | undefined>(undefined);
+    let languageExtension = undefined;
+    if (props.language) {
+      const extension = loadLanguage(props.language);
+      if (extension) {
+        languageExtension = [extension];
+      }
+    }
 
     return (
       <div
@@ -44,6 +53,7 @@ export const CodeMirrorInput = forwardRef<HTMLDivElement, CodeMirrorInputProps>(
             indentOnInput: true,
           }}
           theme={props.codeMirrorTheme || oneDark}
+          extensions={languageExtension}
         />
       </div>
     );
