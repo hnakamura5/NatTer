@@ -1,6 +1,6 @@
 {
   // Configuration for windows.
-  "language": "English",
+  "locale": "English",
   "theme": "dark",
   "shells": [
     {
@@ -10,6 +10,16 @@
       "kind": "powershell",
       "encoding": "shift-jis",
       "interact": "command",
+      "languageServer": {
+        "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "args": [
+          "-NoProfile",
+          "-NoLogo",
+          "-NoExit",
+          "-Command",
+          "\"${HOME}\\.natter-app\\PowerShellEditorServices\\Start-LanguageServer.ps1 -Stdio -LanguageServerOnly\"",
+        ],
+      },
     },
     {
       "name": "PowerShell Terminal",

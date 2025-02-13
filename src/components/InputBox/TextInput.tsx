@@ -31,6 +31,7 @@ import { codeToHtml } from "shiki";
 import { Theme } from "@/datatypes/Theme";
 import { CodeMirrorInput } from "./CodeMirrorInput";
 import { codeMirrorTheme } from "./CodeMirrorTheme";
+import { ShellConfig } from "@/datatypes/Config";
 
 function codeToHTMLWithTheme(
   code: string,
@@ -68,6 +69,9 @@ export function Input(props: {
   const [commandHistory, setCommandHistory] = useState<CommandID | undefined>(
     undefined
   );
+  const [shellConfig, setShellConfig] = useState<ShellConfig | undefined>(
+    undefined
+  );
 
   const command = api.shell.command.useQuery(
     {
@@ -79,6 +83,11 @@ export function Input(props: {
       refetchInterval: 200,
     }
   );
+  const shellConfigQuery = api.shell.config.useQuery(pid, {
+    enabled: shellConfig === undefined,
+    refetchInterval: 500,
+  });
+
   // If the command history is changed, update the text.
   useEffect(() => {
     log.debug(`Command history changed to ${commandHistory} ${command.data}`);
@@ -89,6 +98,12 @@ export function Input(props: {
       }
     }
   }, [commandHistory]);
+
+  useEffect(() => {
+    if (shellConfigQuery.data) {
+      setShellConfig(shellConfigQuery.data);
+    }
+  }, [shellConfigQuery.data]);
 
   // Keybinds
   const keybindRef = useKeybindOfCommandScopeRef();
@@ -177,6 +192,15 @@ export function Input(props: {
         onKeyDown={(e) => {
           handleKeyDown(e);
         }}
+        languageServerConfig={
+          shellConfig && shellConfig.languageServer
+            ? {
+                // TODO: Get current shell config
+                executable: shellConfig.languageServer.executable,
+                args: shellConfig.languageServer.args,
+              }
+            : undefined
+        }
       />
     );
   }

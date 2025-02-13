@@ -29,7 +29,7 @@ const keybindFilePath = path.join(
   "keybind.json"
 );
 const shellSpecDir = path.join(app.getPath("home"), ".natter", "shellSpecs");
-const labelsDir = path.join(app.getPath("home"), ".natter", "language");
+const labelsDir = path.join(app.getPath("home"), ".natter", "locale");
 
 let parsedConfig: Config | undefined;
 let configReadTime: number | undefined;
@@ -125,8 +125,8 @@ export function writeShellSpec(name: string, spec: ShellSpecification) {
     });
 }
 
-export function readLabels(language: string) {
-  const labelsPath = path.join(labelsDir, `${language}.json`);
+export function readLabels(locale: string) {
+  const labelsPath = path.join(labelsDir, `${locale}.json`);
   log.debug("Reading labels from: ", labelsPath);
   const labelsRead = fs.readFile(labelsPath, "utf-8");
   return labelsRead
@@ -175,9 +175,9 @@ export const configurationRouter = server.router({
       return writeShellSpec(opts.input.name, opts.input.spec);
     }),
   readLabels: proc
-    .input(z.object({ language: z.string() }))
+    .input(z.object({ locale: z.string() }))
     .output(LabelsSchema)
     .query(async (opts) => {
-      return readLabels(opts.input.language);
+      return readLabels(opts.input.locale);
     }),
 });

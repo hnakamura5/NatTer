@@ -5,6 +5,7 @@ import { fileSystemRouter } from "@/server/FileSystem";
 import { osShellRouter } from "@/server/osShell";
 import { configurationRouter } from "@/server/configServer";
 import { iconServerRouter } from "@/server/iconServer";
+import { languageServerRouter } from "@/server/languageServer";
 
 export const router = server.router({
   shell: shellRouter,
@@ -12,5 +13,6 @@ export const router = server.router({
   icon: iconServerRouter,
   os: osShellRouter,
   config: configurationRouter,
+  lsp: languageServerRouter,
 });
 export type AppRouter = typeof router;

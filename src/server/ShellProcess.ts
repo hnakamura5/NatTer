@@ -510,4 +510,10 @@ export const shellRouter = server.router({
       const { pid, rows, cols } = opts.input;
       getProcess(pid).handle.resize(rows, cols);
     }),
+  shellConfig: proc
+    .input(ProcessIDScheme)
+    .output(ShellConfigSchema)
+    .query(async (pid) => {
+      return getProcess(pid.input).config;
+    }),
 });

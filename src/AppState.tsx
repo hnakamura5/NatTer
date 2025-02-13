@@ -121,7 +121,7 @@ function LabelsProvider(props: { children: React.ReactNode }) {
   const config = useConfig();
   const labels = api.config.readLabels.useQuery(
     {
-      language: config.language || "English",
+      locale: config.locale || "English",
     },
     {
       onError: (error) => {
