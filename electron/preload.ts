@@ -46,3 +46,5 @@ contextBridge.exposeInMainWorld("languageServer", {
     );
   },
 });
+
+console.log("preload completed.");

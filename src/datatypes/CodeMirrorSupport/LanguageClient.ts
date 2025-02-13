@@ -42,13 +42,6 @@ export function createLanguageClient({
 }: LanguageServerExecutableArgs) {
   const worker = new LanguageClientWorker({ executable, args });
   // Initialize the worker
-  worker.postMessage({
-    type: "initializeProcess",
-    data: {
-      executable: executable,
-      args: args,
-    },
-  });
   return new CodeMirrorLanguageClient(
     worker,
     {
