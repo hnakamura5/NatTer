@@ -1,52 +1,48 @@
+import { LanguageServerConnector } from "@/components/LanguageServerConfigs";
+import { log } from "@/datatypes/Logger";
 import {
-  LanguageServerExecutableArgs,
-  LanguageServerID,
-} from "@/datatypes/LanguageServerConfigs";
+  Message,
+  RequestType,
+  MessageSignature,
+} from "vscode-languageserver-protocol";
+
+type LanguageServerMessageType = MessageSignature;
+function messageFromString(message: string): LanguageServerMessageType {
+  return JSON.parse(message) as LanguageServerMessageType;
+}
+function messageToString(message: LanguageServerMessageType): string {
+  return JSON.stringify(message);
+}
 
 type MessageType = "message" | "messageerror" | "error";
+type MessageEventType = MessageEvent<LanguageServerMessageType>;
+type MessageListenerType = (ev: MessageEventType) => void;
+
 // WebWorker interface object to interact with the language server.
 // onmessage and postMessage have opposite meaning from standard WebWorker.
 // This acts as a proxy/adapter between the language client and server,
 // where the "Worker" side is actually the language server process.
-// Interaction is by electron IPC.
+// Works as adaptor to the connector.
 export class LanguageClientWorker implements Worker {
-  url: string = "";
-  serverID: LanguageServerID | undefined = undefined;
-
-  private messageListeners: ((ev: MessageEvent<string>) => void)[] = [];
-  private messageErrorListeners: ((ev: MessageEvent<string>) => void)[] = [];
+  private messageListeners: MessageListenerType[] = [];
+  private messageErrorListeners: MessageListenerType[] = [];
   private errorListeners: ((ev: ErrorEvent) => void)[] = [];
 
-  constructor(executableArgs: LanguageServerExecutableArgs) {
-    const url = URL.createObjectURL(
-      new Blob([""], { type: "application/javascript" })
-    );
-    this.url = url;
-    this.initializeServer(executableArgs);
-  }
-
-  initializeServer({ executable, args }: LanguageServerExecutableArgs) {
-    window.languageServer.start(executable, args || []).then((serverID) => {
-      this.serverID = serverID;
-      window.languageServer.onReceive(serverID, (message) => {
-        if (this.onmessage) {
-          const messageEvent = new MessageEvent("message", { data: message });
-          this.onmessage(messageEvent);
-        }
+  constructor(private connector: LanguageServerConnector) {
+    this.connector.onmessage((message) => {
+      const messageObject = messageFromString(message);
+      const eventObject = new MessageEvent("message", {
+        data: messageObject,
       });
+      log.debug("LanguageClientWorker: onmessage from server:", eventObject);
+      this.onmessage(eventObject);
     });
-  }
-
-  handleMessage(message: string) {
-    if (this.serverID !== undefined) {
-      window.languageServer.send(this.serverID, message);
-    }
   }
 
   // Worker interface.
 
   // Get message from the language server.
-  onmessage(ev: MessageEvent<string>) {
+  onmessage(ev: MessageEventType) {
     // Dispatch the message listener.
     for (const listener of this.messageListeners) {
       listener(ev);
@@ -54,7 +50,7 @@ export class LanguageClientWorker implements Worker {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onmessageerror(ev: MessageEvent<string>) {
+  onmessageerror(ev: MessageEventType) {
     for (const listener of this.messageErrorListeners) {
       listener(ev);
     }
@@ -67,32 +63,26 @@ export class LanguageClientWorker implements Worker {
   }
 
   // Get message from the language client.
-  postMessage(message: string) {
-    this.handleMessage(message);
+  postMessage(message: LanguageServerMessageType) {
+    log.debug("LanguageClientWorker: postMessage from client:", message);
+    this.connector.send(messageToString(message));
   }
 
   terminate() {
-    if (this.serverID !== undefined) {
-      window.languageServer.close(this.serverID);
-    }
-    URL.revokeObjectURL(this.url);
+    this.connector.close();
   }
 
   addEventListener(
-    type: "message" | "messageerror" | "error",
+    type: MessageType,
     listener: EventListener,
     options?: boolean | AddEventListenerOptions
   ): void {
     switch (type) {
       case "message":
-        this.messageListeners.push(
-          listener as (ev: MessageEvent<string>) => void
-        );
+        this.messageListeners.push(listener as MessageListenerType);
         break;
       case "messageerror":
-        this.messageErrorListeners.push(
-          listener as (ev: MessageEvent<any>) => void
-        );
+        this.messageErrorListeners.push(listener as MessageListenerType);
         break;
       case "error":
         this.errorListeners.push(listener as (ev: ErrorEvent) => void);
@@ -101,7 +91,7 @@ export class LanguageClientWorker implements Worker {
   }
 
   removeEventListener(
-    type: "message" | "messageerror" | "error",
+    type: MessageType,
     listener: EventListener,
     options?: boolean | EventListenerOptions
   ): void {
@@ -126,12 +116,12 @@ export class LanguageClientWorker implements Worker {
     switch (event.type) {
       case "message":
         this.messageListeners.forEach((listener) =>
-          listener(event as MessageEvent<string>)
+          listener(event as MessageEventType)
         );
         break;
       case "messageerror":
         this.messageErrorListeners.forEach((listener) =>
-          listener(event as MessageEvent<string>)
+          listener(event as MessageEventType)
         );
         break;
       case "error":

@@ -1,11 +1,17 @@
-import { forwardRef, useRef } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { EditorView } from "@codemirror/view";
 import CodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
 import { Extension } from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { loadLanguage, LanguageName } from "@uiw/codemirror-extensions-langs";
-import { createLanguageClient } from "@/datatypes/CodeMirrorSupport/LanguageClient";
-import { LanguageServerExecutableArgs } from "@/datatypes/LanguageServerConfigs";
+import { useCodeMirrorLanguageClient } from "@/datatypes/CodeMirrorSupport/LanguageClient";
+import {
+  LanguageServerID,
+  LanguageServerExecutableArgs,
+  useLanguageServerConnector,
+  LanguageServerConnector,
+} from "@/components/LanguageServerConfigs";
+import { log } from "@/datatypes/Logger";
 
 export type CodeMirrorInputProps = {
   id?: string;
@@ -14,6 +20,7 @@ export type CodeMirrorInputProps = {
   style?: React.CSSProperties;
   language?: LanguageName;
   languageServerConfig?: LanguageServerExecutableArgs;
+  bufferFileName?: string;
 } & ReactCodeMirrorProps;
 
 export const CodeMirrorInput = forwardRef<HTMLDivElement, CodeMirrorInputProps>(
@@ -25,26 +32,67 @@ export const CodeMirrorInput = forwardRef<HTMLDivElement, CodeMirrorInputProps>(
       style,
       language,
       languageServerConfig,
+      bufferFileName,
       ...codeMirrorProps
     } = props;
     const viewRef = useRef<EditorView | undefined>(undefined);
-    const extensions: Extension[] = [];
-    if (language) {
+    const [lspExtension, setLspExtension] = useState<Extension[]>([]);
+    const [extensions, setExtensions] = useState<Extension[]>([]);
+    const [lspConnector, setLSPConnector] = useState<
+      LanguageServerConnector | undefined
+    >(undefined);
+    const [serverID, setServerID] = useState<LanguageServerID | undefined>(
+      undefined
+    );
+
+    // Setup language extension.
+    useEffect(() => {
+      if (!language) {
+        return;
+      }
       const extension = loadLanguage(language);
       if (extension) {
-        extensions.push(extension);
+        setExtensions([extension, ...extensions]);
       }
+      return () => {
+        setExtensions(extensions.filter((e) => e !== extension));
+      };
+    }, [language]);
+
+    // Setup language server extension.
+    const { connector, server } =
+      useLanguageServerConnector(languageServerConfig);
+    if (serverID !== server) {
+      setServerID(server);
+      setLSPConnector(connector);
     }
-    if (languageServerConfig) {
-      const languageClient = createLanguageClient(languageServerConfig);
-      extensions.push(
-        languageClient.extension("inmemory://", {
-          shouldHover: true,
-          shouldComplete: true,
-          shouldLint: true,
-        })
-      );
-    }
+    const { client, tempBufferFile } = useCodeMirrorLanguageClient(
+      lspConnector,
+      serverID,
+      !bufferFileName
+    );
+
+    useEffect(() => {
+      if (client !== undefined) {
+        const extension = client.extension(
+          bufferFileName || tempBufferFile || "browser:///",
+          {
+            shouldHover: true,
+            shouldComplete: true,
+            shouldLint: true,
+          }
+        );
+        log.debug("CodeMirrorInput: extension:", extension);
+        setLspExtension([extension]);
+        return () => {
+          setLspExtension([]);
+        };
+      }
+    }, [server, client !== undefined]);
+
+    log.debug(
+      `CodeMirrorInput id: ${id} language: ${language} extensions: ${extensions.length}`
+    );
 
     // TODO: from here. Connect to the language server
     return (
@@ -75,7 +123,7 @@ export const CodeMirrorInput = forwardRef<HTMLDivElement, CodeMirrorInputProps>(
             indentOnInput: true,
           }}
           theme={codeMirrorTheme || oneDark}
-          extensions={extensions}
+          extensions={lspExtension}
         />
       </div>
     );

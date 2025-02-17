@@ -1,6 +1,6 @@
 import { server } from "@/server/tRPCServer";
 import { z } from "zod";
-import { Config, ConfigSchema, parseConfig } from "@/datatypes/Config";
+import { Config, ConfigSchema } from "@/datatypes/Config";
 import {
   KeybindListSchema,
   parseUserKeybindList,
@@ -10,6 +10,7 @@ import {
 import fs from "node:fs/promises";
 import { app } from "electron";
 import path, { parse } from "node:path";
+import JSON5 from "json5";
 
 import { log } from "@/datatypes/Logger";
 import {
@@ -19,9 +20,82 @@ import {
 } from "@/datatypes/ShellSpecification";
 import { LabelsSchema, parseLabels } from "@/datatypes/Labels";
 
-const proc = server.procedure;
+export const tempDir = path.join(app.getPath("temp"), ".natter");
+export const commandTempDir = path.join(tempDir, "Command");
+export const lspTempDir = path.join(tempDir, "LSPTempBuffer");
 
-//const configFilePath = Electron.app.getPath("home") + "/.natter/config.json";
+const pathVariables: Map<string, string> = new Map();
+pathVariables.set("${APPROOT}", app.getPath("exe"));
+pathVariables.set("${HOME}", app.getPath("home"));
+pathVariables.set("${APPDATA}", app.getPath("appData"));
+pathVariables.set("${TEMP}", tempDir);
+pathVariables.set("${LSPTEMP}", lspTempDir);
+
+export function configPathAssignVariables(path: string): string {
+  for (const [key, value] of pathVariables) {
+    path = path.replace(key, value);
+  }
+  return path;
+}
+
+function configPathAssignVariablesOptional(
+  path: string | undefined
+): string | undefined {
+  if (path) {
+    return configPathAssignVariables(path);
+  } else {
+    return undefined;
+  }
+}
+
+function pathToURI(pathStr: string): string {
+  const url = new URL(`file:///${pathStr}`);
+  return url.toString();
+}
+
+function pathToURIOptional(pathStr: string | undefined): string | undefined {
+  if (pathStr) {
+    return pathToURI(pathStr);
+  } else {
+    return undefined;
+  }
+}
+
+export function parseConfig(json: string): Config | undefined {
+  try {
+    const parsed = ConfigSchema.parse(JSON5.parse(json));
+    // Assign path variables.
+    return {
+      ...parsed,
+      shells: parsed.shells.map((s) => ({
+        ...s,
+        executable: configPathAssignVariables(s.executable),
+        args: s.args?.map((a) => configPathAssignVariables(a)),
+        languageServer: s.languageServer
+          ? {
+              ...s.languageServer,
+              executable: configPathAssignVariables(
+                s.languageServer.executable
+              ),
+              args: s.languageServer.args?.map((a) =>
+                configPathAssignVariables(a)
+              ),
+            }
+          : undefined,
+      })),
+      tempDir: configPathAssignVariablesOptional(parsed.tempDir) || tempDir,
+      commandTempDir:
+        configPathAssignVariablesOptional(parsed.commandTempDir) ||
+        commandTempDir,
+      lspTempDir:
+        configPathAssignVariablesOptional(parsed.lspTempDir) || lspTempDir,
+    };
+  } catch (e) {
+    console.error("Failed to parse config: ", e);
+    return undefined;
+  }
+}
+
 const configFilePath = path.join(app.getPath("home"), ".natter", "config.json");
 const keybindFilePath = path.join(
   app.getPath("home"),
@@ -33,6 +107,8 @@ const labelsDir = path.join(app.getPath("home"), ".natter", "locale");
 
 let parsedConfig: Config | undefined;
 let configReadTime: number | undefined;
+
+// Read config. Use this also in server side.
 export function readConfig() {
   return fs.stat(configFilePath).then((stats) => {
     const lastUpdateTime = stats.mtime.getTime();
@@ -144,6 +220,7 @@ export function readLabels(locale: string) {
     });
 }
 
+const proc = server.procedure;
 export const configurationRouter = server.router({
   readConfig: proc.output(ConfigSchema).query(async () => {
     return readConfig();

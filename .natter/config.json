@@ -15,10 +15,11 @@
         "args": [
           "-NoProfile",
           "-NoLogo",
-          "-NoExit",
           "-Command",
-          "\"${HOME}\\.natter-app\\PowerShellEditorServices\\Start-LanguageServer.ps1 -Stdio -LanguageServerOnly\"",
+          "${HOME}\\.natter-app\\PowerShellEditorServices\\Start-EditorServices.ps1",
+          "-Stdio",
         ],
+        "tempBufferFile": "${LSPTEMP}",
       },
     },
     {

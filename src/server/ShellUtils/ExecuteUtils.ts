@@ -401,25 +401,29 @@ export async function receivePartialLineResponse(
 }
 
 export async function saveCommandToTempFile(process: Process, command: string) {
+  const commandTempDir = (await readConfig()).commandTempDir!;
   const shellSpec = process.shellSpec;
   const filePath =
     shellSpec.temporalFilePath ||
-    path.join(app.getPath("temp"), `temp-${process.id}${shellSpec.defaultExt}`);
-  return fs
-    .writeFile(filePath, command)
-    .then(() => {
-      log.debug(`Saved command to ${filePath}`);
-      if (process.config.virtualPath) {
-        return parenCommand(
-          shellSpec,
-          encodeOSPathToVirtual(process.config, filePath)
-        );
-      }
-      return filePath;
-    })
-    .catch(() => {
-      const message = `Failed to save command to ${filePath}`;
-      log.debugTrace(message);
-      throw new Error(message);
-    });
+    path.join(commandTempDir, `temp-${process.id}${shellSpec.defaultExt}`);
+  const dir = path.dirname(filePath);
+  return fs.mkdir(dir, { recursive: true }).then(() => {
+    return fs
+      .writeFile(filePath, command)
+      .then(() => {
+        log.debug(`Saved command to ${filePath}`);
+        if (process.config.virtualPath) {
+          return parenCommand(
+            shellSpec,
+            encodeOSPathToVirtual(process.config, filePath)
+          );
+        }
+        return filePath;
+      })
+      .catch((e) => {
+        const message = `Failed to save command to ${filePath}`;
+        log.debugTrace(message, e);
+        throw new Error(message);
+      });
+  });
 }

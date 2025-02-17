@@ -56,7 +56,7 @@ const StyledCodeMirrorInput = styled(CodeMirrorInput)(({ theme }) => ({
 }));
 
 export function Input(props: {
-  key: string;
+  id: string;
   submit: (command: string, styledCommand?: string) => void;
   inputBoxRef: React.RefObject<HTMLElement>;
 }) {
@@ -73,6 +73,9 @@ export function Input(props: {
     undefined
   );
 
+  log.debug(
+    `Input: id:${props.id} text:${text} history:${commandHistory} numCommands:${numCommands}`
+  );
   const command = api.shell.command.useQuery(
     {
       pid: pid,
@@ -100,10 +103,11 @@ export function Input(props: {
   }, [commandHistory]);
 
   useEffect(() => {
-    if (shellConfigQuery.data) {
+    if (shellConfigQuery.data && shellConfig !== shellConfigQuery.data) {
+      log.debug(`Set shell config: ${JSON.stringify(shellConfigQuery.data)}`);
       setShellConfig(shellConfigQuery.data);
     }
-  }, [shellConfigQuery.data]);
+  }, [shellConfigQuery.data, shellConfig]);
 
   // Keybinds
   const keybindRef = useKeybindOfCommandScopeRef();

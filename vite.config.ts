@@ -11,7 +11,7 @@ console.log(__dirname);
 export default defineConfig({
   esbuild: {
     supported: {
-      'top-level-await': true
+      "top-level-await": true,
     },
   },
   plugins: [
@@ -28,6 +28,13 @@ export default defineConfig({
               external: [
                 "node-pty", // To avoid error "Unexpected character..."
               ],
+              onwarn(warning, warn) {
+                // Suppress "Module level directives cause errors when bundled" warnings
+                if (warning.code === "MODULE_LEVEL_DIRECTIVE") {
+                  return;
+                }
+                warn(warning);
+              },
             },
           },
           resolve: {

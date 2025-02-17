@@ -132,7 +132,7 @@ function InputBox(props: InputBoxProps) {
                 <ControlButtons submit={submit} />
                 <ContextMenu items={<InputBoxContextMenuContents />}>
                   <Input
-                    key={`input-${pid}`}
+                    id={`input-${pid}`}
                     inputBoxRef={
                       // TODO: any better way?
                       inputBoxRef
