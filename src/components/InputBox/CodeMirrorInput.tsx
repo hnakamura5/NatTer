@@ -1,9 +1,13 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { EditorView } from "@codemirror/view";
+import { acceptCompletion } from "@codemirror/autocomplete";
+import { keymap } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
 import CodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
 import { Extension } from "@uiw/react-codemirror";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { loadLanguage, LanguageName } from "@uiw/codemirror-extensions-langs";
+
 import { useCodeMirrorLanguageClient } from "@/datatypes/CodeMirrorSupport/LanguageClient";
 import {
   LanguageServerID,
@@ -123,7 +127,19 @@ export const CodeMirrorInput = forwardRef<HTMLDivElement, CodeMirrorInputProps>(
             indentOnInput: true,
           }}
           theme={codeMirrorTheme || oneDark}
-          extensions={lspExtension}
+          // https://discuss.codemirror.net/t/using-tab-key-for-autocomplete-suggestions/7234/6
+          indentWithTab={false}
+          extensions={[
+            ...lspExtension,
+            keymap.of([
+              {
+                key: "Tab",
+                win: "Tab",
+                run: acceptCompletion,
+              },
+              indentWithTab,
+            ]),
+          ]}
         />
       </div>
     );
