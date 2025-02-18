@@ -95,6 +95,7 @@ export function useCodeMirrorLanguageClient(
             const htmlString = markdown.render(
               completionItem.documentation.value
             );
+            log.debug(`useCodeMirrorLanguageClient: infoRenderer=${htmlString}`);
             divNode.innerHTML = htmlString;
             return divNode;
           },
@@ -104,6 +105,7 @@ export function useCodeMirrorLanguageClient(
             const htmlString = markdown.render(
               flattenAsMarkdown(hover.contents)
             );
+            log.debug(`useCodeMirrorLanguageClient: hoverRenderer=${htmlString}`);
             divNode.innerHTML = htmlString;
             return {
               dom: divNode,

@@ -53,6 +53,16 @@ const StyledCodeMirrorInput = styled(CodeMirrorInput)(({ theme }) => ({
   "& .cm-editor": {
     borderRadius: "5px",
   },
+  "& .cm-tooltip": {
+    backgroundColor: theme.system.tooltipBackgroundColor,
+    color: theme.system.textColor,
+    fontFamily: theme.system.font,
+  },
+  "& .cm-completion-item": {
+    backgroundColor: theme.system.tooltipBackgroundColor,
+    color: theme.system.textColor,
+    fontFamily: theme.system.font,
+  },
 }));
 
 export function Input(props: {

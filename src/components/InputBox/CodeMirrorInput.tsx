@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { EditorView } from "@codemirror/view";
-import { acceptCompletion } from "@codemirror/autocomplete";
+import { acceptCompletion, autocompletion } from "@codemirror/autocomplete";
 import { keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import CodeMirror, { ReactCodeMirrorProps } from "@uiw/react-codemirror";
@@ -86,7 +86,6 @@ export const CodeMirrorInput = forwardRef<HTMLDivElement, CodeMirrorInputProps>(
             shouldLint: true,
           }
         );
-        log.debug("CodeMirrorInput: extension:", extension);
         setLspExtension([extension]);
         return () => {
           setLspExtension([]);
@@ -131,6 +130,10 @@ export const CodeMirrorInput = forwardRef<HTMLDivElement, CodeMirrorInputProps>(
           indentWithTab={false}
           extensions={[
             ...lspExtension,
+            autocompletion({
+              tooltipClass: () => "cm-tooltip",
+              optionClass: () => "cm-completion-item",
+            }),
             keymap.of([
               {
                 key: "Tab",
