@@ -185,82 +185,80 @@ export function Input(props: {
     }
   };
 
-  if (config.editor === "CodeMirror") {
+  // TODO: Input must be on top level of the component to avoid the focus problem.
+  // That is, we lose the focus when the component re-rendered (e.g.on input change).
+  // Even styled component causes this problem.
+  // log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
+  if (config.editor === "Monaco") {
     return (
-      <StyledCodeMirrorInput
-        id={`input-${pid}`}
+      <MonacoInput
         value={text}
+        maxHeight={200}
+        monacoTheme={monacoTheme}
         language={language}
-        codeMirrorTheme={codeMirrorTheme(theme)}
-        onChange={(value, update) => {
-          setText(value);
+        id={`input-${pid}`}
+        style={{
+          padding: "3px 8px 3px 8px",
+          borderRadius: "5px",
+          margin: "0px 5px 0px 3px", // top right bottom left
         }}
         ref={
           props.inputBoxRef
             ? (props.inputBoxRef as RefObject<HTMLDivElement>)
             : undefined
         }
-        style={{
-          padding: "1px 5px 1px 5px", // top right bottom left
+        onChange={(v, e) => {
+          setText(v);
         }}
-        onKeyDown={(e) => {
-          handleKeyDown(e);
-        }}
-        languageServerConfig={
-          shellConfig && shellConfig.languageServer
-            ? {
-                // TODO: Get current shell config
-                executable: shellConfig.languageServer.executable,
-                args: shellConfig.languageServer.args,
-              }
-            : undefined
+        onKeyDown={(e) =>
+          handleKeyDown(e as unknown as React.KeyboardEvent<HTMLDivElement>)
         }
+        onDidMount={(editor) => {
+          const domNode = editor.getContainerDomNode();
+          if (domNode) {
+            log.debug(
+              `Input mounted: ${domNode}#${domNode.id}.${domNode.className}`
+            );
+            //  props.inputBoxRef.current = domNode;
+          }
+          editor.onDidFocusEditorText(() => {
+            log.debug(
+              `Input focused: ${domNode}#${domNode.id}.${domNode.className}`
+            );
+          });
+        }}
       />
     );
   }
-  // TODO: Input must be on top level of the component to avoid the focus problem.
-  // That is, we lose the focus when the component re-rendered (e.g.on input change).
-  // Even styled component causes this problem.
-  // log.debug(`Input rendered text:${text} (history: ${commandHistory})`);
-  //setMonacoInputTheme(theme, "TextInput");
-
   return (
-    <MonacoInput
-      value={text}
-      maxHeight={200}
-      monacoTheme={monacoTheme}
-      language={language}
+    <StyledCodeMirrorInput
       id={`input-${pid}`}
-      style={{
-        padding: "3px 8px 3px 8px",
-        borderRadius: "5px",
-        margin: "0px 5px 0px 3px", // top right bottom left
+      value={text}
+      language={language}
+      codeMirrorTheme={codeMirrorTheme(theme)}
+      onChange={(value, update) => {
+        setText(value);
       }}
       ref={
         props.inputBoxRef
           ? (props.inputBoxRef as RefObject<HTMLDivElement>)
           : undefined
       }
-      onChange={(v, e) => {
-        setText(v);
+      style={{
+        padding: "1px 5px 1px 5px", // top right bottom left
       }}
-      onKeyDown={(e) =>
-        handleKeyDown(e as unknown as React.KeyboardEvent<HTMLDivElement>)
+      onKeyDown={(e) => {
+        handleKeyDown(e);
+      }}
+      languageServerConfig={
+        shellConfig && shellConfig.languageServer
+          ? {
+              // TODO: Get current shell config
+              executable: shellConfig.languageServer.executable,
+              args: shellConfig.languageServer.args,
+            }
+          : undefined
       }
-      onDidMount={(editor) => {
-        const domNode = editor.getContainerDomNode();
-        if (domNode) {
-          log.debug(
-            `Input mounted: ${domNode}#${domNode.id}.${domNode.className}`
-          );
-          //  props.inputBoxRef.current = domNode;
-        }
-        editor.onDidFocusEditorText(() => {
-          log.debug(
-            `Input focused: ${domNode}#${domNode.id}.${domNode.className}`
-          );
-        });
-      }}
     />
   );
 }
