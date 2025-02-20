@@ -19,7 +19,8 @@
     "files": [
       "dist",
       "dist-electron",
-      "node_modules/material-icon-theme/icons"
+      "node_modules/material-icon-theme/icons",
+      ".natter"
     ]
   },
   "dependencies": {

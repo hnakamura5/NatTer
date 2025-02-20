@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import { LanguageServerConfigSchema } from "@/components/LanguageServerConfigs";
-import { lspTempDir, tempDir } from "@/server/configServer";
 
 export const ShellConfigSchema = z.object({
   name: z.string(),
@@ -42,6 +41,10 @@ export const ConfigSchema = z.object({
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
+
+// Why deepPartial is deprecated? https://github.com/colinhacks/zod/issues/2854
+export const PartialConfigSchema = ConfigSchema.deepPartial();
+export type PartialConfig = z.infer<typeof PartialConfigSchema>;
 
 export function decodeVirtualPathToOS(
   config: ShellConfig,

@@ -1,6 +1,11 @@
 import { server } from "@/server/tRPCServer";
 import { z } from "zod";
-import { Config, ConfigSchema } from "@/datatypes/Config";
+import {
+  Config,
+  ConfigSchema,
+  PartialConfig,
+  PartialConfigSchema,
+} from "@/datatypes/Config";
 import {
   KeybindListSchema,
   parseUserKeybindList,
@@ -19,128 +24,54 @@ import {
   parseShellSpec,
 } from "@/datatypes/ShellSpecification";
 import { LabelsSchema, parseLabels } from "@/datatypes/Labels";
+import {
+  overrideWithPartialSchema,
+  parseConfig,
+  parseUserConfig,
+} from "./ConfigUtils/parsers";
+import { Stats } from "node:fs";
+import { BuiltinAndUserConfigManager } from "./ConfigUtils/reader";
 
-export const tempDir = path.join(app.getPath("temp"), ".natter");
-export const commandTempDir = path.join(tempDir, "Command");
-export const lspTempDir = path.join(tempDir, "LSPTempBuffer");
+// Builtin default config.
+const configDir = process.env.DOT_NATTER_PATH || ".natter";
+// User configuration to override default config.
+const userConfigDir = path.join(app.getPath("home"), ".natter");
 
-const pathVariables: Map<string, string> = new Map();
-pathVariables.set("${APPROOT}", app.getPath("exe"));
-pathVariables.set("${HOME}", app.getPath("home"));
-pathVariables.set("${APPDATA}", app.getPath("appData"));
-pathVariables.set("${TEMP}", tempDir);
-pathVariables.set("${LSPTEMP}", lspTempDir);
+// Master configurations.
+const configFileName = "config.json";
+// Keybind Definitions.
+const keybindFileName = "keybind.json";
+// Shell Specifications.
+const shellSpecDirName = "shellSpecs";
+// Labels for each locale.
+const labelsDirName = "locale";
+// Themes.
+const themesDirName = "themes";
 
-export function configPathAssignVariables(path: string): string {
-  for (const [key, value] of pathVariables) {
-    path = path.replace(key, value);
-  }
-  return path;
-}
+const configFilePath = path.join(configDir, configFileName);
+const keybindFilePath = path.join(configDir, keybindFileName);
+const shellSpecDir = path.join(configDir, shellSpecDirName);
+const labelsDir = path.join(configDir, labelsDirName);
+const themesDir = path.join(configDir, themesDirName);
 
-function configPathAssignVariablesOptional(
-  path: string | undefined
-): string | undefined {
-  if (path) {
-    return configPathAssignVariables(path);
-  } else {
-    return undefined;
-  }
-}
+const userConfigFilePath = path.join(userConfigDir, configFileName);
+const userKeybindFilePath = path.join(userConfigDir, keybindFileName);
+const userShellSpecDir = path.join(userConfigDir, shellSpecDirName);
+const userLabelsDir = path.join(userConfigDir, labelsDirName);
+const userThemesDir = path.join(userConfigDir, themesDirName);
 
-function pathToURI(pathStr: string): string {
-  const url = new URL(`file:///${pathStr}`);
-  return url.toString();
-}
-
-function pathToURIOptional(pathStr: string | undefined): string | undefined {
-  if (pathStr) {
-    return pathToURI(pathStr);
-  } else {
-    return undefined;
-  }
-}
-
-export function parseConfig(json: string): Config | undefined {
-  try {
-    const parsed = ConfigSchema.parse(JSON5.parse(json));
-    // Assign path variables.
-    return {
-      ...parsed,
-      shells: parsed.shells.map((s) => ({
-        ...s,
-        executable: configPathAssignVariables(s.executable),
-        args: s.args?.map((a) => configPathAssignVariables(a)),
-        languageServer: s.languageServer
-          ? {
-              ...s.languageServer,
-              executable: configPathAssignVariables(
-                s.languageServer.executable
-              ),
-              args: s.languageServer.args?.map((a) =>
-                configPathAssignVariables(a)
-              ),
-            }
-          : undefined,
-      })),
-      tempDir: configPathAssignVariablesOptional(parsed.tempDir) || tempDir,
-      commandTempDir:
-        configPathAssignVariablesOptional(parsed.commandTempDir) ||
-        commandTempDir,
-      lspTempDir:
-        configPathAssignVariablesOptional(parsed.lspTempDir) || lspTempDir,
-    };
-  } catch (e) {
-    console.error("Failed to parse config: ", e);
-    return undefined;
-  }
-}
-
-const configFilePath = path.join(app.getPath("home"), ".natter", "config.json");
-const keybindFilePath = path.join(
-  app.getPath("home"),
-  ".natter",
-  "keybind.json"
-);
-const shellSpecDir = path.join(app.getPath("home"), ".natter", "shellSpecs");
-const labelsDir = path.join(app.getPath("home"), ".natter", "locale");
-
-let parsedConfig: Config | undefined;
-let configReadTime: number | undefined;
+export const configManager = new BuiltinAndUserConfigManager<
+  Config,
+  PartialConfig
+>(configFilePath, userConfigFilePath, parseConfig, parseUserConfig);
 
 // Read config. Use this also in server side.
-export function readConfig() {
-  return fs.stat(configFilePath).then((stats) => {
-    const lastUpdateTime = stats.mtime.getTime();
-    if (lastUpdateTime === configReadTime && parsedConfig) {
-      return parsedConfig;
-    }
-    const configRead = fs.readFile(configFilePath, "utf-8");
-    log.debug("Reading config from: ", configFilePath);
-    return configRead.then((config) => {
-      const parsed = parseConfig(config);
-      parsedConfig = parsed;
-      configReadTime = lastUpdateTime;
-      if (parsed) {
-        return parsed;
-      }
-      throw new Error("Failed to parse config");
-    });
-  });
+export function readConfig(): Promise<Config> {
+  return configManager.readConfig();
 }
 
-function writeConfig(config: Config) {
-  const writeFile = fs.writeFile(
-    configFilePath,
-    JSON.stringify(config, null, 2)
-  );
-  return writeFile
-    .then(() => {
-      return true;
-    })
-    .catch(() => {
-      return false;
-    });
+function writeUserConfig(config: PartialConfig): Promise<boolean> {
+  return configManager.writeUserConfig(config);
 }
 
 function readKeybind() {
@@ -225,11 +156,11 @@ export const configurationRouter = server.router({
   readConfig: proc.output(ConfigSchema).query(async () => {
     return readConfig();
   }),
-  writeConfig: proc
-    .input(ConfigSchema)
+  writeUserConfig: proc
+    .input(PartialConfigSchema)
     .output(z.boolean())
     .mutation(async (opts) => {
-      return writeConfig(opts.input);
+      return writeUserConfig(opts.input);
     }),
   readKeybind: proc.output(UserKeybindListSchema).query(async () => {
     return readKeybind();
