@@ -4,24 +4,33 @@ import {
   KeybindCommands,
   KeybindCommandsSchema,
   KeybindScopeSchema,
-  UserKeybindCommandsSchema,
+  CustomKeybindCommandsSchema as CustomKeybindCommandsSchema,
 } from "@/datatypes/KeybindCommands";
 import { KeyboardEvent } from "react";
 
 // Use the xterm internal evaluation by copying the function from xterm.js.
 import { evaluateKeyboardEvent } from "@/datatypes/xtermCopySrc/Keyboard";
 
-
-export const UserKeybindSchema = z.object({
+export const CustomKeybindSchema = z.object({
   key: z.string(),
-  command: UserKeybindCommandsSchema,
+  command: CustomKeybindCommandsSchema,
   args: z.array(z.string()).optional(),
   scope: KeybindScopeSchema.optional(),
 });
-export type UserKeybind = z.infer<typeof UserKeybindSchema>;
+export type CustomKeybind = z.infer<typeof CustomKeybindSchema>;
 
-export const UserKeybindListSchema = z.array(UserKeybindSchema);
-export type UserKeybindList = z.infer<typeof UserKeybindListSchema>;
+export const CustomKeybindListSchema = z.array(CustomKeybindSchema);
+export type CustomKeybindList = z.infer<typeof CustomKeybindListSchema>;
+
+export const PartialCustomKeybindSchema = CustomKeybindSchema.deepPartial();
+export type PartialCustomKeybind = z.infer<typeof PartialCustomKeybindSchema>;
+
+export const PartialCustomKeybindListSchema = z.array(
+  PartialCustomKeybindSchema
+);
+export type PartialCustomKeybindList = z.infer<
+  typeof PartialCustomKeybindListSchema
+>;
 
 export const KeybindSchema = z.object({
   key: z.string(),
@@ -34,9 +43,20 @@ export type Keybind = z.infer<typeof KeybindSchema>;
 export const KeybindListSchema = z.array(KeybindSchema);
 export type KeybindList = z.infer<typeof KeybindListSchema>;
 
-export function parseUserKeybindList(json: string): UserKeybindList {
+export function parseCustomKeybindList(json: string): CustomKeybindList {
   try {
-    return UserKeybindListSchema.parse(JSON5.parse(json));
+    return CustomKeybindListSchema.parse(JSON5.parse(json));
+  } catch (e) {
+    console.error("Failed to parse keybind: ", e);
+    return [];
+  }
+}
+
+export function parseCustomUserKeybindList(
+  json: string
+): PartialCustomKeybindList {
+  try {
+    return PartialCustomKeybindListSchema.parse(JSON5.parse(json));
   } catch (e) {
     console.error("Failed to parse keybind: ", e);
     return [];
@@ -44,7 +64,7 @@ export function parseUserKeybindList(json: string): UserKeybindList {
 }
 
 // Add key binds that user can't change.
-export function addFixedKeybinds(keybinds: UserKeybindList): KeybindList {
+export function addFixedKeybinds(keybinds: CustomKeybindList): KeybindList {
   const fixedKeybinds: KeybindList = [
     {
       key: "ctrl+c",

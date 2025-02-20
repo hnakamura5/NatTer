@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const UserKeybindCommandsSchema = z.enum([
+export const CustomKeybindCommandsSchema = z.enum([
   "CommandCopyToClipboard",
   "CommandHistoryUp",
   "CommandHistoryDown",
@@ -15,7 +15,7 @@ export const UserKeybindCommandsSchema = z.enum([
   "SearchInCommand",
   "SendKill",
 ]);
-export type UserKeybindCommands = z.infer<typeof UserKeybindCommandsSchema>;
+export type CustomKeybindCommands = z.infer<typeof CustomKeybindCommandsSchema>;
 
 export const FixedKeybindCommands = z.enum([
   "Copy",
@@ -30,7 +30,7 @@ export const FixedKeybindCommands = z.enum([
 export type FixedKeybindCommands = z.infer<typeof FixedKeybindCommands>;
 
 export const KeybindCommandsSchema = z.union([
-  UserKeybindCommandsSchema,
+  CustomKeybindCommandsSchema,
   FixedKeybindCommands,
 ]);
 export type KeybindCommands = z.infer<typeof KeybindCommandsSchema>;

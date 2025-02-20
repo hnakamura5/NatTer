@@ -1,11 +1,10 @@
-import { z } from "zod";
-import path, { parse } from "node:path";
 import { Stats } from "node:fs";
 import fs from "node:fs/promises";
 
-import { overrideWithPartialSchema, parseConfig } from "./parsers";
+import { overrideWithPartialSchema } from "./parsers";
 import { log } from "@/datatypes/Logger";
 
+// Generic utility for reading and writing built-in and user config files.
 export class BuiltinAndUserConfigManager<ConfigT, PartialT> {
   parsedConfig: ConfigT | undefined;
   configLastUpdateTime: number | undefined;

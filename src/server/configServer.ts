@@ -8,9 +8,13 @@ import {
 } from "@/datatypes/Config";
 import {
   KeybindListSchema,
-  parseUserKeybindList,
-  UserKeybindListSchema,
+  parseCustomKeybindList,
+  CustomKeybindListSchema,
   KeybindList,
+  PartialCustomKeybindList,
+  CustomKeybindList,
+  parseCustomUserKeybindList,
+  PartialCustomKeybindListSchema,
 } from "@/datatypes/Keybind";
 import fs from "node:fs/promises";
 import { app } from "electron";
@@ -60,44 +64,36 @@ const userShellSpecDir = path.join(userConfigDir, shellSpecDirName);
 const userLabelsDir = path.join(userConfigDir, labelsDirName);
 const userThemesDir = path.join(userConfigDir, themesDirName);
 
-export const configManager = new BuiltinAndUserConfigManager<
-  Config,
-  PartialConfig
->(configFilePath, userConfigFilePath, parseConfig, parseUserConfig);
+const configManager = new BuiltinAndUserConfigManager<Config, PartialConfig>(
+  configFilePath,
+  userConfigFilePath,
+  parseConfig,
+  parseUserConfig
+);
 
-// Read config. Use this also in server side.
+// Read config. Use this also in accessing to config in server side.
 export function readConfig(): Promise<Config> {
   return configManager.readConfig();
 }
-
 function writeUserConfig(config: PartialConfig): Promise<boolean> {
   return configManager.writeUserConfig(config);
 }
 
-function readKeybind() {
-  const keybindRead = fs.readFile(keybindFilePath, "utf-8");
-  log.debug("Reading keybind from: ", keybindFilePath);
-  return keybindRead.then((keybind) => {
-    const parsed = parseUserKeybindList(keybind);
-    if (parsed) {
-      return parsed;
-    }
-    throw new Error("Failed to parse keybind");
-  });
-}
+const keybindManager = new BuiltinAndUserConfigManager<
+  CustomKeybindList,
+  PartialCustomKeybindList
+>(
+  keybindFilePath,
+  userKeybindFilePath,
+  parseCustomKeybindList,
+  parseCustomUserKeybindList
+);
 
-function writeKeybind(keybind: KeybindList) {
-  const writeFile = fs.writeFile(
-    keybindFilePath,
-    JSON.stringify(keybind, null, 2)
-  );
-  return writeFile
-    .then(() => {
-      return true;
-    })
-    .catch(() => {
-      return false;
-    });
+function readKeybind(): Promise<CustomKeybindList> {
+  return keybindManager.readConfig();
+}
+function writeUserKeybind(keybind: PartialCustomKeybindList) {
+  return keybindManager.writeUserConfig(keybind);
 }
 
 export function readShellSpecs() {
@@ -162,14 +158,14 @@ export const configurationRouter = server.router({
     .mutation(async (opts) => {
       return writeUserConfig(opts.input);
     }),
-  readKeybind: proc.output(UserKeybindListSchema).query(async () => {
+  readKeybind: proc.output(CustomKeybindListSchema).query(async () => {
     return readKeybind();
   }),
-  writeKeybind: proc
-    .input(KeybindListSchema)
+  writeUserKeybind: proc
+    .input(PartialCustomKeybindListSchema)
     .output(z.boolean())
     .mutation(async (opts) => {
-      return writeKeybind(opts.input);
+      return writeUserKeybind(opts.input);
     }),
   readShellSpecs: proc
     .output(z.array(ShellSpecificationSchema))
