@@ -10,6 +10,7 @@ import { KeyboardEvent } from "react";
 
 // Use the xterm internal evaluation by copying the function from xterm.js.
 import { evaluateKeyboardEvent } from "@/datatypes/xtermCopySrc/Keyboard";
+import { log } from "./Logger";
 
 export const CustomKeybindSchema = z.object({
   key: z.string(),
@@ -47,7 +48,7 @@ export function parseCustomKeybindList(json: string): CustomKeybindList {
   try {
     return CustomKeybindListSchema.parse(JSON5.parse(json));
   } catch (e) {
-    console.error("Failed to parse keybind: ", e);
+    log.error("Failed to parse keybind: ", e);
     return [];
   }
 }
@@ -58,7 +59,7 @@ export function parseCustomUserKeybindList(
   try {
     return PartialCustomKeybindListSchema.parse(JSON5.parse(json));
   } catch (e) {
-    console.error("Failed to parse keybind: ", e);
+    log.error("Failed to parse keybind: ", e);
     return [];
   }
 }

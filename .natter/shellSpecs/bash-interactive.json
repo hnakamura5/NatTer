@@ -1,6 +1,6 @@
 {
   // Specification for the bash shell
-  "name": "bash",
+  "name": "bash-interactive",
   "pathKind": "posix",
   "supportedInteractions": [
     "command",

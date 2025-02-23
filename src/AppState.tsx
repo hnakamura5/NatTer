@@ -90,7 +90,7 @@ export function useKeybindList() {
 function KeybindListProvider(props: { children: React.ReactNode }) {
   const keybind = api.config.readKeybind.useQuery(undefined, {
     onError: (error) => {
-      console.error("Failed to load keybind: ", error);
+      log.error("Failed to load keybind: ", error);
     },
   });
   log.debug("KeybindListProvider: ", keybind.data);

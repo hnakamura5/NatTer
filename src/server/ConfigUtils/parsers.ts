@@ -25,21 +25,39 @@ export function overrideWithPartialSchema<T, PartialT>(
   if (!partial) {
     return base;
   }
-  const result = { ...base } as T;
-  for (const key in partial) {
-    const value = partial[key];
-    if (value !== undefined) {
-      if (value && typeof value === "object" && !Array.isArray(value)) {
-        result[key as unknown as keyof T] = overrideWithPartialSchema(
-          base[key as unknown as keyof T],
-          value
-        );
-      } else {
-        result[key as unknown as keyof T] = value as T[keyof T];
+  if (Array.isArray(partial)) {
+    // For array, concatenate to base.
+    if (Array.isArray(base)) {
+      return [...base, ...partial] as T;
+    } else {
+      // TODO: error?
+      throw new Error(
+        "overrideWithPartialSchema: partial is an array but base is not"
+      );
+    }
+  } else {
+    const result = { ...base } as T;
+    for (const key in partial) {
+      const userValue = partial[key];
+      const baseValue = base[key as unknown as keyof T];
+      log.debug(
+        `overrideWithPartialSchema: ${key}:${typeof key} :: ${baseValue} <- ${userValue}: ${typeof userValue}`
+      );
+      if (userValue !== undefined) {
+        if (typeof userValue === "object") {
+          // For non-array override the base recursively.
+          result[key as unknown as keyof T] = overrideWithPartialSchema(
+            baseValue,
+            userValue
+          );
+        } else {
+          // For non-object scalar, just override the base.
+          result[key as unknown as keyof T] = userValue as T[keyof T];
+        }
       }
     }
+    return result;
   }
-  return result;
 }
 
 export function configPathAssignVariables<T extends string | undefined>(

@@ -26,6 +26,8 @@ import {
   ShellSpecificationSchema,
   ShellSpecification,
   parseShellSpec,
+  PartialShellSpecification,
+  parsePartialShellSpec,
 } from "@/datatypes/ShellSpecification";
 import { LabelsSchema, parseLabels } from "@/datatypes/Labels";
 import {
@@ -34,7 +36,10 @@ import {
   parseUserConfig,
 } from "./ConfigUtils/parsers";
 import { Stats } from "node:fs";
-import { BuiltinAndUserConfigManager } from "./ConfigUtils/reader";
+import {
+  BuiltinAndUserConfigDirectoryManager,
+  BuiltinAndUserConfigManager,
+} from "./ConfigUtils/reader";
 
 // Builtin default config.
 const configDir = process.env.DOT_NATTER_PATH || ".natter";
@@ -96,25 +101,36 @@ function writeUserKeybind(keybind: PartialCustomKeybindList) {
   return keybindManager.writeUserConfig(keybind);
 }
 
-export function readShellSpecs() {
-  const shellSpecs = fs.readdir(shellSpecDir);
-  return shellSpecs.then((specs) => {
-    return Promise.all(
-      specs.map((spec) => {
-        const specPath = path.join(shellSpecDir, spec);
-        log.debug("Reading shell spec from: ", specPath);
-        const specRead = fs.readFile(specPath, "utf-8");
-        return specRead.then((specContent) => {
-          const parsed = parseShellSpec(specContent);
-          if (parsed) {
-            return parsed;
-          }
-          throw new Error(`Failed to parse shell spec in ${specPath}`);
-        });
-      })
-    );
-  });
+const shellSpecManager =
+  new BuiltinAndUserConfigDirectoryManager<ShellSpecification>(
+    shellSpecDir,
+    userShellSpecDir,
+    parseShellSpec
+  );
+
+export function readShellSpecs(): Promise<ShellSpecification[]> {
+  return shellSpecManager.readConfig();
 }
+
+// export function readShellSpecs(): Promise<ShellSpecification[]> {
+//   const shellSpecs = fs.readdir(shellSpecDir);
+//   return shellSpecs.then((specs) => {
+//     return Promise.all(
+//       specs.map((spec) => {
+//         const specPath = path.join(shellSpecDir, spec);
+//         log.debug("Reading shell spec from: ", specPath);
+//         const specRead = fs.readFile(specPath, "utf-8");
+//         return specRead.then((specContent) => {
+//           const parsed = parseShellSpec(specContent);
+//           if (parsed) {
+//             return parsed;
+//           }
+//           throw new Error(`Failed to parse shell spec in ${specPath}`);
+//         });
+//       })
+//     );
+//   });
+// }
 
 export function writeShellSpec(name: string, spec: ShellSpecification) {
   const specPath = path.join(shellSpecDir, name);
