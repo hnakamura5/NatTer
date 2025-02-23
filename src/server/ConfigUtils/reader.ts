@@ -19,9 +19,12 @@ class ConfigFileManager<ConfigT> {
     if (!this.parsedConfig) {
       return Promise.resolve(false);
     }
-    return fs.stat(this.configFilePath).then((configStat) => {
-      return this.checkLastUpdatedTime(configStat);
-    });
+    return fs
+      .stat(this.configFilePath)
+      .then((configStat) => {
+        return this.checkLastUpdatedTime(configStat);
+      })
+      .catch(() => false);
   }
 
   checkLastUpdatedTime(configStat: Stats) {
@@ -33,24 +36,30 @@ class ConfigFileManager<ConfigT> {
   }
 
   readConfig(): Promise<ConfigT> {
-    return fs.stat(this.configFilePath).then((stats) => {
-      const lastUpdateTime = stats.mtime.getTime();
-      if (lastUpdateTime === this.configLastUpdateTime && this.parsedConfig) {
-        return this.parsedConfig;
-      }
-      const configRead = fs.readFile(this.configFilePath, "utf-8");
-      return configRead.then((config) => {
-        log.debug(`Reading config ${config} from: `, this.configFilePath);
-        const parsed = this.parseConfig(config);
-        this.parsedConfig = parsed;
-        this.configLastUpdateTime = lastUpdateTime;
-        if (parsed) {
-          return parsed;
+    return fs
+      .stat(this.configFilePath)
+      .then((stats) => {
+        const lastUpdateTime = stats.mtime.getTime();
+        if (lastUpdateTime === this.configLastUpdateTime && this.parsedConfig) {
+          return this.parsedConfig;
         }
-        // TODO: Friendly error message.
-        throw new Error("Failed to parse config");
+        const configRead = fs.readFile(this.configFilePath, "utf-8");
+        return configRead.then((config) => {
+          log.debug(`Reading config ${config} from: `, this.configFilePath);
+          const parsed = this.parseConfig(config);
+          this.parsedConfig = parsed;
+          this.configLastUpdateTime = lastUpdateTime;
+          if (parsed) {
+            return parsed;
+          }
+          // TODO: Friendly error message.
+          throw new Error("Failed to parse config");
+        });
+      })
+      .catch((e) => {
+        log.debug(`Failed to read config from ${this.configFilePath}`, e);
+        throw new Error("Failed to read config");
       });
-    });
   }
 
   writeConfig(config: ConfigT) {
@@ -71,23 +80,31 @@ class ConfigDirectoryManager<ConfigT> {
   ) {}
 
   setupFileManagers() {
-    const newFileManagers = new Map<string, ConfigFileManager<ConfigT>>();
-    const files = fs.readdir(this.configDirPath);
-    return files.then((fileNames) => {
-      fileNames.map((fileName) => {
-        const filePath = path.join(this.configDirPath, fileName);
-        if (this.fileManagers.has(fileName)) {
-          newFileManagers.set(fileName, this.fileManagers.get(fileName)!);
-        } else {
-          newFileManagers.set(
-            fileName,
-            new ConfigFileManager<ConfigT>(filePath, this.parseConfig)
-          );
-        }
-        this.fileManagers = newFileManagers;
+    return fs
+      .stat(this.configDirPath)
+      .then((stats) => {
+        const newFileManagers = new Map<string, ConfigFileManager<ConfigT>>();
+        const files = fs.readdir(this.configDirPath);
+        return files.then((fileNames) => {
+          fileNames.map((fileName) => {
+            const filePath = path.join(this.configDirPath, fileName);
+            if (this.fileManagers.has(fileName)) {
+              newFileManagers.set(fileName, this.fileManagers.get(fileName)!);
+            } else {
+              newFileManagers.set(
+                fileName,
+                new ConfigFileManager<ConfigT>(filePath, this.parseConfig)
+              );
+            }
+            this.fileManagers = newFileManagers;
+          });
+          return true;
+        });
+      })
+      .catch((e) => {
+        log.debug(`Failed to read config directory: ${this.configDirPath}`);
+        return false;
       });
-      return Promise.resolve();
-    });
   }
 
   readConfigWithFileName(): Promise<{ fileName: string; config: ConfigT }[]> {
@@ -154,7 +171,9 @@ export class BuiltinAndUserConfigManager<ConfigT, PartialT> {
       return this.mergedConfig!;
     }
     const baseConfig = await this.baseConfigManager.readConfig();
-    const userConfig = await this.userConfigManager.readConfig();
+    const userConfig = await this.userConfigManager
+      .readConfig()
+      .catch(() => {}); // User config may not exist
     if (baseConfig) {
       log.debug("Base config: ", baseConfig);
       if (userConfig) {
@@ -225,15 +244,17 @@ export class BuiltinAndUserConfigDirectoryManager<ConfigT> {
     );
   }
 
-  async setupFileManagers() {
-    await this.baseDirManager.setupFileManagers();
-    await this.userDirManager.setupFileManagers();
+  async setupBothFileManagers() {
+    return (
+      (await this.baseDirManager.setupFileManagers()) &&
+      (await this.userDirManager.setupFileManagers())
+    );
   }
 
   async readConfigWithFileName(): Promise<
     { fileName: string; config: ConfigT; isUserConfig: boolean }[]
   > {
-    return this.setupFileManagers().then(async () => {
+    return this.setupBothFileManagers().then(async () => {
       const baseConfigs = await this.baseDirManager
         .readConfigWithFileName()
         .then((configs) => {
@@ -241,7 +262,7 @@ export class BuiltinAndUserConfigDirectoryManager<ConfigT> {
             ...config,
             isUserConfig: false,
           }));
-        });
+        }); // Base config must exist
       const userConfigs = await this.userDirManager
         .readConfigWithFileName()
         .then((configs) => {
@@ -249,6 +270,12 @@ export class BuiltinAndUserConfigDirectoryManager<ConfigT> {
             ...config,
             isUserConfig: true,
           }));
+        })
+        .catch(() => {
+          log.debug(
+            `Failed to read user configs from ${this.userConfigDirPath}`
+          );
+          return []; // User config may not exist
         });
       return [...baseConfigs, ...userConfigs];
     });
