@@ -40,11 +40,12 @@ import {
   BuiltinAndUserConfigDirectoryManager,
   BuiltinAndUserConfigManager,
 } from "./ConfigUtils/reader";
+import { userHomeConfigDir } from "./ConfigUtils/variables";
 
 // Builtin default config.
-const configDir = process.env.DOT_NATTER_PATH || ".natter";
+const configDir = process.env.BUILTIN_DOT_NATTER_PATH || ".natter";
 // User configuration to override default config.
-const userConfigDir = path.join(app.getPath("home"), ".natter");
+const userConfigDir = userHomeConfigDir;
 
 // Master configurations.
 const configFileName = "config.json";

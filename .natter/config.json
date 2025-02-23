@@ -10,17 +10,6 @@
       "kind": "powershell",
       "encoding": "shift-jis",
       "interact": "command",
-      "languageServer": {
-        "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
-        "args": [
-          "-NoProfile",
-          "-NoLogo",
-          "-Command",
-          "${HOME}\\.natter-app\\PowerShellEditorServices\\Start-EditorServices.ps1",
-          "-Stdio",
-        ],
-        "tempBufferFile": "${LSPTEMP}",
-      },
     },
     {
       "name": "PowerShell Terminal",

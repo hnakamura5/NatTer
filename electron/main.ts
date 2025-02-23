@@ -38,7 +38,7 @@ process.env.MATERIAL_ICON_THEME_PATH = app.isPackaged
   : path.join("./node_modules/material-icon-theme/icons");
 // In non-packaged mode, the absolute path is blocked by security policy.
 
-process.env.DOT_NATTER_PATH = app.isPackaged
+process.env.BUILTIN_DOT_NATTER_PATH = app.isPackaged
   ? path.join(process.env.APP_ROOT, ".natter")
   : path.join(".natter");
 

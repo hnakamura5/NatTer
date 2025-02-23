@@ -21,7 +21,7 @@ declare namespace NodeJS {
     // material-icon-theme icon path
     MATERIAL_ICON_THEME_PATH: string;
     // .natter included in the application package
-    DOT_NATTER_PATH: string;
+    BUILTIN_DOT_NATTER_PATH: string;
   }
 }
 

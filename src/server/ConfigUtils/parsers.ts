@@ -10,17 +10,45 @@ import { z } from "zod";
 
 import { log } from "@/datatypes/Logger";
 import {
-  pathVariables,
+  getPathVariables,
   tempDir,
   commandTempDir,
   lspTempDir,
 } from "./variables";
 
+// Force get the member "name" of the object.
+type NameType<T> = T extends { name: infer N } ? N : never;
+function getName<T>(item: T): NameType<T> {
+  return (item as unknown as { name: NameType<T> }).name;
+}
+
+function arrayMerge<T>(base: T[], partial: T[]): T[] {
+  // If T has the key name, make the result unique for it.
+  const obj = base[0] || partial[0];
+  if (!obj || typeof obj !== "object" || !("name" in obj)) {
+    // No member named "name".
+    return [...base, ...partial];
+  }
+  let result = base;
+  const uniqueSet = new Set<NameType<T>>();
+  for (const item of base) {
+    uniqueSet.add(getName(item));
+  }
+  for (const item of partial) {
+    const key = getName(item);
+    if (uniqueSet.has(key)) {
+      // Override with latter one. Remove the item with the same key.
+      result = result.filter((x) => getName(x) !== key);
+    }
+    result.push(item);
+  }
+  return result;
+}
+
 // Override the members of base with members of partial if they are defined.
 export function overrideWithPartialSchema<T, PartialT>(
   base: T,
   partial: PartialT
-  // partialConfig: z.infer<z.ZodType<Partial<T>>>
 ): T {
   if (!partial) {
     return base;
@@ -28,7 +56,7 @@ export function overrideWithPartialSchema<T, PartialT>(
   if (Array.isArray(partial)) {
     // For array, concatenate to base.
     if (Array.isArray(base)) {
-      return [...base, ...partial] as T;
+      return arrayMerge(base, partial) as T;
     } else {
       // TODO: error?
       throw new Error(
@@ -67,7 +95,7 @@ export function configPathAssignVariables<T extends string | undefined>(
     return undefined as T;
   }
   let result = path as string;
-  for (const [key, value] of pathVariables) {
+  for (const [key, value] of getPathVariables()) {
     result = result.replace(key, value);
   }
   return result as T;
@@ -101,9 +129,9 @@ function configPathAssignVariablesToConfig<T extends PartialConfig>(
 
 export function parseConfig(json: string): Config | undefined {
   log.debug("parseConfig:");
-  log.debug(`  .natter: ${process.env.DOT_NATTER_PATH}`);
+  log.debug(`  .natter: ${process.env.BUILTIN_DOT_NATTER_PATH}`);
   log.debug("  pathVariables:");
-  for (const [key, value] of pathVariables) {
+  for (const [key, value] of getPathVariables()) {
     log.debug(`    ${key} -> ${value}`);
   }
 
