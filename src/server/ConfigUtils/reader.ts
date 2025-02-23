@@ -39,8 +39,8 @@ class ConfigFileManager<ConfigT> {
         return this.parsedConfig;
       }
       const configRead = fs.readFile(this.configFilePath, "utf-8");
-      log.debug("Reading config from: ", this.configFilePath);
       return configRead.then((config) => {
+        log.debug(`Reading config ${config} from: `, this.configFilePath);
         const parsed = this.parseConfig(config);
         this.parsedConfig = parsed;
         this.configLastUpdateTime = lastUpdateTime;
@@ -54,11 +54,9 @@ class ConfigFileManager<ConfigT> {
   }
 
   writeConfig(config: ConfigT) {
-    const configWrite = fs.writeFile(
-      this.configFilePath,
-      JSON.stringify(config)
-    );
-    log.debug("Writing config to: ", this.configFilePath);
+    const configStr = JSON.stringify(config, null, 2);
+    const configWrite = fs.writeFile(this.configFilePath, configStr);
+    log.debug(`Writing config ${configStr} to: `, this.configFilePath);
     return configWrite;
   }
 }
@@ -120,146 +118,66 @@ class ConfigDirectoryManager<ConfigT> {
 
 // Generic utility for reading and writing built-in and user config files.
 export class BuiltinAndUserConfigManager<ConfigT, PartialT> {
-  parsedConfig: ConfigT | undefined;
-  configLastUpdateTime: number | undefined;
   mergedConfig: ConfigT | undefined;
 
-  userConfig: PartialT | undefined;
-  userConfigLastUpdateTime: number | undefined;
+  baseConfigManager: ConfigFileManager<ConfigT>;
+  userConfigManager: ConfigFileManager<PartialT>;
 
   constructor(
     public baseConfigFilePath: string,
     public userConfigFilePath: string,
     public parseBaseConfig: (config: string) => ConfigT | undefined,
     public parseUserConfig: (config: string) => PartialT | undefined
-  ) {}
+  ) {
+    this.baseConfigManager = new ConfigFileManager<ConfigT>(
+      baseConfigFilePath,
+      parseBaseConfig
+    );
+    this.userConfigManager = new ConfigFileManager<PartialT>(
+      userConfigFilePath,
+      parseUserConfig
+    );
+  }
 
-  isUpToDate(): Promise<boolean> {
+  async isUpToDate(): Promise<boolean> {
     if (!this.mergedConfig) {
       return Promise.resolve(false);
     }
-    return fs.stat(this.baseConfigFilePath).then(async (configStat) => {
-      const userConfigStat = await fs
-        .stat(this.userConfigFilePath)
-        .catch(() => {
-          return undefined;
-        });
-      return this.checkLastUpdatedTime(configStat, userConfigStat);
-    });
+    return (
+      (await this.baseConfigManager.isUpToDate()) &&
+      (await this.userConfigManager.isUpToDate())
+    );
   }
 
-  checkLastUpdatedTime(configStat: Stats, userConfigStat?: Stats) {
-    const lastUpdateTime = configStat.mtime.getTime();
-    if (lastUpdateTime !== this.configLastUpdateTime) {
-      return false;
+  async readConfig(): Promise<ConfigT> {
+    if (await this.isUpToDate()) {
+      return this.mergedConfig!;
     }
-    if (userConfigStat) {
-      const userLastUpdateTime = userConfigStat.mtime.getTime();
-      if (userLastUpdateTime !== this.userConfigLastUpdateTime) {
-        return false;
+    const baseConfig = await this.baseConfigManager.readConfig();
+    const userConfig = await this.userConfigManager.readConfig();
+    if (baseConfig) {
+      log.debug("Base config: ", baseConfig);
+      if (userConfig) {
+        // Override the config if there is a user config.
+        log.debug("User config: ", userConfig);
+        const merged = overrideWithPartialSchema(baseConfig, userConfig);
+        log.debug("Merged config: ", merged);
+        this.mergedConfig = merged;
+        return merged;
       }
+      return baseConfig;
+    } else {
+      log.debug(`Failed to read base config from ${this.baseConfigFilePath}`);
+      throw new Error("Failed to read base config");
     }
-    return true;
-  }
-
-  readConfig(): Promise<ConfigT> {
-    return fs.stat(this.baseConfigFilePath).then(async (configStat) => {
-      const userConfigStat = await fs
-        .stat(this.userConfigFilePath)
-        .catch(() => {
-          return undefined;
-        });
-      if (
-        this.mergedConfig &&
-        this.checkLastUpdatedTime(configStat, userConfigStat)
-      ) {
-        return this.mergedConfig;
-      }
-      // Read the config and override with user config.
-      log.debug("Reading config from: ", this.baseConfigFilePath);
-      return this.readBaseConfig()
-        .then((baseConfig) => {
-          if (baseConfig) {
-            log.debug("Parsed config: ", baseConfig);
-            return this.readUserConfig().then((userConfig) => {
-              if (userConfig) {
-                // Override the config if there is a user config.
-                log.debug("User config: ", userConfig);
-                const merged = overrideWithPartialSchema(
-                  baseConfig,
-                  userConfig
-                );
-                this.mergedConfig = merged;
-                log.debug("Merged config: ", merged);
-                return merged;
-              }
-              return baseConfig;
-            });
-          }
-          throw new Error("Failed to parse config");
-        })
-        .catch((e) => {
-          log.debug("Failed to read config", e);
-          throw e;
-        });
-    });
   }
 
   readBaseConfig(): Promise<ConfigT | undefined> {
-    return fs
-      .stat(this.baseConfigFilePath)
-      .then((stats) => {
-        const lastUpdateTime = stats.mtime.getTime();
-        if (lastUpdateTime === this.configLastUpdateTime && this.parsedConfig) {
-          return this.parsedConfig;
-        }
-        const configRead = fs.readFile(this.baseConfigFilePath, "utf-8");
-        log.debug("Reading config from: ", this.baseConfigFilePath);
-        return configRead.then((config) => {
-          const parsed = this.parseBaseConfig(config);
-          this.parsedConfig = parsed;
-          this.configLastUpdateTime = lastUpdateTime;
-          if (parsed) {
-            return parsed;
-          }
-          // TODO: Friendly error message.
-          throw new Error("Failed to parse config");
-        });
-      })
-      .catch((e) => {
-        log.debug("Failed to read config", e);
-        return undefined;
-      });
+    return this.baseConfigManager.readConfig();
   }
 
   readUserConfig(): Promise<PartialT | undefined> {
-    return fs
-      .stat(this.userConfigFilePath)
-      .then((stats) => {
-        const lastUpdateTime = stats.mtime.getTime();
-        if (
-          lastUpdateTime === this.userConfigLastUpdateTime &&
-          this.userConfig
-        ) {
-          return this.userConfig;
-        }
-        const configRead = fs.readFile(this.userConfigFilePath, "utf-8");
-        log.debug("Reading user config from: ", this.userConfigFilePath);
-        return configRead.then((config) => {
-          const parsed = this.parseUserConfig(config);
-          this.userConfig = parsed;
-          this.userConfigLastUpdateTime = lastUpdateTime;
-          if (parsed) {
-            return parsed;
-          }
-          // TODO: Friendly error message.
-          throw new Error("Failed to parse user config");
-        });
-      })
-      .catch((e) => {
-        log.debug("Failed to read user config", e);
-        return undefined;
-      });
+    return this.userConfigManager.readConfig();
   }
 
   writeBaseConfig(config: ConfigT) {
