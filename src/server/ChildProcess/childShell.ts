@@ -1,9 +1,9 @@
 import { spawn, ChildProcessWithoutNullStreams } from "child_process";
-import { IChildShell, ChildShellStreamOptions } from "./interface";
+import { IShell, ShellOptions } from "./interface";
 import { Encoder } from "./utility";
 import { log } from "@/datatypes/Logger";
 
-export class ChildProcessShell implements IChildShell {
+export class ChildShell implements IShell {
   private childProcess: ChildProcessWithoutNullStreams;
   private newline: string;
   private encoder: Encoder;
@@ -19,7 +19,7 @@ export class ChildProcessShell implements IChildShell {
   constructor(
     private executable: string,
     private args: string[],
-    private options?: ChildShellStreamOptions
+    private options?: ShellOptions
   ) {
     log.debug(`ChildProcessShell executable:${executable} args:`, args);
     this.childProcess = spawn(executable, args, {

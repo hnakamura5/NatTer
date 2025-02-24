@@ -1,11 +1,11 @@
-import { ChildShellStreamOptions } from "./interface";
+import { ShellOptions } from "./interface";
 import { ConnectConfig } from "ssh2";
 import { SshConnectorBase } from "./sshConnectorBase";
 
 export class SshShell extends SshConnectorBase {
   constructor(
     protected connectConfig: ConnectConfig,
-    protected options?: ChildShellStreamOptions
+    protected options?: ShellOptions
   ) {
     super(connectConfig, false, options);
   }

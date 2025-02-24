@@ -1,8 +1,7 @@
 import {
-  spawnShell,
-  ChildShellStreamOptions,
-  IChildShell,
-  IChildPTy,
+  ShellOptions,
+  IShell,
+  ITerminalPTy,
 } from "@/server/ChildProcess/interface";
 import {
   ShellSpecification,
@@ -37,7 +36,7 @@ import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
 import { readShellSpecs } from "./configServer";
-import { ChildProcessShell } from "./ChildProcess/childShell";
+import { ChildShell } from "./ChildProcess/childShell";
 import { ChildPty } from "./ChildProcess/childPty";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
@@ -174,12 +173,12 @@ function spawnChildShell(
   kind: ShellInteractKind,
   executable: string,
   args: string[],
-  options?: ChildShellStreamOptions
-): IChildShell {
+  options?: ShellOptions
+): IShell {
   if (kind === "terminal") {
     return new ChildPty(executable, args, options);
   } else {
-    return new ChildProcessShell(executable, args, options);
+    return new ChildShell(executable, args, options);
   }
 }
 
@@ -206,7 +205,7 @@ function startProcess(config: ShellConfig): ProcessID {
   const process = newProcess(
     pid,
     shell,
-    config.interact == "terminal" ? (shell as IChildPTy) : undefined,
+    config.interact == "terminal" ? (shell as ITerminalPTy) : undefined,
     config,
     shellSpec,
     emptyCommand(pid, -1),

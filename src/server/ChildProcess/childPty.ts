@@ -1,15 +1,15 @@
 import * as pty from "node-pty";
-import { IChildPTy, ChildShellStreamOptions } from "./interface";
+import { ITerminalPTy, ShellOptions } from "./interface";
 import { CallbackManager } from "./utility";
 
-export class ChildPty extends CallbackManager implements IChildPTy {
+export class ChildPty extends CallbackManager implements ITerminalPTy {
   private pty: pty.IPty;
   private newline: string;
 
   constructor(
     executable: string,
     args: string[],
-    options?: ChildShellStreamOptions
+    options?: ShellOptions
   ) {
     super();
     this.pty = pty.spawn(executable, args, {

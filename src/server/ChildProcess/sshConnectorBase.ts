@@ -1,9 +1,9 @@
 import { log } from "@/datatypes/Logger";
 import { CallbackManager, Encoder } from "./utility";
-import { IChildShell, ChildShellStreamOptions } from "./interface";
+import { IShell, ShellOptions } from "./interface";
 import { Client, ClientChannel, ConnectConfig, PseudoTtyOptions } from "ssh2";
 
-export class SshConnectorBase extends CallbackManager implements IChildShell {
+export class SshConnectorBase extends CallbackManager implements IShell {
   protected client: Client;
   protected stream?: ClientChannel;
   protected newline: string;
@@ -16,7 +16,7 @@ export class SshConnectorBase extends CallbackManager implements IChildShell {
   constructor(
     protected connectConfig: ConnectConfig,
     private window: PseudoTtyOptions | false,
-    protected options?: ChildShellStreamOptions
+    protected options?: ShellOptions
   ) {
     super();
     this.client = new Client();

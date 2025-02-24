@@ -1,10 +1,6 @@
 import { z } from "zod";
 
-import {
-  ChildShellStream,
-  IChildPTy,
-  IChildShell,
-} from "@/server/ChildProcess/interface";
+import { ITerminalPTy, IShell } from "@/server/ChildProcess/interface";
 import { ShellConfig } from "@/datatypes/Config";
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { Command } from "@/datatypes/Command";
@@ -17,8 +13,8 @@ import { log } from "@/datatypes/Logger";
 
 export type Process = {
   id: ProcessID;
-  shell: IChildShell;
-  pty?: IChildPTy;
+  shell: IShell;
+  pty?: ITerminalPTy;
   shellSpec: ShellSpecification;
   config: ShellConfig;
   currentCommand: Command;
@@ -38,8 +34,8 @@ export type Process = {
 
 export function newProcess(
   pid: ProcessID,
-  shell: IChildShell,
-  pty: IChildPTy | undefined,
+  shell: IShell,
+  pty: ITerminalPTy | undefined,
   config: ShellConfig,
   shellSpec: ShellSpecification,
   currentCommand: Command,
@@ -65,42 +61,3 @@ export function clockIncrement(process: Process) {
   process.currentCommand.clock = process.clock;
   return process.clock;
 }
-
-// function adjustEncoding(encoding: string): string {
-//   const lower = encoding.toLowerCase();
-//   if (
-//     lower === "shift_jis" ||
-//     lower === "shift-jis" ||
-//     lower === "shiftjis" ||
-//     lower === "sjis"
-//   ) {
-//     return "windows-31j";
-//   }
-//   return encoding;
-// }
-
-// export function decodeFromShellEncoding(
-//   process: Process,
-//   data: Buffer
-// ): string {
-//   if (process.config.encoding === undefined) {
-//     return data.toString();
-//   }
-//   return iconv.decode(data, adjustEncoding(process.config.encoding));
-// }
-
-// export function encodeToShellEncoding(
-//   process: Process,
-//   command: string
-// ): Buffer {
-//   if (process.config.encoding === undefined) {
-//     return Buffer.from(command);
-//   }
-//   const encoding = adjustEncoding(process.config.encoding);
-//   log.debug(
-//     `encodeToShellEncoding: ${command} to ${encoding} isSupported:${iconv.encodingExists(
-//       encoding
-//     )}`
-//   );
-//   return iconv.encode(command, process.config.encoding);
-// }

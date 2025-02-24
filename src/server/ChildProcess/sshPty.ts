@@ -1,14 +1,14 @@
-import { IChildPTy, ChildShellStreamOptions } from "./interface";
+import { ITerminalPTy, ShellOptions } from "./interface";
 import { ConnectConfig } from "ssh2";
 import { SshConnectorBase } from "./sshConnectorBase";
 
-export class SshPty extends SshConnectorBase implements IChildPTy {
+export class SshPty extends SshConnectorBase implements ITerminalPTy {
   private cols: number;
   private rows: number;
 
   constructor(
     protected connectConfig: ConnectConfig,
-    protected options?: ChildShellStreamOptions
+    protected options?: ShellOptions
   ) {
     const cols = 80;
     const rows = 24;
