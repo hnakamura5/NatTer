@@ -265,7 +265,7 @@ function executeCommandAndReceiveResponseByEcho(
     isSilent,
     onEnd
   ).then(() => {
-    process.handle.execute(exactCommand);
+    process.shell.execute(exactCommand);
   });
 }
 
@@ -296,7 +296,7 @@ export function executeCommandByEcho(
     boundaryDetector,
     lineContinuationDetector,
     styledCommand,
-    process.handle.getSize()
+    process.pty?.getSize()
   );
   if (shellSpec.sourceCommand) {
     // When the shell has source command, run by it for safety over syntax error.

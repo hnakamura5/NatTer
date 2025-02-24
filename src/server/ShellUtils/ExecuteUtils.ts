@@ -77,7 +77,7 @@ function ansiToHtmlNonTerminal(text: string) {
 export async function commandToHtml(process: Process, command: Command) {
   const interact = process.config.interact;
   if (interact === "terminal") {
-    const { cols, rows } = process.handle.getSize() || {
+    const { cols, rows } = process.pty?.getSize() || {
       cols: Cols,
       rows: Rows,
     };
@@ -148,9 +148,8 @@ async function resizeAndWait(process: Process, cols: number, rows: number) {
   // TODO: Too a dirty hack to detect the end of the resizing.
   let completed = false;
   let interval: NodeJS.Timeout | undefined = undefined;
-  process.handle.onStdout((data: Buffer) => {
+  process.shell.onStdout((response: string) => {
     // Dispose the rewriting of stdout by resize.
-    const response = data.toString();
     log.debug(`onStdout by resize: ${response}`);
     if (interval) {
       clearInterval(interval);
@@ -159,7 +158,7 @@ async function resizeAndWait(process: Process, cols: number, rows: number) {
       completed = true;
     }, 100);
   });
-  process.handle.resize(Cols, Rows);
+  process.pty?.resize(Cols, Rows);
   // wait 500 ms
   //await new Promise((resolve) => setTimeout(resolve, 500));
   let count = 0;
@@ -175,7 +174,7 @@ async function withCanonicalTerminalSizeTemporarily(
   process: Process,
   onEnd?: (command: Command) => void
 ) {
-  const size = process.handle.getSize();
+  const size = process.pty?.getSize();
   if (size?.cols === Cols && size?.rows === Rows) {
     return onEnd;
   }
@@ -272,7 +271,7 @@ export function commandFinishedHandler(
     current.stderrHTML = stderrHTML;
     current.outputCompleted = true;
   });
-  process.handle.clear();
+  process.pty?.clear();
   process.event.emit("finish", current);
   if (onEnd !== undefined) {
     log.debug(
@@ -295,12 +294,11 @@ export async function receiveCommandResponse(
     onEnd = await withCanonicalTerminalSizeTemporarily(process, onEnd);
   }
   // stdout handling.
-  process.handle.onStdout((data: Buffer) => {
+  process.shell.onStdout((response: string) => {
     if (current.stdoutIsFinished) {
       log.debug(`onStdout for finished end.`);
       return true;
     }
-    const response = data.toString();
     // log.debug(
     //   `Received data in command ${current.command} in process ${process.id} data: ${data} len: ${data.length}`
     // );
@@ -331,11 +329,10 @@ export async function receiveCommandResponse(
   });
 
   // stderr handling.
-  process.handle.onStderr((data: Buffer) => {
+  process.shell.onStderr((response: string) => {
     if (current.stderrIsFinished) {
       return;
     }
-    const response = data.toString();
     log.debug(`stderr response: ${response}`);
     if (runOnStderrAndDetectExitCode !== undefined) {
       const finished = runOnStderrAndDetectExitCode(
@@ -371,8 +368,7 @@ export async function receivePartialLineResponse(
 ) {
   const current = process.currentCommand;
   // stdout handling.
-  process.handle.onStdout((data: Buffer) => {
-    const response = data.toString();
+  process.shell.onStdout((response: string) => {
     clockIncrement(process);
     // Check if the command is finished.
     const partialLineFinished = runOnStdoutAndDetectExitCode(
@@ -388,11 +384,10 @@ export async function receivePartialLineResponse(
     }
   });
   // stderr handling.
-  process.handle.onStderr((data: Buffer) => {
+  process.shell.onStderr((response: string) => {
     if (current.stderrIsFinished) {
       return;
     }
-    const response = data.toString();
     //log.debug(`stderr: ${response}`);
     current.stderr = current.stderr.concat(response);
     process.event.emit("stderr", response);

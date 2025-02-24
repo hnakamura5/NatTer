@@ -74,11 +74,15 @@ export class SshConnectorBase extends CallbackManager implements IChildShell {
   }
 
   write(data: string) {
-    this.stream?.write(this.encoder.encode(data));
+    this.start().then(() => {
+      this.stream?.write(this.encoder.encode(data));
+    });
   }
 
   execute(command: string) {
-    this.stream?.write(this.encoder.encode(command + this.newline));
+    this.start().then(() => {
+      this.stream?.write(this.encoder.encode(command + this.newline));
+    });
   }
 
   kill(signal?: NodeJS.Signals) {

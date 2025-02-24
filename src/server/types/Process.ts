@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { ChildShellStream } from "@/server/ChildProcess/interface";
+import {
+  ChildShellStream,
+  IChildPTy,
+  IChildShell,
+} from "@/server/ChildProcess/interface";
 import { ShellConfig } from "@/datatypes/Config";
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { Command } from "@/datatypes/Command";
@@ -13,7 +17,8 @@ import { log } from "@/datatypes/Logger";
 
 export type Process = {
   id: ProcessID;
-  handle: ChildShellStream;
+  shell: IChildShell;
+  pty?: IChildPTy;
   shellSpec: ShellSpecification;
   config: ShellConfig;
   currentCommand: Command;
@@ -33,7 +38,8 @@ export type Process = {
 
 export function newProcess(
   pid: ProcessID,
-  handle: ChildShellStream,
+  shell: IChildShell,
+  pty: IChildPTy | undefined,
   config: ShellConfig,
   shellSpec: ShellSpecification,
   currentCommand: Command,
@@ -41,7 +47,8 @@ export function newProcess(
 ): Process {
   return {
     id: pid,
-    handle: handle,
+    shell: shell,
+    pty: pty,
     config: config,
     shellSpec: shellSpec,
     currentCommand: currentCommand,
@@ -53,47 +60,47 @@ export function newProcess(
   };
 }
 
-function adjustEncoding(encoding: string): string {
-  const lower = encoding.toLowerCase();
-  if (
-    lower === "shift_jis" ||
-    lower === "shift-jis" ||
-    lower === "shiftjis" ||
-    lower === "sjis"
-  ) {
-    return "windows-31j";
-  }
-  return encoding;
-}
-
 export function clockIncrement(process: Process) {
   process.clock += 1;
   process.currentCommand.clock = process.clock;
   return process.clock;
 }
 
-export function decodeFromShellEncoding(
-  process: Process,
-  data: Buffer
-): string {
-  if (process.config.encoding === undefined) {
-    return data.toString();
-  }
-  return iconv.decode(data, adjustEncoding(process.config.encoding));
-}
+// function adjustEncoding(encoding: string): string {
+//   const lower = encoding.toLowerCase();
+//   if (
+//     lower === "shift_jis" ||
+//     lower === "shift-jis" ||
+//     lower === "shiftjis" ||
+//     lower === "sjis"
+//   ) {
+//     return "windows-31j";
+//   }
+//   return encoding;
+// }
 
-export function encodeToShellEncoding(
-  process: Process,
-  command: string
-): Buffer {
-  if (process.config.encoding === undefined) {
-    return Buffer.from(command);
-  }
-  const encoding = adjustEncoding(process.config.encoding);
-  log.debug(
-    `encodeToShellEncoding: ${command} to ${encoding} isSupported:${iconv.encodingExists(
-      encoding
-    )}`
-  );
-  return iconv.encode(command, process.config.encoding);
-}
+// export function decodeFromShellEncoding(
+//   process: Process,
+//   data: Buffer
+// ): string {
+//   if (process.config.encoding === undefined) {
+//     return data.toString();
+//   }
+//   return iconv.decode(data, adjustEncoding(process.config.encoding));
+// }
+
+// export function encodeToShellEncoding(
+//   process: Process,
+//   command: string
+// ): Buffer {
+//   if (process.config.encoding === undefined) {
+//     return Buffer.from(command);
+//   }
+//   const encoding = adjustEncoding(process.config.encoding);
+//   log.debug(
+//     `encodeToShellEncoding: ${command} to ${encoding} isSupported:${iconv.encodingExists(
+//       encoding
+//     )}`
+//   );
+//   return iconv.encode(command, process.config.encoding);
+// }

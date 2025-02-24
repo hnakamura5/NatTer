@@ -1,4 +1,9 @@
-import { spawnShell } from "@/server/ChildProcess/interface";
+import {
+  spawnShell,
+  ChildShellStreamOptions,
+  IChildShell,
+  IChildPTy,
+} from "@/server/ChildProcess/interface";
 import {
   ShellSpecification,
   ShellSpecificationSchema,
@@ -20,7 +25,10 @@ import {
 
 import { server } from "@/server/tRPCServer";
 import { observable } from "@trpc/server/observable";
-import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
+import {
+  ShellInteractKind,
+  ShellInteractKindSchema,
+} from "@/datatypes/ShellInteract";
 import { Process, newProcess, clockIncrement } from "@/server/types/Process";
 import { executeCommandByEcho } from "@/server/ShellUtils/ExecuteByEcho";
 import { executeCommandByPrompt } from "./ShellUtils/ExecuteByPrompt";
@@ -29,6 +37,8 @@ import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
 import { readShellSpecs } from "./configServer";
+import { ChildProcessShell } from "./ChildProcess/childShell";
+import { ChildPty } from "./ChildProcess/childPty";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 
@@ -46,7 +56,7 @@ export function shutdownShellProcess() {
   log.debug(`ShellProcess shutdown.`);
   processHolder.forEach((process) => {
     log.debug(`Shutdown process ${process.id}`);
-    process.handle.kill();
+    process.shell.kill();
   });
   log.debug(`Shutdown all processes.`);
 }
@@ -160,6 +170,19 @@ function selectExecutor(shellSpec: ShellSpecification, config: ShellConfig) {
   }
 }
 
+function spawnChildShell(
+  kind: ShellInteractKind,
+  executable: string,
+  args: string[],
+  options?: ChildShellStreamOptions
+): IChildShell {
+  if (kind === "terminal") {
+    return new ChildPty(executable, args, options);
+  } else {
+    return new ChildProcessShell(executable, args, options);
+  }
+}
+
 function startProcess(config: ShellConfig): ProcessID {
   const { name, executable, args, kind, encoding } = config;
   const shellSpec = ProcessSpecs.get(kind);
@@ -170,14 +193,20 @@ function startProcess(config: ShellConfig): ProcessID {
   if (processHolder.length > 100) {
     throw new Error("Too many processes. This is for debugging.");
   }
-  const childShell = spawnShell(config.interact, executable, args, {
-    encoding: encoding,
-  });
+  const shell = spawnChildShell(
+    config.interact,
+    `"${executable}"`,
+    args || [],
+    {
+      encoding: encoding,
+    }
+  );
   const pid = getNextProcessID();
   log.debug(`Start process call ${pid} with ${config.executable}`);
   const process = newProcess(
     pid,
-    childShell,
+    shell,
+    config.interact == "terminal" ? (shell as IChildPTy) : undefined,
     config,
     shellSpec,
     emptyCommand(pid, -1),
@@ -237,13 +266,13 @@ function sendKey(process: Process, key: string) {
   }
   log.debug(`Send key ${key} to process ${process.id}`);
   clockIncrement(process);
-  process.handle.write(key);
+  process.shell.write(key);
 }
 
 function stopProcess(process: Process) {
   log.debug(`Stop process call ${process.id}`);
   clockIncrement(process);
-  process.handle.kill();
+  process.shell.kill();
 }
 
 const proc = server.procedure;
@@ -273,10 +302,6 @@ export const shellRouter = server.router({
         })
         .refine((value) => {
           return true;
-          return isCommandClosed(
-            getProcess(value.pid).shellSpec,
-            value.command
-          );
         })
     )
     .output(CommandSchema)
@@ -508,7 +533,7 @@ export const shellRouter = server.router({
     )
     .mutation(async (opts) => {
       const { pid, rows, cols } = opts.input;
-      getProcess(pid).handle.resize(rows, cols);
+      getProcess(pid).pty?.resize(rows, cols);
     }),
   shellConfig: proc
     .input(ProcessIDScheme)

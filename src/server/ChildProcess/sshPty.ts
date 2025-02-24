@@ -26,9 +26,11 @@ export class SshPty extends SshConnectorBase implements IChildPTy {
 
   resize(cols: number, rows: number): void {
     // TODO: height and width are calculated in the same ratio with default PseudoTtyOptions. Is it right?
-    this.stream?.setWindow(rows, cols, rows * 20, cols * 8);
-    this.cols = cols;
-    this.rows = rows;
+    this.start().then(() => {
+      this.stream?.setWindow(rows, cols, rows * 20, cols * 8);
+      this.cols = cols;
+      this.rows = rows;
+    });
   }
 
   getSize() {
@@ -39,14 +41,18 @@ export class SshPty extends SshConnectorBase implements IChildPTy {
     // Send the escape sequence to clear the screen
     // \x1b[2J clears the screen
     // \x1b[H moves the cursor to the top-left corner
-    this.stream?.write("\x1b[2J\x1b[H");
+    this.write("\x1b[2J\x1b[H");
   }
 
   pause() {
-    this.stream?.pause();
+    this.start().then(() => {
+      this.stream?.pause();
+    });
   }
 
   resume() {
-    this.stream?.resume();
+    this.start().then(() => {
+      this.stream?.resume();
+    });
   }
 }

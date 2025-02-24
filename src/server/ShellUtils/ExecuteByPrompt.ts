@@ -290,7 +290,7 @@ async function setPrompt(
     boundaryDetector,
     undefined,
     undefined,
-    process.handle.getSize()
+    process.pty?.getSize()
   );
   const continuationDetector = nonDuplicateDefaultRandomBoundaryDetector(
     process.config.interact === "terminal",
@@ -305,7 +305,7 @@ async function setPrompt(
     true, // silent
     onEnd
   ).then(() => {
-    process.handle.execute(setBothCommand!);
+    process.shell.execute(setBothCommand!);
   });
 }
 
@@ -327,7 +327,7 @@ async function executePartialLine(
       }
     );
     log.debug(`executePartialLine: ${line} in process ${process.id}`);
-    process.handle.execute(line);
+    process.shell.execute(line);
   });
 }
 
@@ -386,7 +386,7 @@ function executeExactCommand(
           isSilent,
           onEnd
         ).then(() => {
-          process.handle.execute(source || command.exactCommand);
+          process.shell.execute(source || command.exactCommand);
         });
       }
     );
@@ -420,7 +420,7 @@ function executeExactCommand(
     isSilent,
     onEnd
   ).then(() => {
-    process.handle.execute(command.exactCommand);
+    process.shell.execute(command.exactCommand);
   });
 }
 
@@ -457,7 +457,7 @@ export function executeCommandByPrompt(
     boundaryDetector,
     undefined,
     styledCommand,
-    process.handle.getSize()
+    process.pty?.getSize()
   );
   // First, set the prompt and wait it to finish. Then, execute the command.
   setPrompt(
