@@ -11,11 +11,42 @@ import { log } from "@/datatypes/Logger";
 
 iconv.enableStreamingAPI(stream);
 
-type ChileShellStreamOptions = {
+export type ChildShellStreamOptions = {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
   encoding?: string; // UTF-8 by default
+  newline?: string;
 };
+
+// API supported common between child_process, ssh and node-pty.
+export interface IChildShell {
+  start: () => Promise<void>;
+  write: (data: string) => void;
+  execute: (command: string) => void;
+  kill: (signal?: NodeJS.Signals) => void;
+  onStdout: (callback: (data: string) => void) => void;
+  onStderr: (callback: (data: string) => void) => void;
+  onExit: (
+    callback: (code: number, signal?: number | undefined) => void
+  ) => void;
+  removeStdoutListener: (callback: (data: string) => void) => void;
+  removeStderrListener: (callback: (data: string) => void) => void;
+  removeExitListener: (
+    callback: (code: number, signal?: number | undefined) => void
+  ) => void;
+  removeAllStdoutListener: () => void;
+  removeAllStderrListener: () => void;
+  removeAllExitListener: () => void;
+}
+
+// API supported by node-pty.
+export interface IChildPTy extends IChildShell {
+  resize: (cols: number, rows: number) => void;
+  getSize: () => { cols: number; rows: number };
+  clear: () => void;
+  pause: () => void;
+  resume: () => void;
+}
 
 export class ChildShellStream {
   private pty?: pty.IPty;
@@ -32,7 +63,7 @@ export class ChildShellStream {
     private shellInterface: ShellInteractKind,
     command: string,
     args?: string[],
-    private options?: ChileShellStreamOptions
+    private options?: ChildShellStreamOptions
   ) {
     this.usePty = this.shellInterface === "terminal";
     if (this.usePty) {
@@ -231,7 +262,7 @@ export function spawnShell(
   shellInterface: ShellInteractKind,
   command: string,
   args?: string[],
-  options?: ChileShellStreamOptions
+  options?: ChildShellStreamOptions
 ) {
   try {
     return new ChildShellStream(shellInterface, command, args, options);

@@ -1,4 +1,4 @@
-import { spawnShell } from "@/server/ShellUtils/childShell";
+import { spawnShell } from "@/server/ChildProcess/interface";
 import {
   ShellSpecification,
   ShellSpecificationSchema,
