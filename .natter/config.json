@@ -2,32 +2,40 @@
   // Configuration for windows.
   "locale": "English",
   "theme": "dark",
+  // "defaultShell": "PowerShell",
+  "defaultShell": "WSL SSH Bash",
+  //"defaultShell": "PowerShell Terminal",
+  //"defaultShell": "WSL Bash",
+  //"defaultShell": "Cmd",
   "shells": [
     {
       "name": "PowerShell",
+      "type": "local",
       "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
       "args": [],
-      "kind": "powershell",
+      "language": "powershell",
       "encoding": "shift-jis",
       "interact": "command",
     },
     {
       "name": "PowerShell Terminal",
+      "type": "local",
       "executable": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
       "args": [],
-      "kind": "powershell",
+      "language": "powershell",
       "encoding": "shift-jis",
       "interact": "terminal",
     },
     {
       "name": "WSL Bash",
+      "type": "local",
       "executable": "C:\\Windows\\system32\\wsl.exe",
       "args": [
         "-e",
         "/usr/bin/bash",
         "-l",
       ],
-      "kind": "bash",
+      "language": "bash",
       "encoding": "utf-8",
       "interact": "command",
       "virtualPath": {
@@ -37,13 +45,14 @@
     },
     {
       "name": "WSL Bash Terminal",
+      "type": "local",
       "executable": "C:\\Windows\\system32\\wsl.exe",
       "args": [
         "-e",
         "/usr/bin/bash",
         "-l"
       ],
-      "kind": "bash-interactive",
+      "language": "bash-interactive",
       "encoding": "utf-8",
       "interact": "terminal",
       "virtualPath": {
@@ -53,16 +62,29 @@
     },
     {
       "name": "Cmd",
+      "type": "local",
       "executable": "cmd",
       "args": [],
-      "kind": "cmd",
+      "language": "cmd",
       "encoding": "shift-jis",
+      "interact": "command",
+    },
+    {
+      "name": "WSL SSH Bash",
+      "type": "ssh",
+      "connection": {
+        "authentication": "password",
+        "host": "localhost",
+        "port": 22,
+        "username": "test",
+        "password": "testpass",
+      },
+      "executable": "/usr/bin/bash",
+      "args": [],
+      "language": "bash",
+      "encoding": "utf-8",
       "interact": "command",
     }
   ],
-  "defaultShell": "PowerShell",
-  //"defaultShell": "PowerShell Terminal",
-  //"defaultShell": "WSL Bash",
-  //"defaultShell": "Cmd",
   "editor": "CodeMirror",
 }

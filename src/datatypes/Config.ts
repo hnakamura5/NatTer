@@ -1,12 +1,10 @@
 import { z } from "zod";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import { LanguageServerConfigSchema } from "@/components/LanguageServerConfigs";
+import { SshConnectionSchema } from "./SshConfig";
 
-export const ShellConfigSchema = z.object({
-  name: z.string(),
-  executable: z.string(),
-  args: z.array(z.string()).optional(),
-  kind: z.string(),
+const ShellConfigCommon = z.object({
+  language: z.string(),
   encoding: z.string().optional(),
   interact: ShellInteractKindSchema,
   virtualPath: z
@@ -17,10 +15,40 @@ export const ShellConfigSchema = z.object({
     .optional(),
   languageServer: LanguageServerConfigSchema.optional(),
 });
+const ShellConfigExecutableCommon = z.object({});
+
+export const LocalShellConfigSchema = z
+  .object({
+    name: z.string(),
+    type: z.literal("local"),
+    executable: z.string().optional(),
+    args: z.array(z.string()).optional(),
+  })
+  .merge(ShellConfigCommon);
+export type LocalShellConfig = z.infer<typeof LocalShellConfigSchema>;
+
+export const SshShellConfigSchema = z
+  .object({
+    name: z.string(),
+    type: z.literal("ssh"),
+    connection: SshConnectionSchema,
+    executable: z.string(),
+    args: z.array(z.string()).optional(),
+  })
+  .merge(ShellConfigCommon)
+  .merge(ShellConfigExecutableCommon.deepPartial());
+export type SshShellConfig = z.infer<typeof SshShellConfigSchema>;
+
+export const ShellConfigSchema = z.discriminatedUnion("type", [
+  LocalShellConfigSchema,
+  SshShellConfigSchema,
+]);
 
 export type ShellConfig = z.infer<typeof ShellConfigSchema>;
 
-export function shellConfigExecutable(config: ShellConfig): string {
+export function shellConfigExecutable(
+  config: LocalShellConfig
+): string | undefined {
   if (config.args) {
     return `${config.executable} ${config.args.join(" ")}`;
   } else {
@@ -47,7 +75,7 @@ export const PartialConfigSchema = ConfigSchema.deepPartial();
 export type PartialConfig = z.infer<typeof PartialConfigSchema>;
 
 export function decodeVirtualPathToOS(
-  config: ShellConfig,
+  config: LocalShellConfig,
   path: string
 ): string {
   if (config.virtualPath) {

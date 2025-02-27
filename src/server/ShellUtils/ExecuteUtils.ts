@@ -8,7 +8,7 @@ import {
   emptyCommand,
   newCommand,
 } from "@/datatypes/Command";
-import { ShellConfig, encodeOSPathToVirtual } from "@/datatypes/Config";
+import { encodeOSPathToVirtual } from "@/datatypes/Config";
 import {
   ShellSpecification,
   isExitCodeOK,

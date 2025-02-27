@@ -38,6 +38,9 @@ import { log } from "@/datatypes/Logger";
 import { readShellSpecs } from "./configServer";
 import { ChildShell } from "./ChildProcess/childShell";
 import { ChildPty } from "./ChildProcess/childPty";
+import { sshConnectionToConnectConfig } from "@/datatypes/SshConfig";
+import { SshPty } from "./ChildProcess/sshPty";
+import { SshShell } from "./ChildProcess/sshShell";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 
@@ -170,38 +173,49 @@ function selectExecutor(shellSpec: ShellSpecification, config: ShellConfig) {
 }
 
 function spawnChildShell(
-  kind: ShellInteractKind,
+  config: ShellConfig,
   executable: string,
   args: string[],
   options?: ShellOptions
 ): IShell {
-  if (kind === "terminal") {
-    return new ChildPty(executable, args, options);
+  if (config.type === "ssh") {
+    const connectionConfig = sshConnectionToConnectConfig(config.connection);
+    // TODO: executable for ssh
+    if (config.interact === "terminal") {
+      log.debug(`spawn SshPty connectionConfig: ${connectionConfig}`);
+      return new SshPty(connectionConfig, options);
+    } else {
+      log.debug(`spawn SshShell connectionConfig: ${connectionConfig}`);
+      return new SshShell(connectionConfig, options);
+    }
   } else {
-    return new ChildShell(executable, args, options);
+    // local
+    if (config.interact === "terminal") {
+      log.debug(`spawn ChildPty executable:${executable} args:`, args);
+      return new ChildPty(executable, args, options);
+    } else {
+      log.debug(`spawn ChildShell executable:${executable} args:`, args);
+      return new ChildShell(executable, args, options);
+    }
   }
 }
 
 function startProcess(config: ShellConfig): ProcessID {
-  const { name, executable, args, kind, encoding } = config;
-  const shellSpec = ProcessSpecs.get(kind);
+  const { name, executable, args, language, encoding } = config;
+  log.debug(`Start process ${name} config:`, config);
+  const shellSpec = ProcessSpecs.get(language);
   if (shellSpec === undefined) {
     // TODO: Error handling.
-    throw new Error(`Shell kind ${kind} for ${name} is not supported.`);
+    throw new Error(`Shell kind ${language} for ${name} is not supported.`);
   }
   if (processHolder.length > 100) {
     throw new Error("Too many processes. This is for debugging.");
   }
-  const shell = spawnChildShell(
-    config.interact,
-    `"${executable}"`,
-    args || [],
-    {
-      encoding: encoding,
-    }
-  );
+  const shell = spawnChildShell(config, `"${executable}"`, args || [], {
+    encoding: encoding,
+  });
   const pid = getNextProcessID();
-  log.debug(`Start process call ${pid} with ${config.executable}`);
+  log.debug(`Started process call ${name} id:${pid} with ${config.executable}`);
   const process = newProcess(
     pid,
     shell,

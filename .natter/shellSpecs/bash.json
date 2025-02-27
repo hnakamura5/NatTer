@@ -52,7 +52,7 @@
     "list": "ls -lA \"${directory}\"",
     "getUser": "whoami"
   },
-  "sourceCommand": "source \"${path}\"",
+  // [HN] "sourceCommand": "source \"${path}\"",
   "paren": "$(${command})",
   "echoCommands": {
     "toStdout": "echo \"${message}\"",

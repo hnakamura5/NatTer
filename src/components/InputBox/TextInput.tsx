@@ -96,7 +96,7 @@ export function Input(props: {
       refetchInterval: 200,
     }
   );
-  const shellConfigQuery = api.shell.config.useQuery(pid, {
+  const shellConfigQuery = api.shell.shellConfig.useQuery(pid, {
     enabled: shellConfig === undefined,
     refetchInterval: 500,
   });

@@ -27,6 +27,7 @@ export default defineConfig({
             rollupOptions: {
               external: [
                 "node-pty", // To avoid error "Unexpected character..."
+                "ssh2",
               ],
               onwarn(warning, warn) {
                 // Suppress "Module level directives cause errors when bundled" warnings
