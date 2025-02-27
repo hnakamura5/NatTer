@@ -1,16 +1,39 @@
 import { z } from "zod";
 import { ConnectConfig } from "ssh2";
 
-const CommonAuthSchema = z.object({
+import { createHash } from "crypto";
+
+// TODO: Multi hup?
+export const RemoteHostSchema = z.object({
   host: z.string(),
   port: z.number().int().optional(),
   username: z.string(),
-  forceIPv4: z.boolean().optional(),
-  forceIPv6: z.boolean().optional(),
-  hostHash: z.string().optional(),
-  readyTimeout: z.number().int().optional(),
-  timeout: z.number().int().optional(),
 });
+export type RemoteHost = z.infer<typeof RemoteHostSchema>;
+
+export type RemoteHostID = string;
+
+export function remoteHostID(config: RemoteHost): RemoteHostID {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        host: config.host,
+        port: config.port,
+        username: config.username,
+      })
+    )
+    .digest("hex");
+}
+
+const CommonAuthSchema = z
+  .object({
+    forceIPv4: z.boolean().optional(),
+    forceIPv6: z.boolean().optional(),
+    hostHash: z.string().optional(),
+    readyTimeout: z.number().int().optional(),
+    timeout: z.number().int().optional(),
+  })
+  .merge(RemoteHostSchema);
 
 const PasswordAuthSchema = z
   .object({

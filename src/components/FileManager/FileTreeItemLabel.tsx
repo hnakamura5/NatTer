@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { FileStat } from "@/datatypes/PathAbstraction";
+import { FileStat } from "@/datatypes/UniversalPath";
 import { api } from "@/api";
 import { useTheme } from "@/AppState";
 import { log } from "@/datatypes/Logger";

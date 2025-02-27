@@ -7,7 +7,7 @@ import {
 import styled from "@emotion/styled";
 
 import { AlignRight } from "@/components/AlignUtils";
-import { PathParsed } from "@/datatypes/PathAbstraction";
+import { PathParsed } from "@/datatypes/UniversalPath";
 import { IconForFileOrFolder, InlineIconAdjustStyle } from "./FileIcon";
 
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";

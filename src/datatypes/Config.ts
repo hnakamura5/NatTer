@@ -39,6 +39,7 @@ export const SshShellConfigSchema = z
   .merge(ShellConfigExecutableCommon.deepPartial());
 export type SshShellConfig = z.infer<typeof SshShellConfigSchema>;
 
+
 export const ShellConfigSchema = z.discriminatedUnion("type", [
   LocalShellConfigSchema,
   SshShellConfigSchema,

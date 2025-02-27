@@ -1,7 +1,7 @@
 import { TreeItem as MuiTreeItem, TreeItemProps } from "@mui/x-tree-view";
 import Input from "@mui/material/Input";
 import styled from "@emotion/styled";
-import { FileStat } from "@/datatypes/PathAbstraction";
+import { FileStat } from "@/datatypes/UniversalPath";
 import { api } from "@/api";
 import { useTheme } from "@/AppState";
 import { log } from "@/datatypes/Logger";

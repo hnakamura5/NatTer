@@ -5,7 +5,7 @@ import {
   PathKindSchema,
   FileStatScheme,
   PathParsedScheme,
-} from "@/datatypes/PathAbstraction";
+} from "@/datatypes/UniversalPath";
 import path from "node:path";
 import fs from "node:fs/promises";
 
@@ -18,6 +18,11 @@ import { chmod, chown } from "original-fs";
 import { log } from "@/datatypes/Logger";
 import { observable } from "@trpc/server/observable";
 import { EventEmitter, on } from "node:events";
+
+import SFTPClient from "ssh2-sftp-client";
+import { RemoteHostID } from "@/datatypes/SshConfig";
+
+const remoteConnections = new Map<RemoteHostID, SFTPClient>();
 
 const proc = server.procedure;
 

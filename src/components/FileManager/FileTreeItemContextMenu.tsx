@@ -7,7 +7,7 @@ import {
 } from "@/components/Menu/ContextMenu";
 import styled from "@emotion/styled";
 import { useEffect, useState } from "react";
-import { FileStat } from "@/datatypes/PathAbstraction";
+import { FileStat } from "@/datatypes/UniversalPath";
 import { IconMenuItem } from "@/components/Menu/MenuItem";
 import { useLabels, useTheme } from "@/AppState";
 import { IconSubMenuItem, SubMenu, SubMenuItem } from "../Menu/SubMenu";
