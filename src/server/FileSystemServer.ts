@@ -20,9 +20,44 @@ import { observable } from "@trpc/server/observable";
 import { EventEmitter, on } from "node:events";
 
 import SFTPClient from "ssh2-sftp-client";
-import { RemoteHostID } from "@/datatypes/SshConfig";
+import {
+  RemoteHost,
+  RemoteHostID,
+  remoteHostID,
+  sshConnectionToConnectConfig,
+} from "@/datatypes/SshConfig";
+import { readConfig } from "./configServer";
 
 const remoteConnections = new Map<RemoteHostID, SFTPClient>();
+
+async function getRemoteClient(remote: RemoteHost) {
+  const id = remoteHostID(remote);
+  const client = remoteConnections.get(id);
+  if (client !== undefined) {
+    return client;
+  }
+  const newClient = new SFTPClient();
+  remoteConnections.set(id, newClient);
+  await readConfig().then(async (config) => {
+    for (const shell of config.shells) {
+      if (shell.type === "ssh") {
+        const connection = shell.connection;
+        if (
+          remote.host === connection.host &&
+          remote.port === connection.port &&
+          remote.username === connection.username
+        ) {
+          // Connect to the remote host.
+          await newClient.connect(sshConnectionToConnectConfig(connection));
+          return;
+        }
+      }
+    }
+    log.debug("No remote credentials found", remote);
+    throw new Error("No remote credentials found");
+  });
+  return newClient;
+}
 
 const proc = server.procedure;
 

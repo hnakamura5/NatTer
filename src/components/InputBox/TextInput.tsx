@@ -71,7 +71,6 @@ export function Input(props: {
   inputBoxRef: React.RefObject<HTMLElement>;
 }) {
   const pid = usePid();
-  const config = useConfig();
   const numCommands = api.shell.numCommands.useQuery(pid).data;
   const theme = useTheme();
   // const [text, setText] = useState<string>("");
