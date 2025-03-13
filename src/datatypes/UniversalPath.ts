@@ -2,17 +2,22 @@ import { z } from "zod";
 import { RemoteHostSchema, SshConnectionSchema } from "./SshConfig";
 
 // TODO: Add "url" to kind
-export const PathKindSchema = z.enum(["posix", "win32"]);
-export type PathKind = z.infer<typeof PathKindSchema>;
 
 // "Universal" in the means that it supports POSIX/Windows remote/local paths
 export const UniversalPathScheme = z.object({
   path: z.string(),
-  kind: PathKindSchema,
   // For remote paths. undefined for local
   remoteHost: RemoteHostSchema.optional(),
 });
 export type UniversalPath = z.infer<typeof UniversalPathScheme>;
+
+
+export const UniversalPathArrayScheme = z.object({
+  paths: z.array(z.string()),
+  // For remote paths. undefined for local
+  remoteHost: RemoteHostSchema.optional(),
+});
+export type UniversalPathArray = z.infer<typeof UniversalPathArrayScheme>;
 
 export function isRemote(path: UniversalPath) {
   return path.remoteHost !== undefined;
@@ -21,8 +26,12 @@ export function isRemote(path: UniversalPath) {
 export const FileStatScheme = z.object({
   fullPath: z.string(),
   baseName: z.string(),
+  isFile: z.boolean(),
   isDir: z.boolean(),
   isSymlink: z.boolean(),
+  isFIFO: z.boolean(),
+  isSocket: z.boolean(),
+  isBlockDevice: z.boolean(),
   modifiedTime: z.string(),
   changedTime: z.string(),
   accessedTime: z.string(),

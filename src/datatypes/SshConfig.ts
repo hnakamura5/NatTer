@@ -3,11 +3,15 @@ import { ConnectConfig } from "ssh2";
 
 import { createHash } from "crypto";
 
+export const PathKindSchema = z.enum(["posix", "win32"]);
+export type PathKind = z.infer<typeof PathKindSchema>;
+
 // TODO: Multi hup?
 export const RemoteHostSchema = z.object({
   host: z.string(),
   port: z.number().int().optional(),
   username: z.string(),
+  pathKind: PathKindSchema.optional(),
 });
 export type RemoteHost = z.infer<typeof RemoteHostSchema>;
 

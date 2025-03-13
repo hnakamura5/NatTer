@@ -1,86 +1,45 @@
 import { server } from "@/server/tRPCServer";
 import { z } from "zod";
 import {
-  PathKind,
-  PathKindSchema,
   FileStatScheme,
   PathParsedScheme,
+  UniversalPathScheme,
+  UniversalPath,
+  UniversalPathArrayScheme,
+  UniversalPathArray,
 } from "@/datatypes/UniversalPath";
+import { PathKind, PathKindSchema } from "@/datatypes/SshConfig";
 import path from "node:path";
 import fs from "node:fs/promises";
 
 // Fix for  https://github.com/withastro/astro/issues/8660#issuecomment-1733313988
 import * as Electron from "electron";
 
-import { pathOf } from "@/server/ShellUtils/pathAbstractionUtil";
+import { pathOf, univPath } from "@/server/FileSystem/univPath";
 import { chmod, chown } from "original-fs";
 
 import { log } from "@/datatypes/Logger";
 import { observable } from "@trpc/server/observable";
 import { EventEmitter, on } from "node:events";
 
-import SFTPClient from "ssh2-sftp-client";
-import {
-  RemoteHost,
-  RemoteHostID,
-  remoteHostID,
-  sshConnectionToConnectConfig,
-} from "@/datatypes/SshConfig";
 import { readConfig } from "./configServer";
-
-const remoteConnections = new Map<RemoteHostID, SFTPClient>();
-
-async function getRemoteClient(remote: RemoteHost) {
-  const id = remoteHostID(remote);
-  const client = remoteConnections.get(id);
-  if (client !== undefined) {
-    return client;
-  }
-  const newClient = new SFTPClient();
-  remoteConnections.set(id, newClient);
-  await readConfig().then(async (config) => {
-    for (const shell of config.shells) {
-      if (shell.type === "ssh") {
-        const connection = shell.connection;
-        if (
-          remote.host === connection.host &&
-          remote.port === connection.port &&
-          remote.username === connection.username
-        ) {
-          // Connect to the remote host.
-          await newClient.connect(sshConnectionToConnectConfig(connection));
-          return;
-        }
-      }
-    }
-    log.debug("No remote credentials found", remote);
-    throw new Error("No remote credentials found");
-  });
-  return newClient;
-}
+import { univFs } from "./FileSystem/univFs";
 
 const proc = server.procedure;
 
-function pathCanonicalize(filePath: string): string {
-  return path.normalize(filePath);
-}
-
 const eventEmitter = new EventEmitter();
-function changeFileEvent(filePath: string) {
-  changeDirectoryEvent(path.dirname(filePath));
+function changeFileEvent(uPath: UniversalPath) {
+  changeDirectoryEvent(univPath.dirname(uPath));
 }
-function changeDirectoryEvent(filePath: string) {
-  eventEmitter.emit("change", filePath);
+function changeDirectoryEvent(uPath: UniversalPath) {
+  eventEmitter.emit("change", uPath);
 }
 
-const directoryPathScheme = z.string().refine(async (path) => {
-  return await fs.stat(path).then((stats) => {
-    return stats.isDirectory();
-  });
-});
+const directoryPathScheme = UniversalPathScheme;
 
-function parsePath(fullPath: string, pathKind?: PathKind) {
-  const pathLib = pathKind ? pathOf(pathKind) : path;
+function parsePath(uPath: UniversalPath) {
+  const fullPath = uPath.path;
+  const pathLib = pathOf(uPath.remoteHost?.pathKind);
   const normalizedPath = pathLib.normalize(fullPath);
   const parsed = pathLib.parse(normalizedPath);
   // All hierarchies including the root as the first element
@@ -105,11 +64,11 @@ function parsePath(fullPath: string, pathKind?: PathKind) {
 // TODO: add remote support.
 export const fileSystemRouter = server.router({
   list: proc
-    .input(z.string())
+    .input(UniversalPathScheme)
     .output(z.array(z.string()))
     .query(async (opts) => {
       const filePath = opts.input;
-      return fs.readdir(path.normalize(filePath)).catch((err) => {
+      return univFs.list(filePath).catch(() => {
         return [] as string[];
       });
     }),
@@ -119,43 +78,23 @@ export const fileSystemRouter = server.router({
   }),
 
   stat: proc
-    .input(z.string())
+    .input(UniversalPathScheme)
     .output(FileStatScheme.optional())
     .query(async (opts) => {
-      const filePath = opts.input;
-      try {
-        const stats = fs.stat(path.normalize(filePath));
-        return stats.then((stats) => {
-          return {
-            fullPath: filePath,
-            baseName: path.basename(filePath),
-            isDir: stats.isDirectory(),
-            isSymlink: stats.isSymbolicLink(),
-            modifiedTime: stats.mtime.toISOString(),
-            changedTime: stats.ctime.toISOString(),
-            accessedTime: stats.atime.toISOString(),
-            birthTime: stats.birthtime.toISOString(),
-            byteSize: stats.size,
-            permissionMode: stats.mode,
-          };
-        });
-      } catch (err) {
-        log.error(`Failed to stat ${filePath}: ${err}`);
-        return undefined;
-      }
+      return await univFs.stat(opts.input);
     }),
 
   move: proc
     .input(
       z.object({
-        src: z.string(),
-        dest: z.string(),
+        src: UniversalPathScheme,
+        dest: UniversalPathScheme,
       })
     )
     .mutation(async (opts) => {
       const { src, dest } = opts.input;
       if (src !== dest) {
-        await fs.rename(src, dest);
+        await univFs.move(src, dest);
         changeFileEvent(src);
         changeFileEvent(dest);
       }
@@ -164,14 +103,15 @@ export const fileSystemRouter = server.router({
   moveTo: proc
     .input(
       z.object({
-        src: z.string(),
+        src: UniversalPathScheme,
         destDir: directoryPathScheme,
       })
     )
     .mutation(async (opts) => {
       const { src, destDir } = opts.input;
+      await univFs.move(src, destDir);
       if (src !== destDir) {
-        await fs.rename(src, path.join(destDir, path.basename(src)));
+        await univFs.move(src, univPath.join(destDir, univPath.basename(src)));
         changeFileEvent(src);
         changeDirectoryEvent(destDir);
       }
@@ -180,7 +120,7 @@ export const fileSystemRouter = server.router({
   moveStructural: proc
     .input(
       z.object({
-        src: z.array(z.string()),
+        src: UniversalPathArrayScheme,
         destDir: directoryPathScheme,
       })
     )
@@ -190,33 +130,37 @@ export const fileSystemRouter = server.router({
       moveStructural(src, destDir);
     }),
 
-  remove: proc.input(z.string()).mutation(async (opts) => {
+  remove: proc.input(UniversalPathScheme).mutation(async (opts) => {
     const filePath = opts.input;
-    fs.rm(path.normalize(filePath), { recursive: true, force: true }).then(
-      () => {
+    univFs
+      .rm(univPath.normalize(filePath), { recursive: true, force: true })
+      .then(() => {
         changeFileEvent(filePath);
-      }
-    );
+      });
   }),
 
-  trash: proc.input(z.string()).mutation(async (opts) => {
+  trash: proc.input(UniversalPathScheme).mutation(async (opts) => {
     const filePath = opts.input;
-    Electron.shell.trashItem(path.normalize(filePath)).then(() => {
-      changeFileEvent(filePath);
-    });
+    if (filePath.remoteHost) {
+      univFs.rm(univPath.normalize(filePath), { recursive: true, force: true });
+    } else {
+      Electron.shell.trashItem(univPath.normalize(filePath).path).then(() => {
+        changeFileEvent(filePath);
+      });
+    }
   }),
 
   copy: proc
     .input(
       z.object({
-        src: z.string(),
-        dest: z.string(),
+        src: UniversalPathScheme,
+        dest: UniversalPathScheme,
       })
     )
     .mutation(async (opts) => {
       const { src, dest } = opts.input;
       if (src !== dest) {
-        await fs.copyFile(src, dest);
+        await univFs.copy(src, dest);
         changeFileEvent(src);
         changeFileEvent(dest);
       }
@@ -225,14 +169,14 @@ export const fileSystemRouter = server.router({
   copyTo: proc
     .input(
       z.object({
-        src: z.string(),
+        src: UniversalPathScheme,
         destDir: directoryPathScheme,
       })
     )
     .mutation(async (opts) => {
       const { src, destDir } = opts.input;
       if (src !== destDir) {
-        await fs.copyFile(src, path.join(destDir, path.basename(src)));
+        await univFs.copy(src, univPath.join(destDir, univPath.basename(src)));
         changeFileEvent(src);
         changeDirectoryEvent(destDir);
       }
@@ -241,7 +185,7 @@ export const fileSystemRouter = server.router({
   copyStructural: proc
     .input(
       z.object({
-        src: z.array(z.string()),
+        src: UniversalPathArrayScheme,
         destDir: directoryPathScheme,
       })
     )
@@ -251,69 +195,49 @@ export const fileSystemRouter = server.router({
     }),
 
   makeDir: proc
-    .input(z.object({ parent: z.string(), name: z.string() }))
+    .input(z.object({ parent: UniversalPathScheme, name: z.string() }))
     .mutation(async (opts) => {
       const { parent, name } = opts.input;
-      await fs.mkdir(path.join(parent, name));
+      await univFs.mkdir(univPath.join(parent, name));
     }),
 
   makeFile: proc
-    .input(z.object({ parent: z.string(), name: z.string() }))
+    .input(z.object({ parent: UniversalPathScheme, name: z.string() }))
     .mutation(async (opts) => {
       const { parent, name } = opts.input;
-      await fs.writeFile(path.join(parent, name), "");
-    }),
-
-  changeOwner: proc
-    .input(
-      z.object({
-        filePath: z.string(),
-        uid: z.number(),
-        gid: z.number(),
-      })
-    )
-    .mutation(async (opts) => {
-      const { filePath, uid, gid } = opts.input;
-      await fs.chown(path.normalize(filePath), uid, gid);
+      await univFs.writeFile(univPath.join(parent, name), Buffer.from(""));
     }),
 
   changePermissionMode: proc
     .input(
       z.object({
-        filePath: z.string(),
+        filePath: UniversalPathScheme,
         mode: z.number(),
       })
     )
     .mutation(async (opts) => {
       const { filePath, mode } = opts.input;
-      await fs.chmod(path.normalize(filePath), mode);
+      await univFs.chmod(univPath.normalize(filePath), mode);
     }),
 
   parsePath: proc
-    .input(
-      // If pathKind is not provided, use the OS's default path kind
-      z.object({ fullPath: z.string(), pathKind: PathKindSchema.optional() })
-    )
+    .input(UniversalPathScheme)
     .output(PathParsedScheme)
     .query(async (opts) => {
-      const { fullPath, pathKind } = opts.input;
-      return parsePath(fullPath, pathKind);
+      return parsePath(opts.input);
     }),
 
   parsePathAsync: proc
-    .input(
-      z.object({ fullPath: z.string(), pathKind: PathKindSchema.optional() })
-    )
+    .input(UniversalPathScheme)
     .output(PathParsedScheme)
     .mutation(async (opts) => {
-      const { fullPath, pathKind } = opts.input;
-      return parsePath(fullPath, pathKind);
+      return parsePath(opts.input);
     }),
 
   pathExistsAsync: proc
     .input(
       z.object({
-        fullPath: z.string(),
+        fullPath: UniversalPathScheme,
         fileOrDir: z
           .union([z.literal("file"), z.literal("directory")])
           .optional(),
@@ -322,7 +246,8 @@ export const fileSystemRouter = server.router({
     .output(z.boolean())
     .mutation(async (opts) => {
       const { fullPath, fileOrDir } = opts.input;
-      return pathExists(fullPath)
+      return univFs
+        .exists(fullPath)
         .then((exists) => {
           if (!exists) {
             return false;
@@ -330,23 +255,26 @@ export const fileSystemRouter = server.router({
           if (!fileOrDir) {
             return true;
           }
-          return fs.stat(fullPath).then((stats) => {
+          return univFs.stat(fullPath).then((stats) => {
             if (fileOrDir === "file") {
-              return stats.isFile();
+              return stats.isFile;
             } else {
-              return stats.isDirectory();
+              return stats.isDir;
             }
           });
         })
         .catch(() => false);
     }),
 
-  pollChange: proc.input(z.string()).subscription(async (opts) => {
+  pollChange: proc.input(UniversalPathScheme).subscription(async (opts) => {
     const filePath = opts.input;
-    const isDir = (await fs.stat(filePath)).isDirectory();
+    const isDir = (await univFs.stat(filePath)).isDir;
     return observable<boolean>((observer) => {
-      const onChange = (changedPath: string) => {
-        if (changedPath === filePath) {
+      const onChange = (changedPath: UniversalPath) => {
+        if (
+          changedPath.path === filePath.path &&
+          changedPath.remoteHost === filePath.remoteHost
+        ) {
           log.debug(`pollChange: ${filePath} changed`);
           observer.next(true);
         }
@@ -363,23 +291,27 @@ export const fileSystemRouter = server.router({
 
 // If one of the src contains other ones in src, keeps the structure in destination.
 export function structuralSrcToDest(
-  src: string[],
-  destDir: string
+  src: UniversalPathArray,
+  destDir: UniversalPath
 ): [string, string][] {
   const result: [string, string][] = [];
-  const sorted = src.sort();
+  const sorted = src.paths.sort((x, y) => (x < y ? -1 : 1));
   for (let i = 0; i < sorted.length; i++) {
     const srcPath = sorted[i];
-    const destPath = path.join(destDir, path.basename(srcPath));
+    const destPath = univPath.join(
+      destDir,
+      univPath.basename({ path: srcPath, remoteHost: src.remoteHost })
+    );
     let childAdded = false;
     for (let j = i + 1; j < sorted.length; j++) {
       const srcPathMayChild = sorted[j];
+      // If one is the prefix of the other, keep the structure.
       if (srcPathMayChild.startsWith(srcPath)) {
-        const destPathChild = path.join(
+        const destPathChild = univPath.join(
           destPath,
           srcPathMayChild.slice(srcPath.length)
         );
-        result.push([srcPathMayChild, destPathChild]);
+        result.push([srcPathMayChild, destPathChild.path]);
         childAdded = true;
         i = j;
       } else {
@@ -387,49 +319,48 @@ export function structuralSrcToDest(
       }
     }
     if (!childAdded) {
-      result.push([srcPath, destPath]);
+      result.push([srcPath, destPath.path]);
     }
   }
   return result;
 }
 
-async function pathExists(fullPath: string): Promise<boolean> {
-  return fs
-    .access(fullPath)
-    .then(() => true)
-    .catch(() => false);
-}
-
 async function operationStructural(
-  src: string[],
-  destDir: string,
-  operation: (src: string, dest: string) => Promise<void>,
+  src: UniversalPathArray,
+  destDir: UniversalPath,
+  operation: (src: UniversalPath, dest: UniversalPath) => Promise<void>,
   logName?: string
 ) {
   const srcToDest = structuralSrcToDest(src, destDir);
   for (const [srcPath, destPath] of srcToDest) {
     if (srcPath !== destPath) {
-      const destPathDir = path.dirname(destPath);
-      if (!(await pathExists(destPathDir))) {
-        await fs.mkdir(destPathDir, { recursive: true });
+      const destPathDir = univPath.dirname({
+        path: destPath,
+        remoteHost: src.remoteHost,
+      });
+      if (!(await univFs.exists(destPathDir))) {
+        await univFs.mkdir(destPathDir, /*recursive:*/ true);
       }
       log.debug(`${logName} ${srcPath} -> ${destPath}`);
-      operation(srcPath, destPath)
+      operation(
+        { path: srcPath, remoteHost: src.remoteHost },
+        { path: destPath, remoteHost: destDir.remoteHost }
+      )
         .then(() => {
           changeDirectoryEvent(destDir);
         })
         .catch((err) => {
           log.error(`error ${logName} ${srcPath} -> ${destPath}: ${err}`);
         });
-      changeFileEvent(srcPath);
+      changeFileEvent({ path: srcPath, remoteHost: src.remoteHost });
     }
   }
 }
 
-async function moveStructural(src: string[], destDir: string) {
-  operationStructural(src, destDir, fs.rename, "moveStructural");
+async function moveStructural(src: UniversalPathArray, destDir: UniversalPath) {
+  operationStructural(src, destDir, univFs.move, "moveStructural");
 }
 
-async function copyStructural(src: string[], destDir: string) {
-  operationStructural(src, destDir, fs.copyFile, "copyStructural");
+async function copyStructural(src: UniversalPathArray, destDir: UniversalPath) {
+  operationStructural(src, destDir, univFs.copy, "copyStructural");
 }

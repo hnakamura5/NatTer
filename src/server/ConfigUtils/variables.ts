@@ -4,6 +4,7 @@ import path from "node:path";
 export const tempDir = path.join(app.getPath("temp"), ".natter");
 export const commandTempDir = path.join(tempDir, "Command");
 export const lspTempDir = path.join(tempDir, "LSPTempBuffer");
+export const fileSystemTempDir = path.join(tempDir, "FileSystemTempBuffer");
 export const userHomeConfigDir = path.join(app.getPath("home"), ".natter");
 export const appDataConfigDir = path.join(app.getPath("appData"), ".natter");
 // Reserved for user, to place their application executables.

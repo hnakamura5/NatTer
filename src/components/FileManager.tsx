@@ -26,9 +26,6 @@ import {
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
-  KeyboardSensor,
-  MeasuringStrategy,
   PointerSensor,
   useSensor,
   useSensors,
@@ -37,6 +34,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { FileKeybindings } from "./FileManager/FileManagerKeybindings";
 import { useAtom } from "jotai";
 import { parse } from "path";
+import { RemoteHost } from "@/datatypes/SshConfig";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   color: theme.system.textColor,
@@ -63,6 +61,7 @@ export type FileManagerState = {
   historyBack: string[];
   historyForward: string[];
   historyRecent: string[];
+  remoteHost?: RemoteHost;
 };
 function emptyState(activePath: string): FileManagerState {
   return {
@@ -79,6 +78,7 @@ export type FileManagerProps = {
   current: string;
   state?: FileManagerState;
   setState: (state: FileManagerState) => void;
+  remoteHost?: RemoteHost;
   focusRef?: React.Ref<unknown>;
 };
 
@@ -129,9 +129,12 @@ export function FileManager(props: FileManagerProps) {
   const readClipboard = api.os.readClipboard.useMutation();
 
   // Queries for active path
-  const stat = api.fs.stat.useQuery(state?.activePath || "", {
-    enabled: state?.activePath !== undefined,
-  });
+  const stat = api.fs.stat.useQuery(
+    { path: state?.activePath || "", remoteHost: props.remoteHost },
+    {
+      enabled: state?.activePath !== undefined,
+    }
+  );
 
   // Sensor to avoid preventing treeitem expansion and selection
   const pointerSensor = useSensor(PointerSensor, {
@@ -156,6 +159,7 @@ export function FileManager(props: FileManagerProps) {
     historyBack,
     historyForward,
     historyRecent,
+    remoteHost,
   } = state;
   // State update functions
   const setActivePath = (path: string, clearHistoryForward?: boolean) => {
@@ -207,7 +211,7 @@ export function FileManager(props: FileManagerProps) {
     moveActivePathTo: (path) => {
       log.debug(`Try Move active to path: ${path}`);
       return pathExistsAsync
-        .mutateAsync({ fullPath: path, fileOrDir: "directory" })
+        .mutateAsync({ fullPath: { path, remoteHost }, fileOrDir: "directory" })
         .then((exists) => {
           if (exists) {
             if (currentPath != path) {
@@ -267,15 +271,24 @@ export function FileManager(props: FileManagerProps) {
     },
     move: (src, dest) => {
       log.debug(`Move: ${src} -> ${dest}`);
-      move.mutate({ src: src, dest: dest });
+      move.mutate({
+        src: { path: src, remoteHost },
+        dest: { path: dest, remoteHost },
+      });
     },
     moveTo: (src, destDir) => {
       log.debug(`MoveTo: ${src} -> ${destDir}`);
-      moveTo.mutate({ src: src, destDir: destDir });
+      moveTo.mutate({
+        src: { path: src, remoteHost },
+        destDir: { path: destDir, remoteHost },
+      });
     },
     moveStructural: (src, destDir) => {
       log.debug(`Move Structural: ${src} -> ${destDir}`);
-      moveStructural.mutate({ src: src, destDir: destDir });
+      moveStructural.mutate({
+        src: { paths: src, remoteHost },
+        destDir: { path: destDir, remoteHost },
+      });
     },
     cutToInternalClipboard: (src) => {
       log.debug(`Cut Clipboard: ${src}`);
@@ -291,31 +304,45 @@ export function FileManager(props: FileManagerProps) {
     },
     remove: (filePath) => {
       log.debug(`Remove: ${filePath}`);
-      remove.mutate(filePath);
+      remove.mutate({ path: filePath, remoteHost });
     },
     removeSelection: () => {
       log.debug(`Remove Selection: `, selectedItems);
-      selectedItems.forEach((item) => remove.mutate(item));
+      selectedItems.forEach((item) =>
+        remove.mutate({
+          path: item,
+          remoteHost,
+        })
+      );
     },
     trash: (filePath) => {
       log.debug(`Trash: ${filePath}`);
-      trash.mutate(filePath);
+      trash.mutate({ path: filePath, remoteHost });
     },
     trashSelection: () => {
       log.debug(`Trash Selection: `, selectedItems);
-      selectedItems.forEach((item) => trash.mutate(item));
+      selectedItems.forEach((item) => trash.mutate({ path: item, remoteHost }));
     },
     copy: (src, dest) => {
       log.debug(`Copy: ${src} -> ${dest}`);
-      copy.mutate({ src: src, dest: dest });
+      copy.mutate({
+        src: { path: src, remoteHost },
+        dest: { path: dest, remoteHost },
+      });
     },
     copyTo: (src, destDir) => {
       log.debug(`CopyTo: ${src} -> ${destDir}`);
-      copyTo.mutate({ src: src, destDir: destDir });
+      copyTo.mutate({
+        src: { path: src, remoteHost },
+        destDir: { path: destDir, remoteHost },
+      });
     },
     copyStructural: (src, destDir) => {
       log.debug(`Copy Structural: ${src} -> ${destDir}`);
-      copyStructural.mutate({ src: src, destDir: destDir });
+      copyStructural.mutate({
+        src: { paths: src, remoteHost },
+        destDir: { path: destDir, remoteHost },
+      });
     },
     copyToInternalClipboard: (src) => {
       log.debug(`Copy Clipboard: `, src);
@@ -355,11 +382,14 @@ export function FileManager(props: FileManagerProps) {
       log.debug(`Submit Rename: ${newBaseName}`);
       if (renamingPath) {
         parsePathAsync
-          .mutateAsync({ fullPath: renamingPath })
+          .mutateAsync({ path: renamingPath, remoteHost })
           .then((parsed) => {
             setRenamingPath(undefined);
             const newPath = parsed.dir + "/" + newBaseName;
-            move.mutate({ src: renamingPath, dest: newPath });
+            move.mutate({
+              src: { path: renamingPath, remoteHost },
+              dest: { path: newPath, remoteHost },
+            });
           });
       }
     },
@@ -384,7 +414,7 @@ export function FileManager(props: FileManagerProps) {
       return path;
     },
     getSubPathList: (path) => {
-      return parsePathAsync.mutateAsync({ fullPath: path }).then((parsed) => {
+      return parsePathAsync.mutateAsync({ path, remoteHost }).then((parsed) => {
         let accumulator = "";
         const result: string[] = [];
         for (let i = 0; i < parsed.dirHier.length; i++) {
