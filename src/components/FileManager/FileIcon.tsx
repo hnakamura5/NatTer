@@ -65,9 +65,9 @@ export function IconForFileOrFolder(props: {
 }
 
 export const InlineIconAdjustStyle = {
-  verticalAlign: "-4px",
-  width: "1em",
-  height: "1em",
+  verticalAlign: "-5px",
+  width: "1.1em",
+  height: "1.1em",
   paddingRight: "4px",
 };
 

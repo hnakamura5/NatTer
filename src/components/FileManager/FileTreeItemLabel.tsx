@@ -18,6 +18,7 @@ import {
   IconOpenFolder,
   InlineIconAdjustStyle,
 } from "./FileIcon";
+import { useFileManagerHandle } from "./FileManagerHandle";
 
 function Label(props: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -58,8 +59,9 @@ export function FileLabel(props: { stat: FileStat; baseName?: string }) {
   } = useDraggable({
     id: props.stat.fullPath,
   });
+  const handle = useFileManagerHandle();
   const parsed = api.fs.parsePath.useQuery(
-    { fullPath: props.stat.fullPath },
+    { path: props.stat.fullPath, remoteHost: handle.getRemoteHost() },
     {
       onError: () => {
         log.error(`Failed to parse ${props.stat.fullPath}`);
@@ -91,6 +93,7 @@ export function DirectoryLabel(props: {
   const { setNodeRef: dropNodeRef, isOver } = useDroppable({
     id: props.stat.fullPath,
   });
+  const handle = useFileManagerHandle();
   const {
     attributes,
     listeners,
@@ -100,7 +103,7 @@ export function DirectoryLabel(props: {
     id: props.stat.fullPath,
   });
   const parsed = api.fs.parsePath.useQuery(
-    { fullPath: props.stat.fullPath },
+    { path: props.stat.fullPath, remoteHost: handle.getRemoteHost() },
     {
       onError: () => {
         log.error(`Failed to parse ${props.stat.fullPath}`);
@@ -146,8 +149,9 @@ export function DirectoryLabel(props: {
 }
 
 export function StatLoadingLabel(props: { path: string; baseName?: string }) {
+  const handle = useFileManagerHandle();
   const parsed = api.fs.parsePath.useQuery(
-    { fullPath: props.path },
+    { path: props.path, remoteHost: handle.getRemoteHost() },
     {
       onError: () => {
         log.error(`Failed to parse ${props.path}`);

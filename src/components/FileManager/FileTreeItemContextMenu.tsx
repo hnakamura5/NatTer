@@ -43,14 +43,20 @@ export function DeleteSubMenu(props: { filePath: string }) {
         icon={<DeleteIcon sx={IconStyle} />}
         label={contextLabels.trash}
         onClick={() => {
-          handle.trash(props.filePath);
+          handle.trash({
+            path: props.filePath,
+            remoteHost: handle.getRemoteHost(),
+          });
         }}
       />
       <IconMenuItem
         icon={<DeleteForeverIcon sx={IconStyle} />}
         label={contextLabels.deletePermanently}
         onClick={() => {
-          handle.remove(props.filePath);
+          handle.remove({
+            path: props.filePath,
+            remoteHost: handle.getRemoteHost(),
+          });
         }}
       />
     </ContextSubMenuStyleBox>
@@ -119,6 +125,10 @@ export function FileTreeFileItemContextMenu(
   const handle = useFileManagerHandle();
   const isDir = props.stat.isDir;
   const filePath = props.stat.fullPath;
+  const uPath = {
+    path: filePath,
+    remoteHost: handle.getRemoteHost(),
+  };
   return (
     <ContextMenuStyleBox>
       <IconMenuItem
@@ -138,14 +148,14 @@ export function FileTreeFileItemContextMenu(
         icon={<FileCopyIcon sx={IconStyle} />}
         label={contextLabels.copy}
         onClick={() => {
-          handle.copyToInternalClipboard(filePath);
+          handle.copyToInternalClipboard(uPath);
         }}
       />
       <IconMenuItem
         icon={<ContentCutIcon sx={IconStyle} />}
         label={contextLabels.cut}
         onClick={() => {
-          handle.cutToInternalClipboard(filePath);
+          handle.cutToInternalClipboard(uPath);
         }}
       />
       {isDir ? (
@@ -153,7 +163,7 @@ export function FileTreeFileItemContextMenu(
           icon={<ContentPasteIcon sx={IconStyle} />}
           label={contextLabels.paste}
           onClick={() => {
-            handle.pasteFromInternalClipboard(filePath);
+            handle.pasteFromInternalClipboard(uPath);
           }}
         />
       ) : (

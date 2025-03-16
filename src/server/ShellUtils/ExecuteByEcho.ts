@@ -91,7 +91,7 @@ function extendCommandWithBoundaryDetectorByEcho(
     lineIgnoreMarker
   );
   const endEcho = endEchoCommand(shellSpec, boundaryDetector);
-  const newCommand = `${startEcho}${delimiterBeforeCommand}${command}${commandSeparator}${commandSeparator}${delimiterAfterCommand}${endEcho}`;
+  const newCommand = `${startEcho}${delimiterBeforeCommand}${command}${commandSeparator}${delimiterAfterCommand}${endEcho}`;
   return newCommand;
 }
 
@@ -300,6 +300,9 @@ export function executeCommandByEcho(
   );
   if (shellSpec.sourceCommand) {
     // When the shell has source command, run by it for safety over syntax error.
+    log.debug(
+      `executeCommandByEcho temp file ${command} in process ${process.id} cid: ${cid}`
+    );
     saveCommandToTempFile(process, command).then((filePath) => {
       const source = sourceCommand(shellSpec, filePath);
       executeCommandAndReceiveResponseByEcho(
@@ -315,6 +318,9 @@ export function executeCommandByEcho(
   } else {
     // Execute the command in raw.
     // TODO: How to detect end on error?
+    log.debug(
+      `executeCommandByEcho direct ${command} in process ${process.id} cid: ${cid}`
+    );
     executeCommandAndReceiveResponseByEcho(
       process,
       current,

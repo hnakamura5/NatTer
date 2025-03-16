@@ -79,10 +79,10 @@ const configManager = new BuiltinAndUserConfigManager<Config, PartialConfig>(
 
 // Read config. Use this also in accessing to config in server side.
 export function readConfig(): Promise<Config> {
-  return configManager.readConfig();
+  return configManager.readConfigFile();
 }
 function writeUserConfig(config: PartialConfig): Promise<boolean> {
-  return configManager.writeUserConfig(config);
+  return configManager.writeUserConfigFile(config);
 }
 
 const keybindManager = new BuiltinAndUserConfigManager<
@@ -96,10 +96,10 @@ const keybindManager = new BuiltinAndUserConfigManager<
 );
 
 function readKeybind(): Promise<CustomKeybindList> {
-  return keybindManager.readConfig();
+  return keybindManager.readConfigFile();
 }
 function writeUserKeybind(keybind: PartialCustomKeybindList) {
-  return keybindManager.writeUserConfig(keybind);
+  return keybindManager.writeUserConfigFile(keybind);
 }
 
 const shellSpecManager =
@@ -110,28 +110,8 @@ const shellSpecManager =
   );
 
 export function readShellSpecs(): Promise<ShellSpecification[]> {
-  return shellSpecManager.readConfig();
+  return shellSpecManager.readConfigFile();
 }
-
-// export function readShellSpecs(): Promise<ShellSpecification[]> {
-//   const shellSpecs = fs.readdir(shellSpecDir);
-//   return shellSpecs.then((specs) => {
-//     return Promise.all(
-//       specs.map((spec) => {
-//         const specPath = path.join(shellSpecDir, spec);
-//         log.debug("Reading shell spec from: ", specPath);
-//         const specRead = fs.readFile(specPath, "utf-8");
-//         return specRead.then((specContent) => {
-//           const parsed = parseShellSpec(specContent);
-//           if (parsed) {
-//             return parsed;
-//           }
-//           throw new Error(`Failed to parse shell spec in ${specPath}`);
-//         });
-//       })
-//     );
-//   });
-// }
 
 export function writeShellSpec(name: string, spec: ShellSpecification) {
   const specPath = path.join(shellSpecDir, name);

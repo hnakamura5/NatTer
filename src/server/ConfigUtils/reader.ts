@@ -35,7 +35,7 @@ class ConfigFileManager<ConfigT> {
     return lastUpdateTime != this.configLastUpdateTime;
   }
 
-  readConfig(): Promise<ConfigT> {
+  readConfigFile(): Promise<ConfigT> {
     return fs
       .stat(this.configFilePath)
       .then((stats) => {
@@ -62,7 +62,7 @@ class ConfigFileManager<ConfigT> {
       });
   }
 
-  writeConfig(config: ConfigT) {
+  writeConfigFile(config: ConfigT) {
     const configStr = JSON.stringify(config, null, 2);
     const configWrite = fs.writeFile(this.configFilePath, configStr);
     log.debug(`Writing config ${configStr} to: `, this.configFilePath);
@@ -102,7 +102,6 @@ class ConfigDirectoryManager<ConfigT> {
         });
       })
       .catch((e) => {
-        log.debug(`Failed to read config directory: ${this.configDirPath}`);
         return false;
       });
   }
@@ -111,24 +110,24 @@ class ConfigDirectoryManager<ConfigT> {
     return this.setupFileManagers().then(async () => {
       const configs = [];
       for (const [fileName, manager] of this.fileManagers) {
-        const config = await manager.readConfig();
+        const config = await manager.readConfigFile();
         configs.push({ fileName, config });
       }
       return configs;
     });
   }
 
-  writeConfig(fileName: string, config: ConfigT) {
+  writeConfigFile(fileName: string, config: ConfigT) {
     const filePath = path.join(this.configDirPath, fileName);
     if (this.fileManagers.has(fileName)) {
-      return this.fileManagers.get(fileName)!.writeConfig(config);
+      return this.fileManagers.get(fileName)!.writeConfigFile(config);
     } else {
       const newManager = new ConfigFileManager<ConfigT>(
         filePath,
         this.parseConfig
       );
       this.fileManagers.set(fileName, newManager);
-      return newManager.writeConfig(config);
+      return newManager.writeConfigFile(config);
     }
   }
 }
@@ -166,13 +165,13 @@ export class BuiltinAndUserConfigManager<ConfigT, PartialT> {
     );
   }
 
-  async readConfig(): Promise<ConfigT> {
+  async readConfigFile(): Promise<ConfigT> {
     if (await this.isUpToDate()) {
       return this.mergedConfig!;
     }
-    const baseConfig = await this.baseConfigManager.readConfig();
+    const baseConfig = await this.baseConfigManager.readConfigFile();
     const userConfig = await this.userConfigManager
-      .readConfig()
+      .readConfigFile()
       .catch(() => {}); // User config may not exist
     if (baseConfig) {
       log.debug("Base config: ", baseConfig);
@@ -191,15 +190,15 @@ export class BuiltinAndUserConfigManager<ConfigT, PartialT> {
     }
   }
 
-  readBaseConfig(): Promise<ConfigT | undefined> {
-    return this.baseConfigManager.readConfig();
+  readBaseConfigFile(): Promise<ConfigT | undefined> {
+    return this.baseConfigManager.readConfigFile();
   }
 
-  readUserConfig(): Promise<PartialT | undefined> {
-    return this.userConfigManager.readConfig();
+  readUserConfigFile(): Promise<PartialT | undefined> {
+    return this.userConfigManager.readConfigFile();
   }
 
-  writeBaseConfig(config: ConfigT) {
+  writeBaseConfigFile(config: ConfigT) {
     return fs
       .writeFile(this.baseConfigFilePath, JSON.stringify(config, null, 2))
       .then(() => {
@@ -210,7 +209,7 @@ export class BuiltinAndUserConfigManager<ConfigT, PartialT> {
       });
   }
 
-  writeUserConfig(config: PartialT) {
+  writeUserConfigFile(config: PartialT) {
     return fs
       .writeFile(this.userConfigFilePath, JSON.stringify(config, null, 2))
       .then(() => {
@@ -281,7 +280,7 @@ export class BuiltinAndUserConfigDirectoryManager<ConfigT> {
     });
   }
 
-  readConfig(): Promise<ConfigT[]> {
+  readConfigFile(): Promise<ConfigT[]> {
     return this.readConfigWithFileName().then((configs) => {
       const result = configs.map((config) => config.config);
       log.debug(
@@ -292,7 +291,7 @@ export class BuiltinAndUserConfigDirectoryManager<ConfigT> {
     });
   }
 
-  writeUserConfig(fileName: string, config: ConfigT) {
-    return this.userDirManager.writeConfig(fileName, config);
+  writeUserConfigFile(fileName: string, config: ConfigT) {
+    return this.userDirManager.writeConfigFile(fileName, config);
   }
 }

@@ -38,7 +38,7 @@ function FileBreadcrumbElement(props: {
           name={props.name}
           isDir={props.isDir}
           isOpen={props.isDir}
-          style={InlineIconAdjustStyle}
+          style={{ ...InlineIconAdjustStyle, verticalAlign: "-3px" }}
         />
         {props.name}
       </Link>

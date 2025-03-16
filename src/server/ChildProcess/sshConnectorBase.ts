@@ -23,6 +23,7 @@ export class SshConnectorBase extends CallbackManager implements IShell {
     this.client = new Client();
     this.encoder = new Encoder(options?.encoding);
     this.newline = options?.newline || "\n";
+    log.debug("SSH client constructor: ", this.connectConfig);
     this.connectPromise = new Promise<void>((resolve, reject) => {
       this.client
         .on("ready", () => {
@@ -54,16 +55,23 @@ export class SshConnectorBase extends CallbackManager implements IShell {
           );
         })
         .on("error", (err) => {
-          reject();
+          log.debug("SSH client on error: ", err);
           this.error = err;
-          log.debug("SSH client error: ", err);
+          reject();
           // TODO: reconnection with timeout?
         })
         .on("close", () => {
           log.debug("SSH client is closed");
           this.exitCall(this.error ? 1 : 0);
         });
-    });
+    })
+      .catch((err) => {
+        this.error = err;
+        log.debug("SSH client start error: ", err);
+      })
+      .finally(() => {
+        log.debug("SSH client start finally");
+      });
   }
 
   start() {

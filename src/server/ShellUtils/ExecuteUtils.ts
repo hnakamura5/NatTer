@@ -402,6 +402,7 @@ export async function saveCommandToTempFile(process: Process, command: string) {
     shellSpec.temporalFilePath ||
     path.join(commandTempDir, `temp-${process.id}${shellSpec.defaultExt}`);
   const dir = path.dirname(filePath);
+  log.debug(`saveCommandToTempFile to ${filePath}`);
   return fs.mkdir(dir, { recursive: true }).then(() => {
     return fs
       .writeFile(filePath, command)

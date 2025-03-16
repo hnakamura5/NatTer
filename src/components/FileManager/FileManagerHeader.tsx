@@ -175,7 +175,8 @@ export function FileManagerHeader(props: FileManagerHeaderProps) {
   }, [fullPath, parsedPath]);
   const parsed = api.fs.parsePath.useQuery(
     {
-      fullPath: fullPath,
+      path: fullPath,
+      remoteHost: handle.getRemoteHost(),
     },
     {
       enabled: parsedPath === undefined,

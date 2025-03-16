@@ -159,25 +159,26 @@ export function FileTreeItem(props: {
 
   const handle = useFileManagerHandle();
   //log.error(`FileTreeItem: ${props.path}`);
-  const stat = api.fs.stat.useQuery(props.path, {
+  const uPath = {
+    path: props.path,
+    remoteHost: handle.getRemoteHost(),
+  };
+  const stat = api.fs.stat.useQuery(uPath, {
     onError: () => {
       log.error(`Failed to stat ${props.path}`);
     },
   });
-  const parsed = api.fs.parsePath.useQuery(
-    { fullPath: props.path },
-    {
-      onError: () => {
-        log.error(`Failed to parse ${props.path}`);
-      },
-    }
-  );
-  const list = api.fs.list.useQuery(props.path, {
+  const parsed = api.fs.parsePath.useQuery(uPath, {
+    onError: () => {
+      log.error(`Failed to parse ${props.path}`);
+    },
+  });
+  const list = api.fs.list.useQuery(uPath, {
     onError: () => {
       log.error(`Failed to list ${props.path}`);
     },
   });
-  api.fs.pollChange.useSubscription(props.path, {
+  api.fs.pollChange.useSubscription(uPath, {
     onError: () => {
       log.error(`Failed to pollChange ${props.path}`);
     },
@@ -210,7 +211,7 @@ export function FileTreeItem(props: {
     const newPath = parsed.data.dir + parsed.data.sep + baseName;
     log.debug(`Renaming ${props.path} to ${newPath}`);
     setRenamingMode(false);
-    handle.move(props.path, newPath);
+    handle.move(uPath, { path: newPath, remoteHost: handle.getRemoteHost() });
   };
 
   if (stat.data.isDir) {

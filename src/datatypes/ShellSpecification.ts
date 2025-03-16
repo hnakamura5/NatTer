@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PathKindSchema } from "@/datatypes/UniversalPath";
+import { PathKindSchema } from "./SshConfig";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import JSON5 from "json5";
 

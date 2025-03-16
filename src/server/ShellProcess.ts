@@ -38,7 +38,10 @@ import { log } from "@/datatypes/Logger";
 import { readShellSpecs } from "./configServer";
 import { ChildShell } from "./ChildProcess/childShell";
 import { ChildPty } from "./ChildProcess/childPty";
-import { sshConnectionToConnectConfig } from "@/datatypes/SshConfig";
+import {
+  RemoteHostSchema,
+  sshConnectionToConnectConfig,
+} from "@/datatypes/SshConfig";
 import { SshPty } from "./ChildProcess/sshPty";
 import { SshShell } from "./ChildProcess/sshShell";
 
@@ -225,6 +228,15 @@ function startProcess(config: ShellConfig): ProcessID {
     emptyCommand(pid, -1),
     selectExecutor(shellSpec, config)
   );
+  if (config.type === "ssh") {
+    log.debug(`set ssh connection as process.remoteHost:${config.connection}`);
+    process.remoteHost = {
+      host: config.connection.host,
+      port: config.connection.port,
+      username: config.connection.username,
+      pathKind: shellSpec.pathKind,
+    };
+  }
   addProcess(process);
   log.debug(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
@@ -440,6 +452,12 @@ export const shellRouter = server.router({
         directory: getProcess(pid.input).currentDirectory,
         user: getProcess(pid.input).user,
       };
+    }),
+  remoteHost: proc
+    .input(ProcessIDScheme)
+    .output(RemoteHostSchema.optional())
+    .query(async (pid) => {
+      return getProcess(pid.input).remoteHost;
     }),
   commands: proc
     .input(ProcessIDScheme)

@@ -10,6 +10,7 @@ import { EventEmitter, on } from "node:events";
 import * as iconv from "iconv-lite";
 
 import { log } from "@/datatypes/Logger";
+import { RemoteHost } from "@/datatypes/SshConfig";
 
 export type Process = {
   id: ProcessID;
@@ -21,6 +22,7 @@ export type Process = {
   currentDirectory: string;
   user: string;
   clock: number;
+  remoteHost?: RemoteHost;
   event: EventEmitter;
   executor: (
     process: Process,

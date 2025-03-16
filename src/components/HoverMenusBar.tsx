@@ -28,27 +28,42 @@ import { UnderConstruction } from "@/components/UnderConstruction";
 import { GlobalFocusMap } from "./GlobalFocusMap";
 import { set } from "zod";
 import { useAtom } from "jotai";
+import { log } from "@/datatypes/Logger";
 
-function FileManagerWrapper(props: { focusRef: React.RefObject<HTMLElement> }) {
+function FileManagerWrapper(props: {
+  focusRef: React.RefObject<HTMLDivElement>;
+}) {
   const theme = useTheme();
   const pid = usePid();
   const [fileManagerState, setFileManagerState] = useAtom(FileManagerStateAtom);
   const currentDir = api.shell.current.useQuery(pid, {
     refetchInterval: 1000,
     onError: (error) => {
-      console.error(`currentDir fetch: ${error}`);
+      log.error(`currentDir fetch: ${error}`);
     },
   });
-  if (!currentDir.data) {
+  const remoteHost = api.shell.remoteHost.useQuery(pid, {
+    refetchInterval: 1000,
+    onError: (error) => {
+      log.error(`remoteHost fetch error: ${error}`);
+    },
+  });
+
+  if (!currentDir.isSuccess || !remoteHost.isSuccess) {
     return <div>Loading...</div>;
   }
+  log.debug(
+    `FileManagerWrapper currentDir: ${currentDir.data.directory} remoteHost: `,
+    remoteHost.data
+  );
   return (
     <FocusBoundary defaultBorderColor={theme.system.backgroundColor}>
       <FileManager
         current={currentDir.data.directory}
         state={fileManagerState}
         setState={setFileManagerState}
-        focusRef={props.focusRef}
+        ref={props.focusRef}
+        remoteHost={remoteHost.data}
       />
     </FocusBoundary>
   );
@@ -171,7 +186,7 @@ const VerticalList = styled(List)(({ theme }) => ({
 
 function HoverMenusBar(props: HoverMenusBarProps) {
   const theme = useTheme();
-  const fileTreeRef = React.useRef<HTMLElement>(null);
+  const fileTreeRef = React.useRef<HTMLDivElement>(null);
 
   return (
     <VerticalList>

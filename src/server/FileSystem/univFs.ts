@@ -16,6 +16,8 @@ import { fileSystemTempDir, tempDir } from "../ConfigUtils/variables";
 import { stat } from "node:fs";
 
 const remoteConnections = new Map<RemoteHostID, SFTPClient>();
+const remoteUninitializedConnections = new Map<RemoteHostID, SFTPClient>();
+const initializedEventHandlers = new Map<RemoteHostID, (() => void)[]>();
 
 async function getRemoteClient(remote: RemoteHost): Promise<SFTPClient> {
   const id = remoteHostID(remote);
@@ -23,8 +25,18 @@ async function getRemoteClient(remote: RemoteHost): Promise<SFTPClient> {
   if (client !== undefined) {
     return client;
   }
+  if (remoteUninitializedConnections.has(id)) {
+    return new Promise<SFTPClient>((resolve, reject) => {
+      initializedEventHandlers.set(id, [
+        () => {
+          resolve(remoteConnections.get(id)!);
+        },
+        ...(initializedEventHandlers.get(id) || []),
+      ]);
+    });
+  }
   const newClient = new SFTPClient();
-  remoteConnections.set(id, newClient);
+  remoteUninitializedConnections.set(id, newClient);
   await readConfig().then(async (config) => {
     for (const shell of config.shells) {
       if (shell.type === "ssh") {
@@ -36,6 +48,12 @@ async function getRemoteClient(remote: RemoteHost): Promise<SFTPClient> {
         ) {
           // Connect to the remote host.
           await newClient.connect(sshConnectionToConnectConfig(connection));
+          remoteConnections.set(id, newClient);
+          remoteUninitializedConnections.delete(id);
+          for (const handler of initializedEventHandlers.get(id) || []) {
+            handler();
+          }
+          initializedEventHandlers.delete(id);
           return;
         }
       }
@@ -249,7 +267,10 @@ export namespace univFs {
     }
   }
 
-  export async function mkdir(uPath: UniversalPath, recursive?: boolean): Promise<void> {
+  export async function mkdir(
+    uPath: UniversalPath,
+    recursive?: boolean
+  ): Promise<void> {
     if (isRemote(uPath)) {
       const client = await getRemoteClient(uPath.remoteHost!);
       await client.mkdir(uPath.path, recursive);
