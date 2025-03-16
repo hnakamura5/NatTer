@@ -17,7 +17,6 @@ import { log } from "@/datatypes/Logger";
 import { useScrollIntoViewIfNeeded } from "@dnd-kit/core/dist/hooks/utilities";
 import { useState } from "react";
 import { BasicInput } from "../BasicInput";
-import { set } from "zod";
 
 function FileBreadcrumbElement(props: {
   name: string;

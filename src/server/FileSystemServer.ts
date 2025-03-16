@@ -33,7 +33,7 @@ function changeFileEvent(uPath: UniversalPath) {
   changeDirectoryEvent(univPath.dirname(uPath));
 }
 function changeDirectoryEvent(uPath: UniversalPath) {
-  eventEmitter.emit("change", uPath);
+  eventEmitter.emit(uPath.path);
 }
 
 const directoryPathScheme = UniversalPathScheme;
@@ -73,10 +73,6 @@ export const fileSystemRouter = server.router({
         return [] as string[];
       });
     }),
-
-  sep: proc.output(z.string()).query(async () => {
-    return path.sep;
-  }),
 
   stat: proc
     .input(UniversalPathScheme)
@@ -273,20 +269,16 @@ export const fileSystemRouter = server.router({
       log.debug(`pollChange start: `, filePath);
       const isDir = (await univFs.stat(filePath)).isDir;
       return observable<boolean>((observer) => {
-        const onChange = (changedPath: UniversalPath) => {
-          if (
-            changedPath.path === filePath.path
-            // Invoke change event even if the host is different.
-            // This may cause false positive but the cost is just refetching.
-          ) {
-            log.debug(`pollChange: ${filePath} changed`);
-            observer.next(true);
-          }
+        const onChange = () => {
+          log.debug(`pollChange: ${filePath} changed`);
+          observer.next(true);
         };
         if (isDir) {
-          eventEmitter.on("change", onChange);
+          // Invoke change event even if the host is different.
+          // This may cause false positive but the cost is just refetching.
+          eventEmitter.on(filePath.path, onChange);
           return () => {
-            eventEmitter.off("change", onChange);
+            eventEmitter.off(filePath.path, onChange);
           };
         }
       });

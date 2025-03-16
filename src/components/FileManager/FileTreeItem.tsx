@@ -206,9 +206,15 @@ export function FileTreeItem(props: {
       />
     );
   }
+  // TODO: call API
+  const joinPath = (dir: string, baseName: string) => {
+    return props.path === parsed.data.sep
+      ? dir + baseName
+      : dir + parsed.data.sep + baseName;
+  };
 
   const submitRenaming = (baseName: string) => {
-    const newPath = parsed.data.dir + parsed.data.sep + baseName;
+    const newPath = joinPath(parsed.data.dir, baseName);
     log.debug(`Renaming ${props.path} to ${newPath}`);
     setRenamingMode(false);
     handle.move(uPath, { path: newPath, remoteHost: handle.getRemoteHost() });
@@ -218,7 +224,7 @@ export function FileTreeItem(props: {
     // Directory
     const children = list.data?.map((child) => (
       <FileTreeItem
-        path={props.path + parsed.data.sep + child}
+        path={joinPath(props.path, child)}
         key={child}
         showTop={true}
         expandedItems={props.expandedItems}

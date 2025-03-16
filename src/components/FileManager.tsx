@@ -100,6 +100,7 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
     useEffect(() => {
       // Initialize the state if it is not set
       if (!props.state) {
+        log.debug(`FileManager: state Effect`);
         props.setState(emptyState(props.current));
       }
     }, [props.state === undefined]);
