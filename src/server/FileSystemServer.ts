@@ -202,7 +202,7 @@ export const fileSystemRouter = server.router({
     .input(z.object({ parent: UniversalPathScheme, name: z.string() }))
     .mutation(async (opts) => {
       const { parent, name } = opts.input;
-      await univFs.writeFile(univPath.join(parent, name), Buffer.from(""));
+      await univFs.writeFile(univPath.join(parent, name), "");
     }),
 
   changePermissionMode: proc

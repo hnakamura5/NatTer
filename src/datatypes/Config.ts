@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import { LanguageServerConfigSchema } from "@/components/LanguageServerConfigs";
-import { SshConnectionSchema } from "./SshConfig";
+import { PathKindSchema, SshConnectionSchema } from "./SshConfig";
 
 const ShellConfigCommon = z.object({
   language: z.string(),
@@ -14,6 +14,7 @@ const ShellConfigCommon = z.object({
     })
     .optional(),
   languageServer: LanguageServerConfigSchema.optional(),
+  pathKind: PathKindSchema.optional(),
 });
 const ShellConfigExecutableCommon = z.object({});
 
@@ -38,7 +39,6 @@ export const SshShellConfigSchema = z
   .merge(ShellConfigCommon)
   .merge(ShellConfigExecutableCommon.deepPartial());
 export type SshShellConfig = z.infer<typeof SshShellConfigSchema>;
-
 
 export const ShellConfigSchema = z.discriminatedUnion("type", [
   LocalShellConfigSchema,

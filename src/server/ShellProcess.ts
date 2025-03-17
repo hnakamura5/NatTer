@@ -40,6 +40,7 @@ import { ChildShell } from "./ChildProcess/childShell";
 import { ChildPty } from "./ChildProcess/childPty";
 import {
   RemoteHostSchema,
+  remoteHostFromConfig,
   sshConnectionToConnectConfig,
 } from "@/datatypes/SshConfig";
 import { SshPty } from "./ChildProcess/sshPty";
@@ -230,12 +231,7 @@ function startProcess(config: ShellConfig): ProcessID {
   );
   if (config.type === "ssh") {
     log.debug(`set ssh connection as process.remoteHost:${config.connection}`);
-    process.remoteHost = {
-      host: config.connection.host,
-      port: config.connection.port,
-      username: config.connection.username,
-      pathKind: shellSpec.pathKind,
-    };
+    process.remoteHost = remoteHostFromConfig(config);
   }
   addProcess(process);
   log.debug(`Started process ${pid} with ${config.executable}`);

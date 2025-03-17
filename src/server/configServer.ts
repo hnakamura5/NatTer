@@ -40,12 +40,10 @@ import {
   BuiltinAndUserConfigDirectoryManager,
   BuiltinAndUserConfigManager,
 } from "./ConfigUtils/reader";
-import { userHomeConfigDir } from "./ConfigUtils/variables";
+import { localUserHomeConfigDir } from "./ConfigUtils/paths";
 
 // Builtin default config.
 const configDir = process.env.BUILTIN_DOT_NATTER_PATH || ".natter";
-// User configuration to override default config.
-const userConfigDir = userHomeConfigDir;
 
 // Master configurations.
 const configFileName = "config.json";
@@ -64,11 +62,14 @@ const shellSpecDir = path.join(configDir, shellSpecDirName);
 const labelsDir = path.join(configDir, labelsDirName);
 const themesDir = path.join(configDir, themesDirName);
 
-const userConfigFilePath = path.join(userConfigDir, configFileName);
-const userKeybindFilePath = path.join(userConfigDir, keybindFileName);
-const userShellSpecDir = path.join(userConfigDir, shellSpecDirName);
-const userLabelsDir = path.join(userConfigDir, labelsDirName);
-const userThemesDir = path.join(userConfigDir, themesDirName);
+const userConfigFilePath = path.join(localUserHomeConfigDir(), configFileName);
+const userKeybindFilePath = path.join(
+  localUserHomeConfigDir(),
+  keybindFileName
+);
+const userShellSpecDir = path.join(localUserHomeConfigDir(), shellSpecDirName);
+const userLabelsDir = path.join(localUserHomeConfigDir(), labelsDirName);
+const userThemesDir = path.join(localUserHomeConfigDir(), themesDirName);
 
 const configManager = new BuiltinAndUserConfigManager<Config, PartialConfig>(
   configFilePath,

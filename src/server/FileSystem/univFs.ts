@@ -12,7 +12,7 @@ import pathLibLocal from "node:path";
 
 import { log } from "@/datatypes/Logger";
 import { univConvert, univLift, univPath, univPathToString } from "./univPath";
-import { fileSystemTempDir, tempDir } from "../ConfigUtils/variables";
+import { localTempDir } from "../ConfigUtils/paths";
 import { stat } from "node:fs";
 
 const remoteConnections = new Map<RemoteHostID, SFTPClient>();
@@ -89,7 +89,10 @@ async function moveOrCopy(
       } else {
         // Different remote host. Download and upload.
         const clientDest = await getRemoteClient(dest.remoteHost!);
-        const localTempSrc = pathLibLocal.join(tempDir, univPath.basename(src));
+        const localTempSrc = pathLibLocal.join(
+          localTempDir(),
+          univPath.basename(src)
+        );
         if (srcStats.isDir) {
           log.debug(
             `${copy ? "Copy" : "Move"} remote dir to remote: ${univPathToString(
@@ -193,15 +196,22 @@ export namespace univFs {
 
   export async function writeFile(
     uPath: UniversalPath,
-    data: Buffer,
+    data: string,
     append?: boolean
   ): Promise<void> {
     if (isRemote(uPath)) {
       const client = await getRemoteClient(uPath.remoteHost!);
+      log.debug(`Start write file to remote: ${uPath.path} << ${data}`);
       if (append && (await exists(uPath))) {
-        await client.append(data, uPath.path);
+        await client.append(Buffer.from(data), uPath.path);
       } else {
-        await client.put(data, uPath.path);
+        await new Promise((resolve, reject) => {
+          client
+            .createWriteStream(uPath.path, { autoClose: true, flags: "w" })
+            .write(data, () => {
+              resolve(null);
+            });
+        });
       }
       log.debug(`Wrote file to remote: ${uPath.path}`);
     } else {
@@ -273,7 +283,9 @@ export namespace univFs {
   ): Promise<void> {
     if (isRemote(uPath)) {
       const client = await getRemoteClient(uPath.remoteHost!);
-      await client.mkdir(uPath.path, recursive);
+      await client.mkdir(uPath.path, recursive).catch((e) => {
+        log.debug(e);
+      });
       log.debug(`Mkdir from remote: ${uPath.path}`);
     } else {
       await fs.mkdir(uPath.path, { recursive });

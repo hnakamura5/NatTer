@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ConnectConfig } from "ssh2";
 
 import { createHash } from "crypto";
+import { ShellConfig } from "./Config";
 
 export const PathKindSchema = z.enum(["posix", "win32"]);
 export type PathKind = z.infer<typeof PathKindSchema>;
@@ -29,6 +30,27 @@ export function remoteHostID(config: RemoteHost): RemoteHostID {
     .digest("hex");
 }
 
+export function remoteHostFromConfig(
+  config: ShellConfig
+): RemoteHost | undefined {
+  if (config.type === "ssh") {
+    const connection = config.connection;
+    return {
+      host: connection.host,
+      port: connection.port,
+      username: connection.username,
+      pathKind: config.pathKind,
+    };
+  }
+  return undefined;
+}
+
+// TODO: How to read this with variable?
+const CommonConfigSchema = z.object({
+  home: z.string(),
+  tempDir: z.string(), // Temporal directory for command execution.
+});
+
 const CommonAuthSchema = z
   .object({
     forceIPv4: z.boolean().optional(),
@@ -37,7 +59,8 @@ const CommonAuthSchema = z
     readyTimeout: z.number().int().optional(),
     timeout: z.number().int().optional(),
   })
-  .merge(RemoteHostSchema);
+  .merge(RemoteHostSchema)
+  .merge(CommonConfigSchema);
 
 const PasswordAuthSchema = z
   .object({

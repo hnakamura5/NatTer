@@ -11,10 +11,10 @@ import { z } from "zod";
 import { log } from "@/datatypes/Logger";
 import {
   getPathVariables,
-  tempDir,
-  commandTempDir,
-  lspTempDir,
-} from "./variables";
+  localCommandTempDir,
+  localFileSystemTempDir,
+  localTempDir,
+} from "./paths";
 
 // Force get the member "name" of the object.
 type NameType<T> = T extends { name: infer N } ? N : never;
@@ -120,10 +120,11 @@ function configPathAssignVariablesToConfig<T extends PartialConfig>(
           }
         : undefined,
     })),
-    tempDir: configPathAssignVariables(config?.tempDir) || tempDir,
+    tempDir: configPathAssignVariables(config?.tempDir) || localTempDir(),
     commandTempDir:
-      configPathAssignVariables(config?.commandTempDir) || commandTempDir,
-    lspTempDir: configPathAssignVariables(config?.lspTempDir) || lspTempDir,
+      configPathAssignVariables(config?.commandTempDir) ||
+      localCommandTempDir(),
+    lspTempDir: configPathAssignVariables(config?.lspTempDir) || localTempDir(),
   };
 }
 

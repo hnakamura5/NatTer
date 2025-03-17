@@ -26,6 +26,10 @@ import { log } from "@/datatypes/Logger";
 import { api } from "@/api";
 import { readConfig } from "../configServer";
 import { app } from "electron";
+import { getCommandTempDir, getTempDir } from "../ConfigUtils/paths";
+import { remoteHostFromConfig } from "@/datatypes/SshConfig";
+import { univPath } from "../FileSystem/univPath";
+import { univFs } from "../FileSystem/univFs";
 
 const Cols = 512;
 const Rows = 64;
@@ -396,30 +400,27 @@ export async function receivePartialLineResponse(
 }
 
 export async function saveCommandToTempFile(process: Process, command: string) {
-  const commandTempDir = (await readConfig()).commandTempDir!;
+  const commandTempDir = await getCommandTempDir(process.config);
+  const remoteHost = remoteHostFromConfig(process.config);
   const shellSpec = process.shellSpec;
-  const filePath =
-    shellSpec.temporalFilePath ||
-    path.join(commandTempDir, `temp-${process.id}${shellSpec.defaultExt}`);
-  const dir = path.dirname(filePath);
-  log.debug(`saveCommandToTempFile to ${filePath}`);
-  return fs.mkdir(dir, { recursive: true }).then(() => {
-    return fs
-      .writeFile(filePath, command)
-      .then(() => {
-        log.debug(`Saved command to ${filePath}`);
-        if (process.config.virtualPath) {
-          return parenCommand(
-            shellSpec,
-            encodeOSPathToVirtual(process.config, filePath)
-          );
-        }
-        return filePath;
-      })
-      .catch((e) => {
-        const message = `Failed to save command to ${filePath}`;
-        log.debugTrace(message, e);
-        throw new Error(message);
-      });
+  const filePath = univPath.join(
+    { path: commandTempDir, remoteHost },
+    `temp-${process.id}${shellSpec.defaultExt}`
+  );
+  const dir = univPath.dirname(filePath);
+  log.debug(`saveCommandToTempFile to`, filePath);
+  await univFs.mkdir(dir, true);
+  await univFs.writeFile(filePath, command).catch((e) => {
+    const message = `Failed to save command to ${JSON.stringify(filePath)}`;
+    log.debug(message, e);
   });
+  await univFs.chmod(filePath, 0o700);
+  log.debug(`Saved command to `, filePath);
+  if (process.config.virtualPath) {
+    return parenCommand(
+      shellSpec,
+      encodeOSPathToVirtual(process.config, filePath.path)
+    );
+  }
+  return filePath.path;
 }
