@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RemoteHostSchema, SshConnectionSchema } from "./SshConfig";
+import { RemoteHostSchema } from "./SshConfig";
 
 // TODO: Add "url" to kind
 
@@ -11,7 +11,6 @@ export const UniversalPathScheme = z.object({
 });
 export type UniversalPath = z.infer<typeof UniversalPathScheme>;
 
-
 export const UniversalPathArrayScheme = z.object({
   paths: z.array(z.string()),
   // For remote paths. undefined for local
@@ -21,6 +20,22 @@ export type UniversalPathArray = z.infer<typeof UniversalPathArrayScheme>;
 
 export function isRemote(path: UniversalPath) {
   return path.remoteHost !== undefined;
+}
+
+export function univPathToString(uPath: UniversalPath) {
+  if (isRemote(uPath)) {
+    return `${uPath.remoteHost?.username}@${uPath.remoteHost?.host}:${uPath.path}`;
+  }
+  return uPath.path;
+}
+
+export function univPathArrayToString(uPaths: UniversalPathArray) {
+  if (uPaths.remoteHost) {
+    return `${uPaths.remoteHost.username}@${
+      uPaths.remoteHost.host
+    }:[${uPaths.paths.join(",")}]`;
+  }
+  return `[${uPaths.paths.join(",")}]`;
 }
 
 export const FileStatScheme = z.object({

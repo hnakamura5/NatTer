@@ -1,20 +1,37 @@
 import SFTPClient from "ssh2-sftp-client";
 import {
   RemoteHost,
-  RemoteHostID,
-  remoteHostID,
   sshConnectionToConnectConfig,
 } from "@/datatypes/SshConfig";
 import { readConfig } from "@/server/configServer";
-import { FileStat, UniversalPath, isRemote } from "@/datatypes/UniversalPath";
+import {
+  FileStat,
+  UniversalPath,
+  isRemote,
+  univPathToString,
+} from "@/datatypes/UniversalPath";
 import fs from "node:fs/promises";
 import pathLibLocal from "node:path";
 
-import { log } from "@/datatypes/Logger";
-import { univConvert, univLift, univPath, univPathToString } from "./univPath";
-import { localTempDir } from "../ConfigUtils/paths";
-import { stat } from "node:fs";
+import { createHash } from "crypto";
 
+import { log } from "@/datatypes/Logger";
+import { univLift, univPath } from "./univPath";
+import { localTempDir } from "../ConfigUtils/paths";
+
+export type RemoteHostID = string;
+
+export function remoteHostID(config: RemoteHost): RemoteHostID {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        host: config.host,
+        port: config.port,
+        username: config.username,
+      })
+    )
+    .digest("hex");
+}
 const remoteConnections = new Map<RemoteHostID, SFTPClient>();
 const remoteUninitializedConnections = new Map<RemoteHostID, SFTPClient>();
 const initializedEventHandlers = new Map<RemoteHostID, (() => void)[]>();
@@ -202,17 +219,17 @@ export namespace univFs {
     if (isRemote(uPath)) {
       const client = await getRemoteClient(uPath.remoteHost!);
       log.debug(`Start write file to remote: ${uPath.path} << ${data}`);
-      if (append && (await exists(uPath))) {
-        await client.append(Buffer.from(data), uPath.path);
-      } else {
-        await new Promise((resolve, reject) => {
-          client
-            .createWriteStream(uPath.path, { autoClose: true, flags: "w" })
-            .write(data, () => {
-              resolve(null);
-            });
-        });
-      }
+      const fileExists = await exists(uPath);
+      await new Promise((resolve, reject) => {
+        client
+          .createWriteStream(uPath.path, {
+            autoClose: true,
+            flags: append && fileExists ? "a" : "w",
+          })
+          .write(data, () => {
+            resolve(null);
+          });
+      });
       log.debug(`Wrote file to remote: ${uPath.path}`);
     } else {
       fs.writeFile(uPath.path, data, { flag: append ? "a" : "w" });

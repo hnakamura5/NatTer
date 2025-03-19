@@ -79,14 +79,14 @@ export function getPathVariables() {
     pathVariables.set("${EXE}", app.getPath("exe"));
     pathVariables.set("${MODULE}", app.getPath("module"));
     pathVariables.set("${HOME}", app.getPath("home"));
-    pathVariables.set("${APPDATA}", appDataConfigDir);
+    pathVariables.set("${APP_DATA}", appDataConfigDir);
     pathVariables.set(
-      "${APPROOT}",
+      "${APP_ROOT}",
       process.env.APP_ROOT || path.join(app.getPath("exe"), "..")
     );
     pathVariables.set("${TEMP}", localTempDir());
-    pathVariables.set("${LSPTEMP}", localLspTempDir());
-    pathVariables.set("${USERAPP}", appDataUserAppDir);
+    pathVariables.set("${LSP_TEMP}", localLspTempDir());
+    pathVariables.set("${USER_APP}", appDataUserAppDir);
     pathVariables.set("${HIDDEN}", appDataHiddenDir);
   }
   return pathVariables;

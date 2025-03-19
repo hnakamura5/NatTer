@@ -139,7 +139,11 @@ export const fileSystemRouter = server.router({
   trash: proc.input(UniversalPathScheme).mutation(async (opts) => {
     const filePath = opts.input;
     if (filePath.remoteHost) {
-      univFs.rm(univPath.normalize(filePath), { recursive: true, force: true });
+      univFs
+        .rm(univPath.normalize(filePath), { recursive: true, force: true })
+        .then(() => {
+          changeFileEvent(filePath);
+        });
     } else {
       Electron.shell.trashItem(univPath.normalize(filePath).path).then(() => {
         changeFileEvent(filePath);

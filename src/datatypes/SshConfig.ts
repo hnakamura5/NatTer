@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { ConnectConfig } from "ssh2";
 
-import { createHash } from "crypto";
 import { ShellConfig } from "./Config";
 
 export const PathKindSchema = z.enum(["posix", "win32"]);
@@ -16,19 +15,7 @@ export const RemoteHostSchema = z.object({
 });
 export type RemoteHost = z.infer<typeof RemoteHostSchema>;
 
-export type RemoteHostID = string;
 
-export function remoteHostID(config: RemoteHost): RemoteHostID {
-  return createHash("sha256")
-    .update(
-      JSON.stringify({
-        host: config.host,
-        port: config.port,
-        username: config.username,
-      })
-    )
-    .digest("hex");
-}
 
 export function remoteHostFromConfig(
   config: ShellConfig

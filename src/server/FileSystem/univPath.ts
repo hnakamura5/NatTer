@@ -1,5 +1,5 @@
 import nodePath, { win32, posix, PlatformPath } from "node:path";
-import { UniversalPath, isRemote } from "@/datatypes/UniversalPath";
+import { UniversalPath } from "@/datatypes/UniversalPath";
 import { PathKind } from "@/datatypes/SshConfig";
 
 export function pathOf(kind?: PathKind): PlatformPath {
@@ -30,13 +30,6 @@ export function univConvert(
     ...uPath,
     path: func(pathOf(uPath.remoteHost?.pathKind), uPath.path),
   };
-}
-
-export function univPathToString(uPath: UniversalPath) {
-  if (isRemote(uPath)) {
-    return `${uPath.remoteHost?.username}@${uPath.remoteHost?.host}:${uPath.path}`;
-  }
-  return uPath.path;
 }
 
 export namespace univPath {

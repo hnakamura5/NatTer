@@ -37,6 +37,10 @@ import { useAtom } from "jotai";
 import { parse } from "path";
 import { RemoteHost } from "@/datatypes/SshConfig";
 import { UniversalPath } from "@/datatypes/UniversalPath";
+import {
+  univPathArrayToString,
+  univPathToString,
+} from "@/datatypes/UniversalPath";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   color: theme.system.textColor,
@@ -306,7 +310,7 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
         clipSelection("FileCut");
       },
       remove: (filePath) => {
-        log.debug(`Remove: ${filePath}`);
+        log.debug(`Remove: `, filePath);
         remove.mutate(filePath);
       },
       removeSelection: () => {
@@ -316,7 +320,7 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
         );
       },
       trash: (filePath) => {
-        log.debug(`Trash: ${filePath}`);
+        log.debug(`Trash: `, filePath);
         trash.mutate(filePath);
       },
       trashSelection: () => {
@@ -326,15 +330,23 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
         );
       },
       copy: (src, dest) => {
-        log.debug(`Copy: ${src} -> ${dest}`);
+        log.debug(
+          `Copy: ${univPathToString(src)} -> ${univPathToString(dest)}`
+        );
         copy.mutate({ src: src, dest: dest });
       },
       copyTo: (src, destDir) => {
-        log.debug(`CopyTo: ${src} -> ${destDir}`);
+        log.debug(
+          `CopyTo: ${univPathToString(src)} -> ${univPathToString(destDir)}`
+        );
         copyTo.mutate({ src: src, destDir: destDir });
       },
       copyStructural: (src, destDir) => {
-        log.debug(`Copy Structural: ${src} -> ${destDir}`);
+        log.debug(
+          `Copy Structural: ${univPathArrayToString(src)} -> ${univPathToString(
+            destDir
+          )}`
+        );
         copyStructural.mutate({ src: src, destDir: destDir });
       },
       copyToInternalClipboard: (src) => {

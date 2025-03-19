@@ -52,7 +52,6 @@
     "list": "ls -lA \"${directory}\"",
     "getUser": "whoami"
   },
-  // [HN]
   "sourceCommand": "source \"${path}\"",
   "paren": "$(${command})",
   "echoCommands": {
