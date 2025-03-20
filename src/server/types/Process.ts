@@ -12,6 +12,8 @@ import * as iconv from "iconv-lite";
 import { log } from "@/datatypes/Logger";
 import { RemoteHost } from "@/datatypes/SshConfig";
 
+import { randomUUID } from "node:crypto";
+
 export type Process = {
   id: ProcessID;
   shell: IShell;
@@ -62,4 +64,14 @@ export function clockIncrement(process: Process) {
   process.clock += 1;
   process.currentCommand.clock = process.clock;
   return process.clock;
+}
+
+const usedTerminalID: Set<ProcessID> = new Set();
+export function newProcessID(): ProcessID {
+  let result = randomUUID();
+  while (usedTerminalID.has(result)) {
+    result = randomUUID();
+  }
+  usedTerminalID.add(result);
+  return result;
 }

@@ -87,7 +87,7 @@ function InputBox(props: InputBoxProps) {
         { pid: pid, command: command, styledCommand: styledCommand },
         {
           onError: (error) => {
-            log.error(`failed to execute: ${error}`);
+            log.error(`failed to execute: ${pid}`, error);
           },
         }
       );

@@ -1,4 +1,4 @@
-import Session from "@/components/Session";
+import ShellSession from "@/components/ShellSession";
 import HoverMenusBar from "@/components/HoverMenusBar";
 import InputBox from "@/components/InputBox";
 import { Box } from "@mui/material";
@@ -9,7 +9,7 @@ import styled from "@emotion/styled";
 import CurrentBar from "@/components/CurrentBar";
 
 import { api } from "@/api";
-import { ProcessID } from "@/datatypes/Command";
+import { ProcessID, TerminalID } from "@/datatypes/Command";
 import {
   InputText,
   SessionStateJotaiStore,
@@ -24,6 +24,7 @@ import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { Config, ShellConfig } from "@/datatypes/Config";
 
 import { log } from "@/datatypes/Logger";
+import XtermCustom from "./ProcessAccordion/XtermCustom";
 
 const VerticalBox = styled(Box)({
   display: "flex",
@@ -59,29 +60,36 @@ function getDefaultShell(config: Config): ShellConfig {
   return config.shells[0];
 }
 
-// Main window of the session.
-interface SessionContainerProps {}
+function CommonSessionTemplate(props: {
+  pid: ProcessID;
+  children: React.ReactNode;
+}) {
+  return (
+    <pidContext.Provider value={props.pid}>
+      <VerticalBox>
+        <HoverMenusBar />
+        <HorizontalFromBottomBox>
+          <FullWidthBox>{props.children}</FullWidthBox>
+        </HorizontalFromBottomBox>
+      </VerticalBox>
+    </pidContext.Provider>
+  );
+}
 
-function SessionContainer(props: SessionContainerProps) {
-  const config = useConfig();
-  const theme = useTheme();
+function SessionForTerminal(props: { config: ShellConfig }) {
+  const starter = api.terminal.start.useMutation();
+  const stopper = api.terminal.stop.useMutation();
   const [pid, setPid] = useState<ProcessID | undefined>(undefined);
-  const starter = api.shell.start.useMutation();
-  const stopper = api.shell.stop.useMutation();
-
-  const defaultShell = getDefaultShell(config);
-
-  // Start the shell process.
-  // TODO: This is a temporary solution. We should start out of this component.
+  // Start the terminal process.
   useEffect(() => {
     starter
-      .mutateAsync(defaultShell, {
+      .mutateAsync(props.config, {
         onError: (error) => {
-          log.error(`start fetch error: ${error}`);
+          log.error(`start terminal fetch error: ${error}`);
         },
       })
       .then((result) => {
-        log.debug(`start fetch set pid: ${result}`);
+        log.debug(`start terminal fetch set pid: ${result}`);
         setPid(result);
       });
     return () => {
@@ -94,6 +102,72 @@ function SessionContainer(props: SessionContainerProps) {
   if (pid === undefined) {
     return <Box>Loading...</Box>;
   }
+  // Session for terminal
+  return (
+    <CommonSessionTemplate pid={pid}>
+      <XtermCustom />
+    </CommonSessionTemplate>
+  );
+}
+
+function SessionForShell(props: { config: ShellConfig }) {
+  const [pid, setPid] = useState<ProcessID | undefined>(undefined);
+  const starter = api.shell.start.useMutation();
+  const stopper = api.shell.stop.useMutation();
+  log.debug(`SessionForShell config: ${props.config.name} pid: ${pid}`);
+  // Start the shell process.
+  // TODO: This is a temporary solution. We should start out of this component.
+  useEffect(() => {
+    log.debug(`SessionForShell start`);
+    starter
+      .mutateAsync(props.config, {
+        onError: (error) => {
+          log.error(`start fetch shell error: ${error}`);
+        },
+      })
+      .then((result) => {
+        log.debug(`start fetch shell set pid: ${result}`);
+        setPid(result);
+      });
+    return () => {
+      if (pid !== undefined) {
+        log.debug(`SessionForShell stop pid: ${pid}`);
+        stopper.mutate(pid);
+      }
+    };
+  }, []);
+
+  if (pid === undefined) {
+    return <Box>Loading...</Box>;
+  }
+
+  // Session for non interactive shell
+  return (
+    <CommonSessionTemplate pid={pid}>
+      <ShellSession />
+      <CurrentBar />
+      <InputBox />
+    </CommonSessionTemplate>
+  );
+}
+
+function SessionForConfig(props: { config: ShellConfig }) {
+  if (props.config.interact === "terminal") {
+    return <SessionForTerminal config={props.config} />;
+  } else {
+    return <SessionForShell config={props.config} />;
+  }
+}
+
+// Main window of the session.
+interface SessionContainerProps {}
+
+function SessionContainer(props: SessionContainerProps) {
+  const config = useConfig();
+  const theme = useTheme();
+
+  const defaultShell = getDefaultShell(config);
+
   return (
     <ErrorBoundary fallbackRender={SessionContainerError}>
       <EasyFocus.Provider
@@ -111,24 +185,13 @@ function SessionContainer(props: SessionContainerProps) {
       >
         <GlobalFocusMap.Provider>
           <JotaiProvider store={SessionStateJotaiStore}>
-            <pidContext.Provider value={pid}>
-              <Box
-                sx={{
-                  backgroundColor: theme.system.backgroundColor,
-                }}
-              >
-                <VerticalBox>
-                  <HoverMenusBar />
-                  <HorizontalFromBottomBox>
-                    <FullWidthBox>
-                      <Session />
-                      <CurrentBar />
-                      <InputBox />
-                    </FullWidthBox>
-                  </HorizontalFromBottomBox>
-                </VerticalBox>
-              </Box>
-            </pidContext.Provider>
+            <Box
+              sx={{
+                backgroundColor: theme.system.backgroundColor,
+              }}
+            >
+              <SessionForConfig config={defaultShell} />
+            </Box>
           </JotaiProvider>
         </GlobalFocusMap.Provider>
       </EasyFocus.Provider>

@@ -10,7 +10,6 @@ import {
   getUserCommand,
 } from "@/datatypes/ShellSpecification";
 import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
-import { isCommandClosed } from "@/server/ShellUtils/CommandClose";
 import { z } from "zod";
 import {
   Command,
@@ -19,16 +18,18 @@ import {
   CommandSchema,
   emptyCommand,
   ProcessID,
-  ProcessIDSchema as ProcessIDSchemaRaw,
+  ProcessIDSchema,
 } from "@/datatypes/Command";
 
 import { server } from "@/server/tRPCServer";
 import { observable } from "@trpc/server/observable";
+import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
 import {
-  ShellInteractKind,
-  ShellInteractKindSchema,
-} from "@/datatypes/ShellInteract";
-import { Process, newProcess, clockIncrement } from "@/server/types/Process";
+  Process,
+  newProcess,
+  clockIncrement,
+  newProcessID,
+} from "@/server/types/Process";
 import { executeCommandByEcho } from "@/server/ShellUtils/ExecuteByEcho";
 import { executeCommandByPrompt } from "./ShellUtils/ExecuteByPrompt";
 import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
@@ -36,15 +37,8 @@ import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
 import { readShellSpecs } from "./configServer";
-import { ChildShell } from "./ChildProcess/childShell";
-import { ChildPty } from "./ChildProcess/childPty";
-import {
-  RemoteHostSchema,
-  remoteHostFromConfig,
-  sshConnectionToConnectConfig,
-} from "@/datatypes/SshConfig";
-import { SshPty } from "./ChildProcess/sshPty";
-import { SshShell } from "./ChildProcess/sshShell";
+import { RemoteHostSchema, remoteHostFromConfig } from "@/datatypes/SshConfig";
+import { spawnChildShell } from "./ChildProcess/spawn";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
 
@@ -67,44 +61,43 @@ export function shutdownShellProcess() {
   log.debug(`Shutdown all processes.`);
 }
 
-const processHolder: Process[] = [];
+const processHolder = new Map<ProcessID, Process>();
+const commandsOfProcessID = new Map<ProcessID, Command[]>();
 function getProcess(pid: ProcessID): Process {
-  return processHolder[pid - 1];
+  const result = processHolder.get(pid);
+  if (result === undefined) {
+    const message = `Process ${pid} not found.`;
+    log.error(message);
+    throw new Error(message);
+  }
+  return result;
 }
-function addProcess(process: Process) {
-  processHolder.push(process);
+function addProcess(pid: ProcessID, process: Process) {
+  processHolder.set(pid, process);
+  commandsOfProcessID.set(pid, []);
 }
 function getNextProcessID(): ProcessID {
-  return processHolder.length + 1;
+  return newProcessID();
 }
 
-const commandsOfProcessID: Command[][] = [];
-function emplaceCommandList(pid: ProcessID) {
-  const currentLength = commandsOfProcessID.length;
-  for (let i = currentLength; i < pid; i++) {
-    commandsOfProcessID.push([]);
-  }
-}
 function getCommand(pid: ProcessID, cid: CommandID): Command {
-  emplaceCommandList(pid);
-  return commandsOfProcessID[pid - 1][cid];
+  return getCommands(pid)[cid];
 }
 function getNumCommands(pid: ProcessID): number {
-  emplaceCommandList(pid);
-  return commandsOfProcessID[pid - 1].length;
+  return getCommands(pid).length;
 }
 function addCommand(pid: ProcessID, command: Command) {
-  emplaceCommandList(pid);
-  commandsOfProcessID[pid - 1].push(command);
+  getCommands(pid).push(command);
 }
 function getCommands(pid: ProcessID): Command[] {
-  emplaceCommandList(pid);
-  return commandsOfProcessID[pid - 1];
+  const result = commandsOfProcessID.get(pid);
+  if (result === undefined) {
+    const message = `Commands of Process ${pid} not found`;
+    log.error(message);
+    throw new Error(message);
+  }
+  return result;
 }
-
-const ProcessIDScheme = ProcessIDSchemaRaw.refine((value) => {
-  return value < getNextProcessID();
-});
 
 export const StdoutEventSchema = z.object({
   cid: CommandIDSchema,
@@ -176,34 +169,6 @@ function selectExecutor(shellSpec: ShellSpecification, config: ShellConfig) {
   }
 }
 
-function spawnChildShell(
-  config: ShellConfig,
-  executable: string,
-  args: string[],
-  options?: ShellOptions
-): IShell {
-  if (config.type === "ssh") {
-    const connectionConfig = sshConnectionToConnectConfig(config.connection);
-    // TODO: executable for ssh
-    if (config.interact === "terminal") {
-      log.debug(`spawn SshPty connectionConfig: ${connectionConfig}`);
-      return new SshPty(connectionConfig, options);
-    } else {
-      log.debug(`spawn SshShell connectionConfig: ${connectionConfig}`);
-      return new SshShell(connectionConfig, options);
-    }
-  } else {
-    // local
-    if (config.interact === "terminal") {
-      log.debug(`spawn ChildPty executable:${executable} args:`, args);
-      return new ChildPty(executable, args, options);
-    } else {
-      log.debug(`spawn ChildShell executable:${executable} args:`, args);
-      return new ChildShell(executable, args, options);
-    }
-  }
-}
-
 function startProcess(config: ShellConfig): ProcessID {
   const { name, executable, args, language, encoding } = config;
   log.debug(`Start process ${name} config:`, config);
@@ -212,7 +177,7 @@ function startProcess(config: ShellConfig): ProcessID {
     // TODO: Error handling.
     throw new Error(`Shell language ${language} for ${name} is not supported.`);
   }
-  if (processHolder.length > 100) {
+  if (processHolder.size > 100) {
     throw new Error("Too many processes. This is for debugging.");
   }
   const shell = spawnChildShell(config, `"${executable}"`, args || [], {
@@ -223,7 +188,7 @@ function startProcess(config: ShellConfig): ProcessID {
   const process = newProcess(
     pid,
     shell,
-    config.interact == "terminal" ? (shell as ITerminalPTy) : undefined,
+    undefined,
     config,
     shellSpec,
     emptyCommand(pid, -1),
@@ -233,7 +198,7 @@ function startProcess(config: ShellConfig): ProcessID {
     log.debug(`set ssh connection as process.remoteHost:${config.connection}`);
     process.remoteHost = remoteHostFromConfig(config);
   }
-  addProcess(process);
+  addProcess(pid, process);
   log.debug(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
   process.executor(
@@ -264,7 +229,6 @@ function executeCommand(
   onEnd?: (command: Command) => void
 ): Command {
   const cid = isSilent ? -1 : getNumCommands(process.id);
-  const shellSpec = process.shellSpec;
   const currentCommand = process.executor(
     process,
     command,
@@ -301,12 +265,12 @@ export const shellRouter = server.router({
   // Start a new process of shell.
   start: proc
     .input(ShellConfigSchema)
-    .output(ProcessIDScheme)
+    .output(ProcessIDSchema)
     .mutation(async (opts) => {
       try {
         return startProcess(opts.input);
       } catch (e) {
-        console.error(e);
+        log.error(`proc start error: `, e);
         throw e;
       }
     }),
@@ -316,7 +280,7 @@ export const shellRouter = server.router({
     .input(
       z
         .object({
-          pid: ProcessIDScheme,
+          pid: ProcessIDSchema,
           command: z.string(),
           isSilent: z.boolean().optional(),
           styledCommand: z.string().optional(),
@@ -342,7 +306,7 @@ export const shellRouter = server.router({
   sendKey: proc
     .input(
       z.object({
-        pid: ProcessIDScheme,
+        pid: ProcessIDSchema,
         key: z.string(),
       })
     )
@@ -357,7 +321,7 @@ export const shellRouter = server.router({
   onStdout: proc
     .input(
       z.object({
-        pid: ProcessIDScheme,
+        pid: ProcessIDSchema,
         cid: CommandIDSchema,
       })
     )
@@ -388,7 +352,7 @@ export const shellRouter = server.router({
         };
       });
     }),
-  onStderr: proc.input(ProcessIDScheme).subscription(async (opts) => {
+  onStderr: proc.input(ProcessIDSchema).subscription(async (opts) => {
     const pid = opts.input;
     const process = getProcess(pid);
     let firstEmit = true;
@@ -413,7 +377,7 @@ export const shellRouter = server.router({
     });
   }),
   onCommandFinish: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(CommandSchema)
     .subscription(async (opts) => {
       const pid = opts.input;
@@ -427,7 +391,7 @@ export const shellRouter = server.router({
 
   // Stop the shell process.
   stop: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(z.void())
     .mutation(async (pid) => {
       stopProcess(getProcess(pid.input));
@@ -435,13 +399,13 @@ export const shellRouter = server.router({
 
   // Process state queries.
   spec: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(ShellSpecificationSchema)
     .query(async (pid) => {
       return getProcess(pid.input).shellSpec;
     }),
   current: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(z.object({ directory: z.string(), user: z.string() }))
     .query(async (pid) => {
       return {
@@ -450,19 +414,19 @@ export const shellRouter = server.router({
       };
     }),
   remoteHost: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(RemoteHostSchema.optional())
     .query(async (pid) => {
       return getProcess(pid.input).remoteHost;
     }),
   commands: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(z.array(CommandSchema))
     .query(async (pid) => {
       return getCommands(pid.input);
     }),
   numCommands: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(z.number().int())
     .query(async (pid) => {
       return getNumCommands(pid.input);
@@ -470,7 +434,7 @@ export const shellRouter = server.router({
   command: proc
     .input(
       z.object({
-        pid: ProcessIDScheme,
+        pid: ProcessIDSchema,
         cid: z.number().int(),
       })
     )
@@ -482,10 +446,7 @@ export const shellRouter = server.router({
   stdoutIsFinished: proc
     .input(
       z.object({
-        pid: ProcessIDScheme.refine((value) => {
-          //log.debug(`isFinished call pid refine ${value}`);
-          return value < getNextProcessID();
-        }),
+        pid: ProcessIDSchema,
         cid: CommandIDSchema,
       })
     )
@@ -497,7 +458,7 @@ export const shellRouter = server.router({
   stderrIsFinished: proc
     .input(
       z.object({
-        pid: ProcessIDScheme.refine((value) => {
+        pid: ProcessIDSchema.refine((value) => {
           return value < getNextProcessID();
         }),
         cid: CommandIDSchema,
@@ -511,7 +472,7 @@ export const shellRouter = server.router({
   outputCompleted: proc
     .input(
       z.object({
-        pid: ProcessIDScheme,
+        pid: ProcessIDSchema,
         cid: CommandIDSchema,
       })
     )
@@ -523,7 +484,7 @@ export const shellRouter = server.router({
   stdoutResponse: proc
     .input(
       z.object({
-        pid: ProcessIDScheme,
+        pid: ProcessIDSchema,
         cid: CommandIDSchema,
       })
     )
@@ -533,19 +494,19 @@ export const shellRouter = server.router({
       return getCommand(pid, cid).stdoutResponse;
     }),
   name: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(z.string())
     .query(async (pid) => {
       return getProcess(pid.input).config.name;
     }),
   config: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(ShellConfigSchema)
     .query(async (pid) => {
       return getProcess(pid.input).config;
     }),
   interactMode: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(ShellInteractKindSchema)
     .query(async (pid) => {
       return getProcess(pid.input).config.interact;
@@ -553,7 +514,7 @@ export const shellRouter = server.router({
   resize: proc
     .input(
       z.object({
-        pid: ProcessIDScheme,
+        pid: ProcessIDSchema,
         rows: z.number().int(),
         cols: z.number().int(),
       })
@@ -563,7 +524,7 @@ export const shellRouter = server.router({
       getProcess(pid).pty?.resize(rows, cols);
     }),
   shellConfig: proc
-    .input(ProcessIDScheme)
+    .input(ProcessIDSchema)
     .output(ShellConfigSchema)
     .query(async (pid) => {
       return getProcess(pid.input).config;

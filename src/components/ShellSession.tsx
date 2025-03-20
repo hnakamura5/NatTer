@@ -11,7 +11,7 @@ import { hasScrollbarY } from "./AlignUtils";
 
 interface SessionProps {}
 
-function Session(props: SessionProps) {
+function ShellSession(props: SessionProps) {
   const pid = usePid();
   // Length is used as the trigger of the event of submitting new command.
   const [length, setLength] = useState<number>(0);
@@ -42,7 +42,7 @@ function Session(props: SessionProps) {
   const numCommands = api.shell.numCommands.useQuery(pid, {
     refetchInterval: 200,
     onError: (error) => {
-      log.error(`num commands fetch: ${error}`);
+      log.error(`num commands fetch: ${pid}`, error);
     },
   });
   log.debug(`numCommands in pid-${pid}: ${numCommands.data}`);
@@ -87,4 +87,4 @@ function SessionError() {
   return <Box>Session load error.</Box>;
 }
 
-export default Session;
+export default ShellSession;

@@ -26,7 +26,6 @@ import {
   FinishedCommandResponse,
 } from "@/components/ProcessAccordion/CommandResponse";
 import { CommandSummary } from "@/components/ProcessAccordion/CommandSummary";
-import XtermCustom from "@/components/ProcessAccordion/XtermCustom";
 import Xterm from "./ProcessAccordion/Xterm";
 import { usePid } from "@/SessionStates";
 import { CommandID, ProcessID } from "@/datatypes/Command";
@@ -43,13 +42,28 @@ import { useAtom } from "jotai";
 // import { log } from "@/datatypes/Logger";
 import { log } from "@/datatypes/Logger";
 
-const queryOption = {
+const queryOption = (pid: ProcessID, additionalMessage?: string) => ({
   refetchInterval: 500,
   /* eslint-disable @typescript-eslint/no-explicit-any */
   onError(e: any) {
-    log.error(`ProcessAccordion: error ${e}`);
+    log.error(`ProcessAccordion: error in ${additionalMessage} for ${pid}`, e);
   },
-};
+});
+
+function SummarySelector(props: { cid: CommandID }) {
+  const pid = usePid();
+  const command = api.shell.command.useQuery(
+    {
+      pid: pid,
+      cid: props.cid,
+    },
+    queryOption(pid, "SummarySelector")
+  );
+  if (!command.data) {
+    return <Box>Command not found.</Box>;
+  }
+  return <CommandSummary command={command.data} />;
+}
 
 const AccordionStyle = styled(Box)(({ theme }) => ({
   color: theme.shell.textColor,
@@ -61,21 +75,6 @@ const AccordionStyle = styled(Box)(({ theme }) => ({
   overflowWrap: "anywhere",
   borderRadius: "3px",
 }));
-
-function SummarySelector(props: { cid: CommandID }) {
-  const pid = usePid();
-  const command = api.shell.command.useQuery(
-    {
-      pid: pid,
-      cid: props.cid,
-    },
-    queryOption
-  );
-  if (!command.data) {
-    return <Box>Command not found.</Box>;
-  }
-  return <CommandSummary command={command.data} />;
-}
 
 function ProcessAccordionSummary(props: { cid: CommandID }) {
   const theme = useTheme();
@@ -113,20 +112,13 @@ function ResponseSelector(props: { cid: CommandID }) {
       pid: pid,
       cid: cid,
     },
-    queryOption
+    queryOption(pid, "ResponseSelector")
   );
-  const interactMode = api.shell.interactMode.useQuery(pid);
-  if (interactMode.data == "terminal") {
-    //return <XtermCustom pid={props.command.pid} cid={props.command.cid} />;
-    return <XtermCustom pid={pid} cid={cid} />;
+  if (stdoutIsFinished.data) {
+    return <FinishedCommandResponse cid={cid} />;
   } else {
-    if (stdoutIsFinished.data) {
-      return <FinishedCommandResponse cid={cid} />;
-    } else {
-      return <AliveCommandResponse cid={cid} />;
-    }
+    return <AliveCommandResponse cid={cid} />;
   }
-  // }
 }
 
 function ProcessAccordionDetail(props: {
@@ -162,7 +154,7 @@ function ProcessKeySender(props: {
       pid: pid,
       cid: props.cid,
     },
-    queryOption
+    queryOption(pid, "ProcessKeySender")
   );
 
   return (
@@ -255,14 +247,14 @@ function ProcessAccordion(props: ProcessAccordionProps) {
       pid: pid,
       cid: cid,
     },
-    queryOption
+    queryOption(pid, "ProcessAccordion isFinished")
   );
   const isComplete = api.shell.outputCompleted.useQuery(
     {
       pid: pid,
       cid: cid,
     },
-    queryOption
+    queryOption(pid, "ProcessAccordion isComplete")
   );
   // On finish of the last command, focus back to the input box.
   useEffect(() => {

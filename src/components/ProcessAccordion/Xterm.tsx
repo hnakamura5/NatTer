@@ -10,7 +10,7 @@ import "@xterm/xterm/css/xterm.css";
 import { useEffect, useRef } from "react";
 import { Theme } from "@/datatypes/Theme";
 import { useTheme } from "@/AppState";
-import { CommandID, ProcessID } from "@/datatypes/Command";
+import { CommandID, ProcessID, TerminalID } from "@/datatypes/Command";
 
 import { log } from "@/datatypes/Logger";
 
@@ -35,7 +35,7 @@ function newTerminal(theme: Theme) {
   terminal.loadAddon(new ClipboardAddon());
   terminal.loadAddon(new Unicode11Addon());
   terminal.unicode.activeVersion = "11";
-  terminal.resize(512, 64); //[HN] TODO: set appropriate size.
+  terminal.resize(512, 64); // TODO: set appropriate size?
   log.debug(`new terminal handle ${count++}`);
   return {
     terminal: terminal,
@@ -46,12 +46,11 @@ function newTerminal(theme: Theme) {
 }
 
 interface XtermProps {
-  pid: ProcessID;
-  cid: CommandID;
+  pid: TerminalID;
 }
 
 export default function Xterm(props: XtermProps) {
-  const { pid, cid } = props;
+  const pid = props.pid;
   const theme = useTheme();
   const termDivRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<{ terminal: Terminal; opened: boolean } | null>(
@@ -61,23 +60,23 @@ export default function Xterm(props: XtermProps) {
   useEffect(() => {
     const handle = newTerminal(theme);
     if (!handle) {
-      log.debug(`no handle ${pid}-${cid}`);
+      log.debug(`no handle ${pid}`);
       return;
     }
     const terminal = handle.terminal;
     if (termDivRef.current) {
       terminal.open(termDivRef.current);
-      log.debug(`open terminal ${pid}-${cid}`);
+      log.debug(`open terminal ${pid}`);
     }
     //handle.fit.fit();
 
-    terminal.write(`pid: ${pid} cid: ${cid}\r\n`);
+    terminal.write(`pid: ${pid}\r\n`); // TODO: to test
 
     return () => {
-      log.debug(`dispose terminal ${pid}-${cid}`);
+      log.debug(`dispose terminal ${pid}`);
       terminal.dispose();
     };
   }, []);
 
-  return <div ref={termDivRef} id={`Xterm-${pid}-${cid}`} />;
+  return <div ref={termDivRef} id={`Xterm-${pid}`} />;
 }

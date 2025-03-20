@@ -9,8 +9,11 @@ import { z } from "zod";
 export const CommandIDSchema = z.number().int().min(-1);
 export type CommandID = z.infer<typeof CommandIDSchema>;
 
-export const ProcessIDSchema = z.number().int().min(0);
+export const ProcessIDSchema = z.string();
 export type ProcessID = z.infer<typeof ProcessIDSchema>;
+
+export const TerminalIDSchema = z.string();
+export type TerminalID = string;
 
 export const CommandSchema = z.object({
   pid: ProcessIDSchema,
