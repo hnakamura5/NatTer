@@ -17,7 +17,6 @@ import {
   PartialCustomKeybindListSchema,
 } from "@/datatypes/Keybind";
 import fs from "node:fs/promises";
-import { app } from "electron";
 import path, { parse } from "node:path";
 import JSON5 from "json5";
 
@@ -43,7 +42,7 @@ import {
 import { localUserHomeConfigDir } from "./ConfigUtils/paths";
 
 // Builtin default config.
-const configDir = process.env.BUILTIN_DOT_NATTER_PATH || ".natter";
+const configDir = () => process.env.BUILTIN_DOT_NATTER_PATH;
 
 // Master configurations.
 const configFileName = "config.json";
@@ -56,66 +55,65 @@ const labelsDirName = "locale";
 // Themes.
 const themesDirName = "themes";
 
-const configFilePath = path.join(configDir, configFileName);
-const keybindFilePath = path.join(configDir, keybindFileName);
-const shellSpecDir = path.join(configDir, shellSpecDirName);
-const labelsDir = path.join(configDir, labelsDirName);
-const themesDir = path.join(configDir, themesDirName);
+const configFilePath = () => path.join(configDir(), configFileName);
+const keybindFilePath = () => path.join(configDir(), keybindFileName);
+const shellSpecDir = () => path.join(configDir(), shellSpecDirName);
+const labelsDir = () => path.join(configDir(), labelsDirName);
+const themesDir = () => path.join(configDir(), themesDirName);
 
-const userConfigFilePath = path.join(localUserHomeConfigDir(), configFileName);
-const userKeybindFilePath = path.join(
-  localUserHomeConfigDir(),
-  keybindFileName
-);
-const userShellSpecDir = path.join(localUserHomeConfigDir(), shellSpecDirName);
-const userLabelsDir = path.join(localUserHomeConfigDir(), labelsDirName);
-const userThemesDir = path.join(localUserHomeConfigDir(), themesDirName);
+const userConfigFilePath = () =>
+  path.join(localUserHomeConfigDir(), configFileName);
+const userKeybindFilePath = () =>
+  path.join(localUserHomeConfigDir(), keybindFileName);
+const userShellSpecDir = () =>
+  path.join(localUserHomeConfigDir(), shellSpecDirName);
+const userLabelsDir = () => path.join(localUserHomeConfigDir(), labelsDirName);
+const userThemesDir = () => path.join(localUserHomeConfigDir(), themesDirName);
 
-const configManager = new BuiltinAndUserConfigManager<Config, PartialConfig>(
-  configFilePath,
-  userConfigFilePath,
-  parseConfig,
-  parseUserConfig
-);
+const configManager = () =>
+  new BuiltinAndUserConfigManager<Config, PartialConfig>(
+    configFilePath(),
+    userConfigFilePath(),
+    parseConfig,
+    parseUserConfig
+  );
 
 // Read config. Use this also in accessing to config in server side.
 export function readConfig(): Promise<Config> {
-  return configManager.readConfigFile();
+  return configManager().readConfigFile();
 }
 function writeUserConfig(config: PartialConfig): Promise<boolean> {
-  return configManager.writeUserConfigFile(config);
+  return configManager().writeUserConfigFile(config);
 }
 
-const keybindManager = new BuiltinAndUserConfigManager<
-  CustomKeybindList,
-  PartialCustomKeybindList
->(
-  keybindFilePath,
-  userKeybindFilePath,
-  parseCustomKeybindList,
-  parseCustomUserKeybindList
-);
+const keybindManager = () =>
+  new BuiltinAndUserConfigManager<CustomKeybindList, PartialCustomKeybindList>(
+    keybindFilePath(),
+    userKeybindFilePath(),
+    parseCustomKeybindList,
+    parseCustomUserKeybindList
+  );
 
 function readKeybind(): Promise<CustomKeybindList> {
-  return keybindManager.readConfigFile();
+  return keybindManager().readConfigFile();
 }
 function writeUserKeybind(keybind: PartialCustomKeybindList) {
-  return keybindManager.writeUserConfigFile(keybind);
+  return keybindManager().writeUserConfigFile(keybind);
 }
 
-const shellSpecManager =
+const shellSpecManager = () =>
   new BuiltinAndUserConfigDirectoryManager<ShellSpecification>(
-    shellSpecDir,
-    userShellSpecDir,
+    shellSpecDir(),
+    userShellSpecDir(),
     parseShellSpec
   );
 
 export function readShellSpecs(): Promise<ShellSpecification[]> {
-  return shellSpecManager.readConfigFile();
+  return shellSpecManager().readConfigFile();
 }
 
 export function writeShellSpec(name: string, spec: ShellSpecification) {
-  const specPath = path.join(shellSpecDir, name);
+  const specPath = path.join(shellSpecDir(), name);
   const writeFile = fs.writeFile(specPath, JSON.stringify(spec, null, 2));
   return writeFile
     .then(() => {
@@ -127,7 +125,7 @@ export function writeShellSpec(name: string, spec: ShellSpecification) {
 }
 
 export function readLabels(locale: string) {
-  const labelsPath = path.join(labelsDir, `${locale}.json`);
+  const labelsPath = path.join(labelsDir(), `${locale}.json`);
   log.debug("Reading labels from: ", labelsPath);
   const labelsRead = fs.readFile(labelsPath, "utf-8");
   return labelsRead

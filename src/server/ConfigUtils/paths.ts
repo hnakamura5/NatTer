@@ -1,11 +1,11 @@
-import { app } from "electron";
+import * as Electron from "electron";
 import path from "node:path";
 import { ShellConfig } from "@/datatypes/Config";
 import { pathOf } from "../FileSystem/univPath";
 import { readConfig } from "../configServer";
 
 export function localTempDir() {
-  return path.join(app.getPath("temp"), "natter");
+  return path.join(Electron.app.getPath("temp"), "natter");
 }
 export async function getTempDir(config: ShellConfig) {
   if (config.type === "ssh") {
@@ -55,7 +55,7 @@ export async function getFileSystemTempDir(config: ShellConfig) {
 
 // User-specific configuration directory.
 export function localUserHomeConfigDir() {
-  return path.join(app.getPath("home"), ".natter");
+  return path.join(Electron.app.getPath("home"), ".natter");
 }
 // TODO: Is remote home required?
 export function getUserHomeConfigDir(config: ShellConfig) {
@@ -66,28 +66,30 @@ export function getUserHomeConfigDir(config: ShellConfig) {
   return localUserHomeConfigDir();
 }
 
-export const appDataConfigDir = path.join(app.getPath("appData"), ".natter");
+// FIXME: Error in importing Electron in test with Playwright.
+const appDataConfigDir = () =>
+  path.join(Electron.app.getPath("appData"), ".natter");
 // Reserved for user, to place their application executables.
-export const appDataUserAppDir = path.join(appDataConfigDir, "applications");
+const appDataUserAppDir = () => path.join(appDataConfigDir(), "applications");
 // Reserved for saved credentials.
-export const appDataHiddenDir = path.join(appDataConfigDir, "hidden");
+const appDataHiddenDir = () => path.join(appDataConfigDir(), "hidden");
 
 const pathVariables: Map<string, string> = new Map();
 
 export function getPathVariables() {
   if (pathVariables.size === 0) {
-    pathVariables.set("${EXE}", app.getPath("exe"));
-    pathVariables.set("${MODULE}", app.getPath("module"));
-    pathVariables.set("${HOME}", app.getPath("home"));
-    pathVariables.set("${APP_DATA}", appDataConfigDir);
+    pathVariables.set("${EXE}", Electron.app.getPath("exe"));
+    pathVariables.set("${MODULE}", Electron.app.getPath("module"));
+    pathVariables.set("${HOME}", Electron.app.getPath("home"));
+    pathVariables.set("${APP_DATA}", appDataConfigDir());
     pathVariables.set(
       "${APP_ROOT}",
-      process.env.APP_ROOT || path.join(app.getPath("exe"), "..")
+      process.env.APP_ROOT || path.join(Electron.app.getPath("exe"), "..")
     );
     pathVariables.set("${TEMP}", localTempDir());
     pathVariables.set("${LSP_TEMP}", localLspTempDir());
-    pathVariables.set("${USER_APP}", appDataUserAppDir);
-    pathVariables.set("${HIDDEN}", appDataHiddenDir);
+    pathVariables.set("${USER_APP}", appDataUserAppDir());
+    pathVariables.set("${HIDDEN}", appDataHiddenDir());
   }
   return pathVariables;
 }

@@ -130,7 +130,7 @@ function configPathAssignVariablesToConfig<T extends PartialConfig>(
 
 export function parseConfig(json: string): Config | undefined {
   log.debug("parseConfig:");
-  log.debug(`  .natter: ${process.env.BUILTIN_DOT_NATTER_PATH}`);
+  log.debug(`  .natter defaultConfig: ${process.env.BUILTIN_DOT_NATTER_PATH}`);
   log.debug("  pathVariables:");
   for (const [key, value] of getPathVariables()) {
     log.debug(`    ${key} -> ${value}`);

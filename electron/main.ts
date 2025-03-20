@@ -38,14 +38,17 @@ process.env.MATERIAL_ICON_THEME_PATH = app.isPackaged
   : path.join("./node_modules/material-icon-theme/icons");
 // In non-packaged mode, the absolute path is blocked by security policy.
 
+// The name ".natter" causes bug of electron-builder (not bundled)
+// https://github.com/electron-userland/electron-builder/issues/5904
 process.env.BUILTIN_DOT_NATTER_PATH = app.isPackaged
-  ? path.join(process.env.APP_ROOT, ".natter")
-  : path.join(".natter");
+  ? path.join(process.env.APP_ROOT, "defaultConfig")
+  : path.join("defaultConfig");
 
 logRenderer.transports.console.format = "[{level}:main] > {text}";
 log.debug(`APP_ROOT: ${process.env.APP_ROOT}`);
 log.debug(`VITE_PUBLIC: ${process.env.VITE_PUBLIC}`);
 log.debug(`MATERIAL_ICON_THEME_PATH: ${process.env.MATERIAL_ICON_THEME_PATH}`);
+log.debug(`BUILTIN_DOT_NATTER_PATH: ${process.env.BUILTIN_DOT_NATTER_PATH}`);
 
 let win: BrowserWindow | null;
 

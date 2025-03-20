@@ -1,19 +1,21 @@
 import { test, _electron as electron, expect } from "@playwright/test";
-import { structuralSrcToDest } from "../../src/server/FileSystem";
+import { structuralSrcToDest } from "../../src/server/FileSystemServer";
 
 test("structuralSrcToDest", async () => {
-  const src = [
-    "C:\\parent1\\child11",
-    "C:\\parent1",
-    "C:\\parent2",
-    "C:\\parent1\\child12",
-    "C:\\parent2\\child21",
-    "C:\\parent2\\child22",
-    "C:\\parent3",
-  ];
-  const dest = "D:\\";
+  const src = {
+    paths: [
+      "C:\\parent1\\child11",
+      "C:\\parent1",
+      "C:\\parent2",
+      "C:\\parent1\\child12",
+      "C:\\parent2\\child21",
+      "C:\\parent2\\child22",
+      "C:\\parent3",
+    ],
+  };
+  const dest = { path: "D:\\" };
 
-  const sorted = src.sort();
+  const sorted = src.paths.sort();
   expect(sorted).toEqual([
     "C:\\parent1",
     "C:\\parent1\\child11",

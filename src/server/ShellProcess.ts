@@ -210,7 +210,7 @@ function startProcess(config: ShellConfig): ProcessID {
   const shellSpec = ProcessSpecs.get(language);
   if (shellSpec === undefined) {
     // TODO: Error handling.
-    throw new Error(`Shell kind ${language} for ${name} is not supported.`);
+    throw new Error(`Shell language ${language} for ${name} is not supported.`);
   }
   if (processHolder.length > 100) {
     throw new Error("Too many processes. This is for debugging.");

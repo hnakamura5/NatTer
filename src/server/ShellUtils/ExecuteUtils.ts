@@ -25,7 +25,6 @@ import { AnsiUp } from "@/datatypes/ansiUpCustom";
 import { log } from "@/datatypes/Logger";
 import { api } from "@/api";
 import { readConfig } from "../configServer";
-import { app } from "electron";
 import { getCommandTempDir, getTempDir } from "../ConfigUtils/paths";
 import { remoteHostFromConfig } from "@/datatypes/SshConfig";
 import { univPath } from "../FileSystem/univPath";
