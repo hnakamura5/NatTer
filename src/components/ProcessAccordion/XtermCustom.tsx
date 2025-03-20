@@ -60,7 +60,7 @@ function newTerminal(theme: Theme): terminalHandle {
   terminal.loadAddon(new ClipboardAddon());
   terminal.loadAddon(new Unicode11Addon());
   terminal.unicode.activeVersion = "11";
-  terminal.resize(512, 64); //[HN] TODO: set appropriate size.
+  terminal.resize(80, 24); //[HN] TODO: set appropriate size.
   log.debug(`new terminal ${count++}`);
   return {
     terminal: terminal,
@@ -104,9 +104,10 @@ export default function XtermCustom() {
       } serial:${handle.serialize.serialize()}`
     );
 
-    fit.fit();
+    // fit.fit();
     window.onresize = () => {
       if (termDivRef.current) {
+        log.debug(`fit terminal ${pid}`);
         fit.fit();
       }
     };
@@ -115,7 +116,7 @@ export default function XtermCustom() {
       sendKey.mutate({ pid: pid, key: data });
     });
     handle.terminal.onResize((size) => {
-      log.debug(`terminal onResize: ${size}`);
+      log.debug(`terminal onResize: `, size);
       resize.mutate({ pid: pid, cols: size.cols, rows: size.rows });
     });
     return () => {

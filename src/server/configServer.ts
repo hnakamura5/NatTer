@@ -70,13 +70,19 @@ const userShellSpecDir = () =>
 const userLabelsDir = () => path.join(localUserHomeConfigDir(), labelsDirName);
 const userThemesDir = () => path.join(localUserHomeConfigDir(), themesDirName);
 
-const configManager = () =>
-  new BuiltinAndUserConfigManager<Config, PartialConfig>(
-    configFilePath(),
-    userConfigFilePath(),
-    parseConfig,
-    parseUserConfig
-  );
+let manager: BuiltinAndUserConfigManager<Config, PartialConfig> | undefined =
+  undefined;
+const configManager = () => {
+  if (manager === undefined) {
+    manager = new BuiltinAndUserConfigManager<Config, PartialConfig>(
+      configFilePath(),
+      userConfigFilePath(),
+      parseConfig,
+      parseUserConfig
+    );
+  }
+  return manager;
+};
 
 // Read config. Use this also in accessing to config in server side.
 export function readConfig(): Promise<Config> {

@@ -46,7 +46,7 @@ export function setupShellProcess() {
   log.debug(`ShellProcess setup.`);
   return readShellSpecs().then((specs) => {
     specs.forEach((spec) => {
-      log.debug(`Read shell spec: `, spec);
+      // log.debug(`Read shell spec: `, spec);
       ProcessSpecs.set(spec.name, spec);
     });
   });

@@ -44,7 +44,7 @@ function ConfigProvider(props: { children: React.ReactNode }) {
       console.error("Failed to load config: ", error);
     },
   });
-  log.debug("ConfigProvider: ", config.data);
+  // log.debug("ConfigProvider: ", config.data);
   if (!config.data) {
     return <div>Failed to load config</div>;
   }
@@ -93,7 +93,7 @@ function KeybindListProvider(props: { children: React.ReactNode }) {
       log.error("Failed to load keybind: ", error);
     },
   });
-  log.debug("KeybindListProvider: ", keybind.data);
+  // log.debug("KeybindListProvider: ", keybind.data);
   if (!keybind.data) {
     return <div>Failed to load keybind</div>;
   }
@@ -129,7 +129,7 @@ function LabelsProvider(props: { children: React.ReactNode }) {
       },
     }
   );
-  log.debug("LabelsProvider: ", labels.data);
+  // log.debug("LabelsProvider: ", labels.data);
   if (!labels.data) {
     return <div>Failed to load labels</div>;
   }

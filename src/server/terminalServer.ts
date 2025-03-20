@@ -18,6 +18,13 @@ const Terminals = new Map<ProcessID, ITerminalPTy>();
 const configs = new Map<ProcessID, ShellConfig>();
 const stdoutEvent = new EventEmitter();
 
+export function shutdownTerminals() {
+  log.debug(`Shutdown terminals.`);
+  for (const terminal of Terminals.values()) {
+    terminal.kill();
+  }
+}
+
 function startTerminal(shellConfig: ShellConfig) {
   const id = newProcessID();
   const term = spawnChildTerminal(
@@ -28,9 +35,6 @@ function startTerminal(shellConfig: ShellConfig) {
   );
   Terminals.set(id, term);
   configs.set(id, shellConfig);
-  term.onStdout((data: string) => {
-    stdoutEvent.emit(id, data);
-  });
   return id;
 }
 
@@ -61,6 +65,7 @@ export const terminalRouter = server.router({
     .output(ProcessIDSchema)
     .mutation(async (opts) => {
       try {
+        log.debug(`Start terminal ${opts.input.name}`);
         return startTerminal(opts.input);
       } catch (e) {
         console.error(e);
@@ -108,17 +113,14 @@ export const terminalRouter = server.router({
 
   stdout: proc.input(ProcessIDSchema).subscription(async (opts) => {
     const pid = opts.input;
-    let firstEmit = true;
     return observable<string>((emit) => {
       const onData = (data: string) => {
-        if (firstEmit) {
-          emit.next(data);
-          firstEmit = false;
-        }
+        log.debug(`stdout: ${data} in terminal ${pid}`);
+        emit.next(data);
       };
-      stdoutEvent.on(pid, onData);
+      getTerminal(pid).onStdout(onData);
       return () => {
-        stdoutEvent.off(pid, onData);
+        getTerminal(pid).removeStdoutListener(onData);
       };
     });
   }),

@@ -41,11 +41,12 @@ class ConfigFileManager<ConfigT> {
       .then((stats) => {
         const lastUpdateTime = stats.mtime.getTime();
         if (lastUpdateTime === this.configLastUpdateTime && this.parsedConfig) {
+          log.debug(`Reading up-to-date config from: `, this.configFilePath);
           return this.parsedConfig;
         }
         const configRead = fs.readFile(this.configFilePath, "utf-8");
         return configRead.then((config) => {
-          log.debug(`Reading config ${config} from: `, this.configFilePath);
+          log.debug(`Reading config from: `, this.configFilePath);
           const parsed = this.parseConfig(config);
           this.parsedConfig = parsed;
           this.configLastUpdateTime = lastUpdateTime;
@@ -174,12 +175,12 @@ export class BuiltinAndUserConfigManager<ConfigT, PartialT> {
       .readConfigFile()
       .catch(() => {}); // User config may not exist
     if (baseConfig) {
-      log.debug("Base config: ", baseConfig);
+      // log.debug("Base config: ", baseConfig);
       if (userConfig) {
         // Override the config if there is a user config.
-        log.debug("User config: ", userConfig);
+        // log.debug("User config: ", userConfig);
         const merged = overrideWithPartialSchema(baseConfig, userConfig);
-        log.debug("Merged config: ", merged);
+        // log.debug("Merged config: ", merged);
         this.mergedConfig = merged;
         return merged;
       }
@@ -283,10 +284,10 @@ export class BuiltinAndUserConfigDirectoryManager<ConfigT> {
   readConfigFile(): Promise<ConfigT[]> {
     return this.readConfigWithFileName().then((configs) => {
       const result = configs.map((config) => config.config);
-      log.debug(
-        `readConfig from directory ${this.baseConfigDirPath} <- ${this.userConfigDirPath}: `,
-        result
-      );
+      // log.debug(
+      //   `readConfig from directory ${this.baseConfigDirPath} <- ${this.userConfigDirPath}: `,
+      //   result
+      // );
       return result;
     });
   }
