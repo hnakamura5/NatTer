@@ -40,6 +40,7 @@ import { SubMenu, SubMenuItem } from "./Menu/SubMenu";
 import { MenuItem } from "./Menu/MenuItem";
 import { CommandID } from "@/datatypes/Command";
 import { set } from "zod";
+import { HistoryProvider, useHistory } from "./InputBox/HistoryProvider";
 
 function InputBoxContextMenuContents() {
   return (
@@ -75,26 +76,14 @@ interface InputBoxProps {}
 function InputBox(
   props: InputBoxProps & {
     submit: (command: string, styledCommand?: string) => void;
-    historyHandle?: {
-      size: number;
-      get: (index: number) => Promise<string | undefined>;
-    };
   }
 ) {
-  const history = props.historyHandle;
+  const historyHandle = useHistory();
   const theme = useTheme();
   const pid = usePid();
   const inputBoxRef = React.useRef<HTMLElement>(null);
 
   const [text, setText] = useAtom(InputText);
-  const [commandHistory, setCommandHistory] = useState<CommandID | undefined>(
-    undefined
-  );
-  // The input text before history back command started.
-  const [valueBeforeHistoryBack, setValueBeforeHistoryBack] = useState<
-    string | undefined
-  >(undefined);
-
   const handleGFM = GlobalFocusMap.useHandle();
 
   // Keybinds
@@ -120,62 +109,22 @@ function InputBox(
   useKeybindOfCommand(
     "CommandHistoryUp",
     () => {
-      log.debug(
-        `CommandHistoryUp history:${commandHistory} num:${history?.size}`
-      );
-      if (history?.size) {
-        if (commandHistory === undefined) {
-          history.get(history.size - 1).then((command) => {
-            if (command) {
-              setValueBeforeHistoryBack(text);
-              setText(command);
-              setCommandHistory(history.size - 1);
-            }
-          });
-        } else if (commandHistory === 0) {
-          setCommandHistory(undefined);
-          setText(valueBeforeHistoryBack || "");
-          setValueBeforeHistoryBack(undefined);
-        } else {
-          history.get(commandHistory - 1).then((command) => {
-            if (command) {
-              setCommandHistory(commandHistory - 1);
-              setText(command);
-            }
-          });
+      historyHandle.historyUp(text).then((newText) => {
+        if (newText !== undefined) {
+          setText(newText);
         }
-      }
+      });
     },
     keybindRef
   );
   useKeybindOfCommand(
     "CommandHistoryDown",
     () => {
-      log.debug(
-        `CommandHistoryDown history:${commandHistory} num:${history?.size}`
-      );
-      if (history?.size) {
-        if (commandHistory === undefined) {
-          history.get(0).then((command) => {
-            if (command) {
-              setValueBeforeHistoryBack(text);
-              setText(command);
-              setCommandHistory(0);
-            }
-          });
-        } else if (commandHistory === history.size - 1) {
-          setCommandHistory(undefined);
-          setText(valueBeforeHistoryBack || "");
-          setValueBeforeHistoryBack(undefined);
-        } else {
-          history.get(commandHistory + 1).then((command) => {
-            if (command) {
-              setCommandHistory(commandHistory + 1);
-              setText(command);
-            }
-          });
+      historyHandle.historyDown(text).then((newText) => {
+        if (newText !== undefined) {
+          setText(newText);
         }
-      }
+      });
     },
     keybindRef
   );
@@ -196,8 +145,7 @@ function InputBox(
                 <ControlButtons
                   submit={(command: string, styledCommand?: string) => {
                     // Submit invalidates history.
-                    setCommandHistory(undefined);
-                    setValueBeforeHistoryBack(undefined);
+                    historyHandle.reset();
                     props.submit(command, styledCommand);
                   }}
                 />
@@ -211,8 +159,7 @@ function InputBox(
                     submit={props.submit}
                     onChange={(value) => {
                       // User change invalidates history.
-                      setCommandHistory(undefined);
-                      setValueBeforeHistoryBack(undefined);
+                      historyHandle.reset();
                     }}
                   />
                 </ContextMenu>
@@ -255,19 +202,12 @@ export function TerminalInputBox(props: InputBoxProps) {
   );
 
   return (
-    <InputBox
-      {...props}
-      submit={submit}
-      historyHandle={
-        numHistory.data
-          ? {
-              size: numHistory.data,
-              get: (index: number) =>
-                history.mutateAsync({ pid: pid, index: index }),
-            }
-          : undefined
-      }
-    />
+    <HistoryProvider
+      size={numHistory.data}
+      get={(index: number) => history.mutateAsync({ pid: pid, index: index })}
+    >
+      <InputBox {...props} submit={submit} />
+    </HistoryProvider>
   );
 }
 
@@ -295,20 +235,15 @@ export function ShellInputBox(props: InputBoxProps) {
   );
 
   return (
-    <InputBox
-      {...props}
-      submit={submit}
-      historyHandle={
-        numCommands.data
-          ? {
-              size: numCommands.data,
-              get: (index: number) =>
-                getCommand
-                  .mutateAsync({ pid: pid, cid: index })
-                  .then((command) => command.command),
-            }
-          : undefined
+    <HistoryProvider
+      size={numCommands.data}
+      get={(index: number) =>
+        getCommand
+          .mutateAsync({ pid: pid, cid: index })
+          .then((command) => command.command)
       }
-    />
+    >
+      <InputBox {...props} submit={submit} />
+    </HistoryProvider>
   );
 }
