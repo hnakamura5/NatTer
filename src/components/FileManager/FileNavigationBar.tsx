@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import styled from "@emotion/styled";
 
-import { AlignRight } from "@/components/AlignUtils";
+import { AlignRight } from "@/components/Utils";
 import { PathParsed } from "@/datatypes/UniversalPath";
 import { IconForFileOrFolder, InlineIconAdjustStyle } from "./FileIcon";
 

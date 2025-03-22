@@ -26,6 +26,7 @@ import { api } from "@/api";
 
 import { log } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
+import { eventStabilizer } from "../Utils";
 
 function pxToNumber(px: string) {
   return parseInt(px.replace("px", ""));
@@ -104,15 +105,29 @@ export default function XtermCustom() {
       } serial:${handle.serialize.serialize()}`
     );
 
-    // fit.fit();
-    window.onresize = () => {
+    // Debounce the resize function to prevent multiple rapid calls
+    const stableFit = eventStabilizer(() => {
       if (termDivRef.current) {
-        log.debug(`fit terminal ${pid}`);
+        log.debug(`resize terminal fit ${pid}`);
         fit.fit();
       }
-    };
+    });
+    // Initial fit
+    stableFit();
+
+    // Set up resize observer to detect container size changes
+    const resizeObserver = new ResizeObserver(() => {
+      if (termDivRef.current) {
+        log.debug(`container resize detected for terminal ${pid}`);
+        stableFit();
+      }
+    });
+
+    if (termDivRef.current) {
+      resizeObserver.observe(termDivRef.current);
+    }
     handle.terminal.onData((data) => {
-      log.debug(`terminal onData: ${data}`);
+      log.debug(`terminal onData to sendKey: ${data}`);
       sendKey.mutate({ pid: pid, key: data });
     });
     handle.terminal.onResize((size) => {
@@ -122,6 +137,8 @@ export default function XtermCustom() {
     return () => {
       log.debug(`dispose terminal ${pid}`);
       terminal.dispose();
+      resizeObserver.disconnect();
+      handleRef.current = null;
     };
   }, []);
 
@@ -137,7 +154,11 @@ export default function XtermCustom() {
 
   return (
     <ErrorBoundary fallbackRender={XtermCustomError}>
-      <div ref={termDivRef} id={`XtermCustom-${pid}`} />
+      <div
+        ref={termDivRef}
+        id={`XtermCustom-${pid}`}
+        style={{ flex: 1, overflow: "hidden" }}
+      />
     </ErrorBoundary>
   );
 }

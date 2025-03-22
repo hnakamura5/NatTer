@@ -1,16 +1,13 @@
 import * as pty from "node-pty";
 import { ITerminalPTy, ShellOptions } from "./interface";
 import { CallbackManager } from "./utility";
+import { log } from "@/datatypes/Logger";
 
 export class ChildPty extends CallbackManager implements ITerminalPTy {
   private pty: pty.IPty;
   private newline: string;
 
-  constructor(
-    executable: string,
-    args: string[],
-    options?: ShellOptions
-  ) {
+  constructor(executable: string, args: string[], options?: ShellOptions) {
     super();
     this.pty = pty.spawn(executable, args, {
       cwd: options?.cwd,
@@ -44,6 +41,7 @@ export class ChildPty extends CallbackManager implements ITerminalPTy {
   }
 
   resize(cols: number, rows: number) {
+    log.debug(`ChildPty resize cols: ${cols}, rows: ${rows}`);
     this.pty.resize(cols, rows);
   }
 

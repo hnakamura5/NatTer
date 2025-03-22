@@ -68,9 +68,9 @@ function CommonSessionTemplate(props: {
     <pidContext.Provider value={props.pid}>
       <VerticalBox>
         <HoverMenusBar />
-        <HorizontalFromBottomBox>
-          <FullWidthBox>{props.children}</FullWidthBox>
-        </HorizontalFromBottomBox>
+        <FullWidthBox>
+          <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
+        </FullWidthBox>
       </VerticalBox>
     </pidContext.Provider>
   );

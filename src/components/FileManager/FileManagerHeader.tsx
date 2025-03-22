@@ -3,7 +3,7 @@ import styled from "@emotion/styled";
 import { useEffect, useState } from "react";
 import { api } from "@/api";
 
-import { AlignRight } from "@/components/AlignUtils";
+import { AlignRight } from "@/components/Utils";
 import { PathParsed } from "@/datatypes/UniversalPath";
 import { FileBreadcrumbs, FileNavigationBar } from "./FileNavigationBar";
 import { TooltipHover } from "@/components/TooltipHover";

@@ -135,6 +135,6 @@ export const terminalRouter = server.router({
     )
     .mutation(async (opts) => {
       const { pid, rows, cols } = opts.input;
-      getTerminal(pid).resize(rows, cols);
+      getTerminal(pid).resize(cols, rows);
     }),
 });

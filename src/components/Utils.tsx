@@ -37,3 +37,21 @@ export function AlignRight(props: { children: ReactNode }) {
     </div>
   );
 }
+
+// Debounce the event by interval (or 200ms). This is used to prevent the
+// consistent events (such as resizing) from being triggered too often.
+export function eventStabilizer<T extends unknown[]>(
+  callback: (...args: T) => void,
+  interval?: number
+) {
+  let timeout: NodeJS.Timeout | undefined = undefined;
+
+  return (...args: T) => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => {
+      callback(...args);
+    }, interval || 200); // 200ms debounce in default.
+  };
+}

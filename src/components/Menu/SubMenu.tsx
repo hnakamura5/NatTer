@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { log } from "@/datatypes/Logger";
 import { ListItemIcon } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { InlineFullFillPadding } from "../AlignUtils";
+import { InlineFullFillPadding } from "../Utils";
 import { IconMenuItemProps, MenuItem } from "./MenuItem";
 import { useTheme } from "@/AppState";
 
