@@ -16,6 +16,7 @@ import { EventEmitter, on } from "node:events";
 
 const Terminals = new Map<ProcessID, ITerminalPTy>();
 const configs = new Map<ProcessID, ShellConfig>();
+const history = new Map<ProcessID, string[]>();
 const stdoutEvent = new EventEmitter();
 
 export function shutdownTerminals() {
@@ -35,6 +36,7 @@ function startTerminal(shellConfig: ShellConfig) {
   );
   Terminals.set(id, term);
   configs.set(id, shellConfig);
+  history.set(id, []);
   return id;
 }
 
@@ -50,6 +52,14 @@ function getConfig(pid: ProcessID) {
   const result = configs.get(pid);
   if (result === undefined) {
     throw new Error(`Config for Terminal ${pid} not found`);
+  }
+  return result;
+}
+
+function getHistory(pid: ProcessID) {
+  const result = history.get(pid);
+  if (result === undefined) {
+    throw new Error(`History for Terminal ${pid} not found`);
   }
   return result;
 }
@@ -85,6 +95,7 @@ export const terminalRouter = server.router({
       const { pid, command } = opts.input;
       log.debug(`Execute command ${command} in process ${pid}`);
       const term = getTerminal(pid);
+      getHistory(pid).push(command);
       term.execute(command);
     }),
 
@@ -136,5 +147,23 @@ export const terminalRouter = server.router({
     .mutation(async (opts) => {
       const { pid, rows, cols } = opts.input;
       getTerminal(pid).resize(cols, rows);
+    }),
+
+  numHistory: proc
+    .input(ProcessIDSchema)
+    .output(z.number().int())
+    .query(async (pid) => {
+      return getHistory(pid.input).length;
+    }),
+
+  history: proc
+    .input(z.object({ pid: ProcessIDSchema, index: z.number().int() }))
+    .output(z.string().optional())
+    .mutation(async (opts) => {
+      const { pid, index } = opts.input;
+      if (index >= getHistory(pid).length) {
+        return undefined;
+      }
+      return getHistory(pid)[index];
     }),
 });

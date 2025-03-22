@@ -5,6 +5,7 @@ import { FileManagerState } from "@/components/FileManager";
 import { log } from "@/datatypes/Logger";
 
 import * as monaco from "monaco-editor";
+import { ShellConfig } from "./datatypes/Config";
 
 // Defines the state with scope of one session
 
@@ -18,6 +19,19 @@ export const usePid = () => {
     throw new Error(message);
   }
   return pid;
+};
+
+export const shellConfigContext = React.createContext<ShellConfig | undefined>(
+  undefined
+);
+export const useShellConfig = () => {
+  const shellConfig = React.useContext(shellConfigContext);
+  if (shellConfig === undefined) {
+    const message = "useShellConfig must be used within a ShellConfigContext";
+    log.error(message);
+    throw new Error(message);
+  }
+  return shellConfig;
 };
 
 export const SessionStateJotaiStore = createStore();

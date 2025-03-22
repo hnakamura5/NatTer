@@ -1,6 +1,6 @@
 import ShellSession from "@/components/ShellSession";
 import HoverMenusBar from "@/components/HoverMenusBar";
-import InputBox from "@/components/InputBox";
+import { ShellInputBox, TerminalInputBox }from "@/components/InputBox";
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Provider as JotaiProvider } from "jotai";
@@ -13,6 +13,7 @@ import { ProcessID, TerminalID } from "@/datatypes/Command";
 import {
   InputText,
   SessionStateJotaiStore,
+  shellConfigContext,
   pidContext,
   usePid,
 } from "@/SessionStates";
@@ -103,8 +104,10 @@ function SessionForTerminal(props: { config: ShellConfig }) {
     return <Box>Loading...</Box>;
   }
   // Session for terminal
+  // XtermCustom is flex, so filled from bottom by HorizontalFromBottomBox.
   return (
     <CommonSessionTemplate pid={pid}>
+      <TerminalInputBox />
       <XtermCustom />
     </CommonSessionTemplate>
   );
@@ -146,7 +149,7 @@ function SessionForShell(props: { config: ShellConfig }) {
     <CommonSessionTemplate pid={pid}>
       <ShellSession />
       <CurrentBar />
-      <InputBox />
+      <ShellInputBox />
     </CommonSessionTemplate>
   );
 }
@@ -184,15 +187,17 @@ function SessionContainer(props: SessionContainerProps) {
         }}
       >
         <GlobalFocusMap.Provider>
-          <JotaiProvider store={SessionStateJotaiStore}>
-            <Box
-              sx={{
-                backgroundColor: theme.system.backgroundColor,
-              }}
-            >
-              <SessionForConfig config={defaultShell} />
-            </Box>
-          </JotaiProvider>
+          <shellConfigContext.Provider value={defaultShell}>
+            <JotaiProvider store={SessionStateJotaiStore}>
+              <Box
+                sx={{
+                  backgroundColor: theme.system.backgroundColor,
+                }}
+              >
+                <SessionForConfig config={defaultShell} />
+              </Box>
+            </JotaiProvider>
+          </shellConfigContext.Provider>
         </GlobalFocusMap.Provider>
       </EasyFocus.Provider>
     </ErrorBoundary>

@@ -15,7 +15,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import React, { RefObject, useEffect, useState } from "react";
 import { EasyFocus } from "@/components/EasyFocus";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
-import { InputText, usePid } from "@/SessionStates";
+import { InputText, usePid, useShellConfig } from "@/SessionStates";
 import { useAtom } from "jotai";
 import { CommandID } from "@/datatypes/Command";
 import {
@@ -68,97 +68,17 @@ const StyledCodeMirrorInput = styled(CodeMirrorInput)(({ theme }) => ({
 export function Input(props: {
   id: string;
   submit: (command: string, styledCommand?: string) => void;
+  onChange?: (value: string) => void;
   inputBoxRef: React.RefObject<HTMLElement>;
 }) {
   const pid = usePid();
   const config = useConfig();
-  const numCommands = api.shell.numCommands.useQuery(pid).data;
+  const shellConfig = useShellConfig();
   const theme = useTheme();
   // const [text, setText] = useState<string>("");
   const [text, setText] = useAtom(InputText);
-  const [commandHistory, setCommandHistory] = useState<CommandID | undefined>(
-    undefined
-  );
-  const [shellConfig, setShellConfig] = useState<ShellConfig | undefined>(
-    undefined
-  );
 
-  log.debug(
-    `Input: id:${props.id} text:${text} history:${commandHistory} numCommands:${numCommands}`
-  );
-  const command = api.shell.command.useQuery(
-    {
-      pid: pid,
-      cid: commandHistory || 0,
-    },
-    {
-      enabled: commandHistory !== undefined,
-      refetchInterval: 200,
-    }
-  );
-  const shellConfigQuery = api.shell.shellConfig.useQuery(pid, {
-    enabled: shellConfig === undefined,
-    refetchInterval: 500,
-  });
-
-  // If the command history is changed, update the text.
-  useEffect(() => {
-    log.debug(`Command history changed to ${commandHistory} ${command.data}`);
-    if (commandHistory) {
-      if (command.data) {
-        log.debug(`Set history command: ${command.data.command}`);
-        setText(command.data.command);
-      }
-    }
-  }, [commandHistory]);
-
-  useEffect(() => {
-    if (shellConfigQuery.data && shellConfig !== shellConfigQuery.data) {
-      log.debug(`Set shell config: ${JSON.stringify(shellConfigQuery.data)}`);
-      setShellConfig(shellConfigQuery.data);
-    }
-  }, [shellConfigQuery.data, shellConfig]);
-
-  // Keybinds
-  const keybindRef = useKeybindOfCommandScopeRef();
-  useKeybindOfCommand(
-    "CommandHistoryUp",
-    () => {
-      log.debug(
-        `CommandHistoryUp history:${commandHistory} num:${numCommands}`
-      );
-      if (numCommands) {
-        if (commandHistory === undefined) {
-          setCommandHistory(numCommands - 1);
-        } else if (commandHistory === 0) {
-          setCommandHistory(undefined);
-          setText("");
-        } else {
-          setCommandHistory(commandHistory - 1);
-        }
-      }
-    },
-    keybindRef
-  );
-  useKeybindOfCommand(
-    "CommandHistoryDown",
-    () => {
-      log.debug(
-        `CommandHistoryDown history:${commandHistory} num:${numCommands}`
-      );
-      if (numCommands) {
-        if (commandHistory === undefined) {
-          setCommandHistory(0);
-        } else if (commandHistory === numCommands - 1) {
-          setCommandHistory(undefined);
-          setText("");
-        } else {
-          setCommandHistory(commandHistory + 1);
-        }
-      }
-    },
-    keybindRef
-  );
+  log.debug(`Input: id:${props.id} text:${text}`);
 
   const language = "powershell";
   const monacoTheme = "vitesse-black";
@@ -209,6 +129,9 @@ export function Input(props: {
         }
         onChange={(v, e) => {
           setText(v);
+          if (props.onChange) {
+            props.onChange(v);
+          }
         }}
         onKeyDown={(e) =>
           handleKeyDown(e as unknown as React.KeyboardEvent<HTMLDivElement>)
@@ -238,6 +161,9 @@ export function Input(props: {
       codeMirrorTheme={codeMirrorTheme(theme)}
       onChange={(value, update) => {
         setText(value);
+        if (props.onChange) {
+          props.onChange(value);
+        }
       }}
       ref={
         props.inputBoxRef

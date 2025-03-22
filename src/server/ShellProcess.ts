@@ -443,6 +443,18 @@ export const shellRouter = server.router({
       const { pid, cid } = opts.input;
       return getCommand(pid, cid);
     }),
+  commandAsync: proc
+    .input(
+      z.object({
+        pid: ProcessIDSchema,
+        cid: z.number().int(),
+      })
+    )
+    .output(CommandSchema)
+    .mutation(async (opts) => {
+      const { pid, cid } = opts.input;
+      return getCommand(pid, cid);
+    }),
   stdoutIsFinished: proc
     .input(
       z.object({
