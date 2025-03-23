@@ -4,11 +4,13 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { createIPCHandler } from "electron-trpc/main";
 import { router } from "@/server/tRPCRouter";
-import { setupShellProcess, shutdownShellProcess } from "@/server/ShellProcess";
+import {
+  setupShellProcess,
+  shutdownShellProcess,
+} from "@/server/processServer";
 
 import * as log from "electron-log/main";
 import * as logRenderer from "electron-log/renderer";
-import { shutdownTerminals } from "@/server/terminalServer";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -123,7 +125,6 @@ process.on("uncaughtException", (error) => {
 
 app.on("quit", () => {
   shutdownShellProcess();
-  shutdownTerminals();
   log.debug("app quit");
 });
 

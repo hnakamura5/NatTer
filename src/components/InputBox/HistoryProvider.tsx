@@ -36,7 +36,9 @@ export function HistoryProvider(
   >(undefined);
 
   const historyUp = (current: string): Promise<string | undefined> => {
-    log.debug(`CommandHistoryUp history:${commandHistory} num:${props.size} valueBefore:${valueBeforeHistoryBack} current:${current}`);
+    log.debug(
+      `CommandHistoryUp history:${commandHistory} num:${props.size} valueBefore:${valueBeforeHistoryBack} current:${current}`
+    );
     if (size) {
       if (commandHistory === undefined) {
         return get(size - 1).then((command) => {
@@ -63,7 +65,9 @@ export function HistoryProvider(
   };
 
   const historyDown = (current: string): Promise<string | undefined> => {
-    log.debug(`CommandHistoryDown history:${commandHistory} num:${size} valueBefore:${valueBeforeHistoryBack} current:${current}`);
+    log.debug(
+      `CommandHistoryDown history:${commandHistory} num:${size} valueBefore:${valueBeforeHistoryBack} current:${current}`
+    );
     if (size) {
       if (commandHistory === undefined) {
         return get(0).then((command) => {
@@ -90,6 +94,9 @@ export function HistoryProvider(
   };
 
   const reset = () => {
+    log.debug(
+      `CommandHistoryReset history:${commandHistory} num:${size} valueBefore:${valueBeforeHistoryBack}`
+    );
     setCommandHistory(undefined);
     setValueBeforeHistoryBack(undefined);
   };

@@ -41,10 +41,16 @@ interface CurrentBarProps {}
 function CurrentBar(props: CurrentBarProps) {
   const pid = usePid();
 
-  const current = api.shell.current.useQuery(pid, {
+  const currentDir = api.process.currentDirectory.useQuery(pid, {
     refetchInterval: 500,
     onError: (error) => {
       log.error(`currentDir fetch error for ${pid}: ${error}`);
+    },
+  });
+  const currentUser = api.process.currentUser.useQuery(pid, {
+    refetchInterval: 500,
+    onError: (error) => {
+      log.error(`currentUser fetch error for ${pid}: ${error}`);
     },
   });
 
@@ -53,10 +59,10 @@ function CurrentBar(props: CurrentBarProps) {
       <CurrentBarStyle>
         <span>
           <CurrentDirStyle>
-            <IconText icon={<FolderIcon />} text={current.data?.directory} />
+            <IconText icon={<FolderIcon />} text={currentDir.data} />
           </CurrentDirStyle>
           <UserStyle>
-            <IconText icon={<FaUserEdit />} text={current.data?.user} />
+            <IconText icon={<FaUserEdit />} text={currentUser.data} />
           </UserStyle>
         </span>
       </CurrentBarStyle>

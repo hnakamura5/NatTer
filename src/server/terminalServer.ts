@@ -4,8 +4,15 @@ import { server } from "@/server/tRPCServer";
 import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
 import { observable } from "@trpc/server/observable";
 
-import { newProcessID } from "./types/Process";
-import { ProcessID, ProcessIDSchema } from "@/datatypes/Command";
+import { Process, newProcessID } from "./types/Process";
+import {
+  Command,
+  CommandID,
+  CommandSchema,
+  ProcessID,
+  ProcessIDSchema,
+  newCommand,
+} from "@/datatypes/Command";
 import { spawnChildTerminal } from "./ChildProcess/spawn";
 
 import { ITerminalPTy } from "@/server/ChildProcess/interface";
@@ -13,54 +20,55 @@ import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { log } from "@/datatypes/Logger";
 
 import { EventEmitter, on } from "node:events";
-
-const Terminals = new Map<ProcessID, ITerminalPTy>();
-const configs = new Map<ProcessID, ShellConfig>();
-const history = new Map<ProcessID, string[]>();
-const stdoutEvent = new EventEmitter();
-
-export function shutdownTerminals() {
-  log.debug(`Shutdown terminals.`);
-  for (const terminal of Terminals.values()) {
-    terminal.kill();
-  }
-}
+import {
+  addCommand,
+  addNewProcess,
+  getCommand,
+  getNumCommands,
+  getProcess,
+} from "./processServer";
 
 function startTerminal(shellConfig: ShellConfig) {
-  const id = newProcessID();
   const term = spawnChildTerminal(
     shellConfig,
     shellConfig.executable || "",
     shellConfig.args || [],
     {}
   );
-  Terminals.set(id, term);
-  configs.set(id, shellConfig);
-  history.set(id, []);
-  return id;
+  const process = addNewProcess(term, term, shellConfig, executeCommand);
+  return process.id;
 }
 
 function getTerminal(pid: ProcessID) {
-  const result = Terminals.get(pid);
+  const result = getProcess(pid).pty;
   if (result === undefined) {
-    throw new Error(`Terminal ${pid} not found`);
+    throw new Error(`Process ${pid} is not terminal`);
   }
   return result;
 }
 
-function getConfig(pid: ProcessID) {
-  const result = configs.get(pid);
-  if (result === undefined) {
-    throw new Error(`Config for Terminal ${pid} not found`);
-  }
-  return result;
-}
-
-function getHistory(pid: ProcessID) {
-  const result = history.get(pid);
-  if (result === undefined) {
-    throw new Error(`History for Terminal ${pid} not found`);
-  }
+function executeCommand(
+  process: Process,
+  command: string,
+  cid: CommandID,
+  styledCommand?: string,
+  isSilent?: boolean,
+  onEnd?: (command: Command) => void
+): Command {
+  const result = newCommand(
+    process.id,
+    cid,
+    command,
+    command,
+    process.currentDirectory,
+    process.user,
+    "",
+    undefined,
+    styledCommand,
+    process.pty?.getSize()
+  );
+  process.pty?.execute(command);
+  // TODO: Other command members such as exitCode?
   return result;
 }
 
@@ -88,15 +96,25 @@ export const terminalRouter = server.router({
       z.object({
         pid: ProcessIDSchema,
         command: z.string(),
+        isSilent: z.boolean().optional(),
       })
     )
-    .output(z.void())
+    .output(CommandSchema)
     .mutation(async (opts) => {
-      const { pid, command } = opts.input;
+      const { pid, command, isSilent } = opts.input;
+      const cid = isSilent ? -1 : getNumCommands(pid);
       log.debug(`Execute command ${command} in process ${pid}`);
-      const term = getTerminal(pid);
-      getHistory(pid).push(command);
-      term.execute(command);
+      const currentCommand = executeCommand(
+        getProcess(pid),
+        command,
+        cid,
+        undefined,
+        isSilent
+      );
+      if (!isSilent) {
+        addCommand(pid, currentCommand);
+      }
+      return currentCommand;
     }),
 
   sendKey: proc
@@ -117,9 +135,7 @@ export const terminalRouter = server.router({
     .input(ProcessIDSchema)
     .output(z.void())
     .mutation(async (pid) => {
-      const process = getTerminal(pid.input);
-      process.kill();
-      Terminals.delete(pid.input);
+      getTerminal(pid.input).kill();
     }),
 
   stdout: proc.input(ProcessIDSchema).subscription(async (opts) => {
@@ -153,7 +169,7 @@ export const terminalRouter = server.router({
     .input(ProcessIDSchema)
     .output(z.number().int())
     .query(async (pid) => {
-      return getHistory(pid.input).length;
+      return getNumCommands(pid.input);
     }),
 
   history: proc
@@ -161,9 +177,9 @@ export const terminalRouter = server.router({
     .output(z.string().optional())
     .mutation(async (opts) => {
       const { pid, index } = opts.input;
-      if (index >= getHistory(pid).length) {
+      if (index >= getNumCommands(pid)) {
         return undefined;
       }
-      return getHistory(pid)[index];
+      return getCommand(pid, index).command;
     }),
 });

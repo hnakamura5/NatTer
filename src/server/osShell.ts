@@ -11,6 +11,7 @@ import {
   SaveDialogOptions as ElectronSaveDialogOptions,
 } from "electron";
 import path from "node:path";
+import os from "node:os";
 
 import { boolean, z } from "zod";
 import { server } from "@/server/tRPCServer";
@@ -152,7 +153,7 @@ export const osShellRouter = server.router({
       const { input } = opts;
       return showSaveDialog(input);
     }),
-    // Clipboard functionalities.
+  // Clipboard functionalities.
   writeClipboard: proc.input(z.string()).mutation(async (opts) => {
     const { input } = opts;
     await clipboard.writeText(input);
@@ -168,6 +169,11 @@ export const osShellRouter = server.router({
       }
       return result;
     }),
+
+  user: proc.input(z.string()).query(async (opts) => {
+    const { input } = opts;
+    return os.userInfo().username;
+  }),
 });
 
 // Safe version of osShellRouter.

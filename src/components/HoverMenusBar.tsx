@@ -36,13 +36,13 @@ function FileManagerWrapper(props: {
   const theme = useTheme();
   const pid = usePid();
   const [fileManagerState, setFileManagerState] = useAtom(FileManagerStateAtom);
-  const currentDir = api.shell.current.useQuery(pid, {
+  const currentDir = api.process.currentDirectory.useQuery(pid, {
     refetchInterval: 1000,
     onError: (error) => {
       log.error(`currentDir fetch: ${error}`);
     },
   });
-  const remoteHost = api.shell.remoteHost.useQuery(pid, {
+  const remoteHost = api.process.remoteHost.useQuery(pid, {
     refetchInterval: 1000,
     onError: (error) => {
       log.error(`remoteHost fetch error: ${error}`);
@@ -53,17 +53,17 @@ function FileManagerWrapper(props: {
     return <div>Loading...</div>;
   }
   log.debug(
-    `FileManagerWrapper currentDir: ${currentDir.data.directory} remoteHost: `,
+    `FileManagerWrapper currentDir: ${currentDir.data} remoteHost: `,
     remoteHost.data
   );
   return (
     <FocusBoundary defaultBorderColor={theme.system.backgroundColor}>
       <FileManager
-        current={currentDir.data.directory}
+        current={currentDir.data}
         state={fileManagerState}
         setState={setFileManagerState}
         ref={props.focusRef}
-        remoteHost={remoteHost.data}
+        remoteHost={remoteHost.data.remoteHost}
       />
     </FocusBoundary>
   );

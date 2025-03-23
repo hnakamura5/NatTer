@@ -53,6 +53,10 @@ export async function getFileSystemTempDir(config: ShellConfig) {
   return path.join(await getTempDir(config), "FileSystemTempBuffer");
 }
 
+export function localUserHomeDir() {
+  return Electron.app.getPath("home");
+}
+
 // User-specific configuration directory.
 export function localUserHomeConfigDir() {
   return path.join(Electron.app.getPath("home"), ".natter");

@@ -36,68 +36,17 @@ import { isCommandEchoBackToStdout } from "./ShellUtils/BoundaryDetectorUtils";
 import { getStdoutOutputPartInPlain } from "@/server/ShellUtils/ExecuteUtils";
 
 import { log } from "@/datatypes/Logger";
-import { readShellSpecs } from "./configServer";
 import { RemoteHostSchema, remoteHostFromConfig } from "@/datatypes/SshConfig";
 import { spawnChildShell } from "./ChildProcess/spawn";
-
-const ProcessSpecs = new Map<string, ShellSpecification>();
-
-export function setupShellProcess() {
-  log.debug(`ShellProcess setup.`);
-  return readShellSpecs().then((specs) => {
-    specs.forEach((spec) => {
-      // log.debug(`Read shell spec: `, spec);
-      ProcessSpecs.set(spec.name, spec);
-    });
-  });
-}
-
-export function shutdownShellProcess() {
-  log.debug(`ShellProcess shutdown.`);
-  processHolder.forEach((process) => {
-    log.debug(`Shutdown process ${process.id}`);
-    process.shell.kill();
-  });
-  log.debug(`Shutdown all processes.`);
-}
-
-const processHolder = new Map<ProcessID, Process>();
-const commandsOfProcessID = new Map<ProcessID, Command[]>();
-function getProcess(pid: ProcessID): Process {
-  const result = processHolder.get(pid);
-  if (result === undefined) {
-    const message = `Process ${pid} not found.`;
-    log.error(message);
-    throw new Error(message);
-  }
-  return result;
-}
-function addProcess(pid: ProcessID, process: Process) {
-  processHolder.set(pid, process);
-  commandsOfProcessID.set(pid, []);
-}
-function getNextProcessID(): ProcessID {
-  return newProcessID();
-}
-
-function getCommand(pid: ProcessID, cid: CommandID): Command {
-  return getCommands(pid)[cid];
-}
-function getNumCommands(pid: ProcessID): number {
-  return getCommands(pid).length;
-}
-function addCommand(pid: ProcessID, command: Command) {
-  getCommands(pid).push(command);
-}
-function getCommands(pid: ProcessID): Command[] {
-  const result = commandsOfProcessID.get(pid);
-  if (result === undefined) {
-    const message = `Commands of Process ${pid} not found`;
-    log.error(message);
-    throw new Error(message);
-  }
-  return result;
-}
+import {
+  addCommand,
+  addNewProcess,
+  getCommand,
+  getCommands,
+  getNumCommands,
+  getProcess,
+  getShellSpec,
+} from "./processServer";
 
 export const StdoutEventSchema = z.object({
   cid: CommandIDSchema,
@@ -149,7 +98,8 @@ function currentSetter(process: Process) {
 }
 
 // Select the appropriate executor.
-function selectExecutor(shellSpec: ShellSpecification, config: ShellConfig) {
+function selectExecutor(config: ShellConfig) {
+  const shellSpec = getShellSpec(config.language);
   if (config.interact === "terminal") {
     if (!shellSpec.promptCommands) {
       log.debug(
@@ -172,33 +122,16 @@ function selectExecutor(shellSpec: ShellSpecification, config: ShellConfig) {
 function startProcess(config: ShellConfig): ProcessID {
   const { name, executable, args, language, encoding } = config;
   log.debug(`Start process ${name} config:`, config);
-  const shellSpec = ProcessSpecs.get(language);
-  if (shellSpec === undefined) {
-    // TODO: Error handling.
-    throw new Error(`Shell language ${language} for ${name} is not supported.`);
-  }
-  if (processHolder.size > 100) {
-    throw new Error("Too many processes. This is for debugging.");
-  }
   const shell = spawnChildShell(config, `"${executable}"`, args || [], {
     encoding: encoding,
   });
-  const pid = getNextProcessID();
-  log.debug(`Started process call ${name} id:${pid} with ${config.executable}`);
-  const process = newProcess(
-    pid,
+  const process = addNewProcess(
     shell,
     undefined,
     config,
-    shellSpec,
-    emptyCommand(pid, -1),
-    selectExecutor(shellSpec, config)
+    selectExecutor(config)
   );
-  if (config.type === "ssh") {
-    log.debug(`set ssh connection as process.remoteHost:${config.connection}`);
-    process.remoteHost = remoteHostFromConfig(config);
-  }
-  addProcess(pid, process);
+  const pid = process.id;
   log.debug(`Started process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
   process.executor(
@@ -278,16 +211,12 @@ export const shellRouter = server.router({
   // Execute a new command in the shell process.
   execute: proc
     .input(
-      z
-        .object({
-          pid: ProcessIDSchema,
-          command: z.string(),
-          isSilent: z.boolean().optional(),
-          styledCommand: z.string().optional(),
-        })
-        .refine((value) => {
-          return true;
-        })
+      z.object({
+        pid: ProcessIDSchema,
+        command: z.string(),
+        isSilent: z.boolean().optional(),
+        styledCommand: z.string().optional(),
+      })
     )
     .output(CommandSchema)
     .mutation(async (opts) => {
@@ -470,9 +399,7 @@ export const shellRouter = server.router({
   stderrIsFinished: proc
     .input(
       z.object({
-        pid: ProcessIDSchema.refine((value) => {
-          return value < getNextProcessID();
-        }),
+        pid: ProcessIDSchema,
         cid: CommandIDSchema,
       })
     )
