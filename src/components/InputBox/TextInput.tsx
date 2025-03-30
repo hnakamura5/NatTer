@@ -116,7 +116,8 @@ export function Input(props: {
         maxHeight={200}
         monacoTheme={monacoTheme}
         language={language}
-        id={`input-${pid}`}
+        // TODO: add pid to the id but how to test?
+        id={`input`}
         style={{
           padding: "3px 8px 3px 8px",
           borderRadius: "5px",
@@ -155,7 +156,8 @@ export function Input(props: {
   }
   return (
     <StyledCodeMirrorInput
-      id={`input-${pid}`}
+        // TODO: add pid to the id but how to test?
+      id={`input`}
       value={text}
       language={language}
       codeMirrorTheme={codeMirrorTheme(theme)}

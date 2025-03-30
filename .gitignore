@@ -30,3 +30,6 @@ private
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Local configuration files
+.env

@@ -1,0 +1,37 @@
+{
+  "models": [
+    {
+      "name": "Google Gemini 2.5",
+      "provider": "google",
+      "apiKey": "${ENV:GOOGLE_API_KEY}",
+      "model": "gemini-2.5-pro-exp-03-25",
+      "inputTokens": 1048576,
+      "outputTokens": 65536,
+      "options": {
+        "temperature": 0.5
+      }
+    },
+    {
+      "name": "Google Gemini 2.0 Flash Thinking",
+      "provider": "google",
+      "apiKey": "${ENV:GOOGLE_API_KEY}",
+      "model": "gemini-2.0-flash-thinking-exp-1219",
+      "inputTokens": 32767,
+      "outputTokens": 8192,
+      "options": {
+        "temperature": 0.5
+      }
+    },
+    {
+      "name": "Google Gemini 2.0 Flash",
+      "provider": "google",
+      "apiKey": "${ENV:GOOGLE_API_KEY}",
+      "model": "gemini-2.0-flash-exp",
+      "inputTokens": 1048576,
+      "outputTokens": 8192,
+      "options": {
+        "temperature": 0.5
+      }
+    }
+  ]
+}

@@ -21,7 +21,7 @@ test.afterEach(async () => {
 });
 
 test("Input exists", async () => {
-  const input = await page.locator("#input-1");
+  const input = await page.locator("#input");
   expect(await input.isEnabled()).toBeTruthy();
   expect(await input.isVisible()).toBeTruthy();
 });

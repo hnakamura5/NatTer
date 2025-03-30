@@ -281,7 +281,7 @@ export class BuiltinAndUserConfigDirectoryManager<ConfigT> {
     });
   }
 
-  readConfigFile(): Promise<ConfigT[]> {
+  readConfigFiles(): Promise<ConfigT[]> {
     return this.readConfigWithFileName().then((configs) => {
       const result = configs.map((config) => config.config);
       // log.debug(

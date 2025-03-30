@@ -16,6 +16,15 @@ import {
   parseCustomUserKeybindList,
   PartialCustomKeybindListSchema,
 } from "@/datatypes/Keybind";
+// Import the new AI schemas
+import {
+  ChatAIConnection,
+  ChatAIConnectionArray,
+  ChatAIConnectionSchema,
+  parseChatAIConnection,
+  parseChatAIConnectionArray,
+} from "@/datatypes/AIModelConnection"; // Adjust path if needed
+
 import fs from "node:fs/promises";
 import path, { parse } from "node:path";
 import JSON5 from "json5";
@@ -54,12 +63,15 @@ const shellSpecDirName = "shellSpecs";
 const labelsDirName = "locale";
 // Themes.
 const themesDirName = "themes";
+// Chat AI configs
+const chatAIDirName = "chatAIs";
 
 const configFilePath = () => path.join(configDir(), configFileName);
 const keybindFilePath = () => path.join(configDir(), keybindFileName);
 const shellSpecDir = () => path.join(configDir(), shellSpecDirName);
 const labelsDir = () => path.join(configDir(), labelsDirName);
 const themesDir = () => path.join(configDir(), themesDirName);
+const chatAIDir = () => path.join(configDir(), chatAIDirName);
 
 const userConfigFilePath = () =>
   path.join(localUserHomeConfigDir(), configFileName);
@@ -69,6 +81,7 @@ const userShellSpecDir = () =>
   path.join(localUserHomeConfigDir(), shellSpecDirName);
 const userLabelsDir = () => path.join(localUserHomeConfigDir(), labelsDirName);
 const userThemesDir = () => path.join(localUserHomeConfigDir(), themesDirName);
+const userChatAIDir = () => path.join(localUserHomeConfigDir(), chatAIDirName);
 
 let manager: BuiltinAndUserConfigManager<Config, PartialConfig> | undefined =
   undefined;
@@ -115,7 +128,7 @@ const shellSpecManager = () =>
   );
 
 export function readShellSpecs(): Promise<ShellSpecification[]> {
-  return shellSpecManager().readConfigFile();
+  return shellSpecManager().readConfigFiles();
 }
 
 export function writeShellSpec(name: string, spec: ShellSpecification) {
@@ -146,6 +159,20 @@ export function readLabels(locale: string) {
     .catch((e) => {
       log.error(`Failed to read labels from ${labelsPath}`, e);
       throw new Error("Failed to read labels");
+    });
+}
+
+const chatATManager = () =>
+  new BuiltinAndUserConfigDirectoryManager<ChatAIConnection[]>(
+    chatAIDir(),
+    userChatAIDir(),
+    parseChatAIConnectionArray
+  );
+export function readChatAIs(): Promise<ChatAIConnection[]> {
+  return chatATManager()
+    .readConfigFiles()
+    .then((configs) => {
+      return configs.flat();
     });
 }
 
@@ -186,4 +213,9 @@ export const configurationRouter = server.router({
     .query(async (opts) => {
       return readLabels(opts.input.locale);
     }),
+  readChatAIs: proc.output(z.array(z.string())).query(async () => {
+    return readChatAIs().then((chatAIs) => {
+      return chatAIs.map((chatAI) => chatAI.name);
+    });
+  }),
 });
