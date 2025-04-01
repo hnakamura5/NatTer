@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/system";
 import styled from "@emotion/styled";
 import { useTheme } from "@/AppState";
-import { colorLine } from "./CommonStyle";
+import { colorLine, RightAlignBox } from "./CommonStyle";
 
 const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.shell.secondaryBackgroundColor,
@@ -26,8 +26,10 @@ export type ChatLikeUserInputProps = {
 export function ChatLikeUserInput(props: ChatLikeUserInputProps) {
   const theme = useTheme();
   return (
-    <StyledBox sx={colorLine(theme.shell.useCommandColor)}>
-      <HTMLContainer dangerouslySetInnerHTML={{ __html: props.html }} />
-    </StyledBox>
+    <RightAlignBox>
+      <StyledBox sx={colorLine(theme.shell.useCommandColor)}>
+        <HTMLContainer dangerouslySetInnerHTML={{ __html: props.html }} />
+      </StyledBox>
+    </RightAlignBox>
   );
 }

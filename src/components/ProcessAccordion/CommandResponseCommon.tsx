@@ -71,15 +71,6 @@ export function CommandHeader(props: { command: Command }) {
         <CurrentDirStyle>{command.currentDirectory}</CurrentDirStyle>
         <UserStyle>{command.user}</UserStyle>
       </span>
-      <CommandStyle sx={colorSection(theme.shell.useCommandColor)}>
-        {command.styledCommand ? (
-          <StyledCommandStyle
-            dangerouslySetInnerHTML={{ __html: command.styledCommand }}
-          ></StyledCommandStyle>
-        ) : (
-          command.command
-        )}
-      </CommandStyle>
     </ResponseAlign>
   );
 }

@@ -8,60 +8,50 @@ import { Paper } from "@mui/material";
 import { api } from "@/api";
 import { usePid } from "@/SessionStates";
 import {
-  CommandHeader,
   colorLine,
-  ResponseStyle,
 } from "@/components/ProcessAccordion/CommandResponseCommon";
 
 import { useState } from "react";
 
 import { log } from "@/datatypes/Logger";
+import { ChatLikeResponse } from "../InteractionAccordion/ChatLikeResponse";
+import { ChatLikeUserInput } from "../InteractionAccordion/ChatLikeUserInput";
 
-const ResponseStyleWithScroll = styled(ResponseStyle)({
-  overflow: "auto",
-});
+const CurrentDirStyle = styled.span(({ theme }) => ({
+  color: theme.shell.directoryColor,
+}));
+const UserStyle = styled.span(({ theme }) => ({
+  color: theme.shell.userColor,
+  float: "right",
+  marginRight: "2px",
+}));
+const TimeStyle = styled.span(({ theme }) => ({
+  color: theme.shell.timeColor,
+  style: "bold underline",
+  marginRight: "10px",
+}));
 
-export function CommandResponse(props: { command: Command }) {
+const ResponseAlign = styled(Box)(({ theme }) => ({
+  width: "calc(100% + 15px)",
+  marginLeft: "-8px",
+}));
+
+function CommandHeader(props: { command: Command }) {
   const { command } = props;
-  const theme = useTheme();
-  // Convert stdout and stderr to HTML.
-  // TODO: Do we have to use xterm serialization for terminal output?
-  const ansiUp = new AnsiUp();
-  const purifier = DOMPurify();
-  const stdoutHTML = purifier.sanitize(
-    ansiUp.ansi_to_html(command.stdoutResponse).replace(/\n/g, "<br />")
-  );
-  const stderrHTML = purifier.sanitize(
-    ansiUp.ansi_to_html(command.stderr).replace(/\n/g, "<br />")
-  );
-
   return (
-    <ResponseStyleWithScroll>
-      <CommandHeader command={command} />
-      <Box sx={{ overflow: "auto" }}>
-        <Box sx={colorLine(theme.shell.stdoutColor)}>
-          <div
-            dangerouslySetInnerHTML={{
-              __html: stdoutHTML,
-            }}
-          />
-        </Box>
-        <Box sx={colorLine(theme.shell.stderrColor)}>
-          <div
-            dangerouslySetInnerHTML={{
-              __html: stderrHTML,
-            }}
-          />
-        </Box>
-      </Box>
-    </ResponseStyleWithScroll>
+    <ResponseAlign>
+      <span>
+        <TimeStyle>{command.startTime}</TimeStyle>
+        <CurrentDirStyle>{command.currentDirectory}</CurrentDirStyle>
+        <UserStyle>{command.user}</UserStyle>
+      </span>
+    </ResponseAlign>
   );
 }
 
 function RecordedCommandResponse(props: { cid: CommandID }) {
   const pid = usePid();
-  const theme = useTheme();
-  const command = api.shell.command.useQuery(
+  const commandQuery = api.shell.command.useQuery(
     {
       pid: pid,
       cid: props.cid,
@@ -74,32 +64,27 @@ function RecordedCommandResponse(props: { cid: CommandID }) {
     }
   );
 
-  if (!command.data) {
+  if (!commandQuery.data) {
     return <Box>Command not found.</Box>;
   }
+  const command = commandQuery.data;
 
   return (
-    <Box sx={{marginRight: "10px", marginBottom: "2px"}}>
-      <CommandHeader command={command.data} />
-      <ResponseStyleWithScroll>
-        <Box sx={colorLine(theme.shell.stdoutColor)}>
-          <div
-            dangerouslySetInnerHTML={{ __html: command.data.stdoutHTML || "" }}
-          />
-        </Box>
-        <Box sx={colorLine(theme.shell.stderrColor)}>
-          <div
-            dangerouslySetInnerHTML={{ __html: command.data.stderrHTML || "" }}
-          />
-        </Box>
-      </ResponseStyleWithScroll>
+    <Box sx={{ marginRight: "10px", marginBottom: "2px" }}>
+      <CommandHeader command={command} />
+      <ChatLikeUserInput
+        html={command.styledCommand || `<span>${command.command}</span>`}
+      />
+      <ChatLikeResponse
+        successHtml={command.stdoutHTML || ""}
+        errorHtml={command.stderrHTML || ""}
+      />
     </Box>
   );
 }
 
 export function FinishedCommandResponse(props: { cid: CommandID }) {
   const pid = usePid();
-
   log.debug(`FinishedCommandResponse: pid-${pid} cid-${props.cid}`);
   const outputCompleted = api.shell.outputCompleted.useQuery(
     { pid: pid, cid: props.cid },
@@ -115,6 +100,17 @@ export function FinishedCommandResponse(props: { cid: CommandID }) {
   }
   return <Box>Not recorded.</Box>;
 }
+
+const ResponseStyle = styled(ResponseAlign)(({ theme }) => ({
+  maxHeight: "calc(50vh - 50px)",
+  backgroundColor: theme.shell.secondaryBackgroundColor,
+  paddingBottom: "5px",
+  borderRadius: "3px",
+}));
+
+const ResponseStyleWithScroll = styled(ResponseStyle)({
+  overflow: "auto",
+});
 
 export function AliveCommandResponse(props: { cid: CommandID }) {
   const pid = usePid();

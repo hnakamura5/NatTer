@@ -40,3 +40,8 @@ export const colorLine = (color: string) => {
     paddingLeft: 1,
   };
 };
+
+export const ResponseAlign = styled(Box)(({ theme }) => ({
+  width: "calc(100% + 15px)",
+  marginLeft: "-8px",
+}));
