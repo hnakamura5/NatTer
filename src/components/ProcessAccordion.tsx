@@ -22,14 +22,11 @@ import styled from "@emotion/styled";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import {
   AliveCommandResponse,
-  CommandResponse,
   FinishedCommandResponse,
 } from "@/components/ProcessAccordion/CommandResponse";
 import { CommandSummary } from "@/components/ProcessAccordion/CommandSummary";
-import Xterm from "./ProcessAccordion/Xterm";
 import { usePid } from "@/SessionStates";
 import { CommandID, ProcessID } from "@/datatypes/Command";
-import { UseTRPCQueryOptions } from "@trpc/react-query/shared";
 
 import { useHotkeys } from "react-hotkeys-hook";
 import {

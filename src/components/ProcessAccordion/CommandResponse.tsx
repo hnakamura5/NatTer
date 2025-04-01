@@ -7,9 +7,6 @@ import DOMPurify from "dompurify";
 import { Paper } from "@mui/material";
 import { api } from "@/api";
 import { usePid } from "@/SessionStates";
-import {
-  colorLine,
-} from "@/components/ProcessAccordion/CommandResponseCommon";
 
 import { useState } from "react";
 
@@ -123,7 +120,7 @@ export function AliveCommandResponse(props: { cid: CommandID }) {
 
   log.debug(`AliveCommandResponse: pid-${pid} cid-${cid}`);
 
-  const command = api.shell.command.useQuery(
+  const commandQuery = api.shell.command.useQuery(
     {
       pid: pid,
       cid: props.cid,
@@ -157,23 +154,21 @@ export function AliveCommandResponse(props: { cid: CommandID }) {
     }
   );
 
-  if (!command.data) {
+  if (!commandQuery.data) {
     return <Box>Loading...</Box>;
   }
+  const command = commandQuery.data;
 
   return (
     <Box>
-      <CommandHeader command={command.data} />
-      <ResponseStyleWithScroll>
-        <Box sx={colorLine(theme.shell.stdoutColor)}>
-          <div dangerouslySetInnerHTML={{ __html: stdoutHTML || "" }} />
-        </Box>
-        <Box sx={colorLine(theme.shell.stderrColor)}>
-          <div
-            dangerouslySetInnerHTML={{ __html: command.data.stderrHTML || "" }}
-          />
-        </Box>
-      </ResponseStyleWithScroll>
+      <CommandHeader command={commandQuery.data} />
+      <ChatLikeUserInput
+        html={command.styledCommand || `<span>${command.command}</span>`}
+      />
+      <ChatLikeResponse
+        successHtml={stdoutHTML || ""}
+        errorHtml={command.stderrHTML || ""}
+      />
     </Box>
   );
 }
