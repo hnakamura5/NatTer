@@ -132,7 +132,7 @@ function startProcess(config: ShellConfig): ProcessID {
     selectExecutor(config)
   );
   const pid = process.id;
-  log.debug(`Started process ${pid} with ${config.executable}`);
+  log.debug(`Starting process ${pid} with ${config.executable}`);
   // First execute move to home command and wait for wake up.
   process.executor(
     process,

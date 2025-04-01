@@ -413,7 +413,10 @@ export async function saveCommandToTempFile(process: Process, command: string) {
     const message = `Failed to save command to ${JSON.stringify(filePath)}`;
     log.debug(message, e);
   });
-  await univFs.chmod(filePath, 0o700);
+  // Time to make sure the file is saved.
+  await setTimeout(async () => {
+    await univFs.chmod(filePath, 0o700);
+  }, 200);
   log.debug(`Saved command to `, filePath);
   if (process.config.virtualPath) {
     return parenCommand(

@@ -229,6 +229,8 @@ export namespace univFs {
           .write(data, () => {
             resolve(null);
           });
+      }).catch((e) => {
+        log.debug("Failed to write ", e);
       });
       log.debug(`Wrote file to remote: ${uPath.path}`);
     } else {

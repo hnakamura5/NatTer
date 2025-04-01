@@ -1,6 +1,6 @@
 import ShellSession from "@/components/ShellSession";
 import HoverMenusBar from "@/components/HoverMenusBar";
-import { ShellInputBox, TerminalInputBox }from "@/components/InputBox";
+import { ShellInputBox, TerminalInputBox } from "@/components/InputBox";
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Provider as JotaiProvider } from "jotai";
@@ -147,9 +147,9 @@ function SessionForShell(props: { config: ShellConfig }) {
   // Session for non interactive shell
   return (
     <CommonSessionTemplate pid={pid}>
-      <ShellSession />
-      <CurrentBar />
       <ShellInputBox />
+      <CurrentBar />
+      <ShellSession />
     </CommonSessionTemplate>
   );
 }

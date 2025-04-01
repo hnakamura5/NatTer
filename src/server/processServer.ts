@@ -123,6 +123,7 @@ export function getNumCommands(pid: ProcessID): number {
 }
 
 export function addCommand(pid: ProcessID, command: Command) {
+  log.debug(`Add command ${command.command} to process ${pid}`);
   getCommands(pid).push(command);
 }
 
@@ -139,7 +140,7 @@ export function getCommands(pid: ProcessID): Command[] {
 const proc = server.procedure;
 export const processRouter = server.router({
   currentDirectory: proc.input(ProcessIDSchema).query(({ input }) => {
-    log.debug(`Get current directory of process ${input}`);
+    // log.debug(`Get current directory of process ${input}`);
     const process = getProcess(input);
     return process.currentDirectory;
   }),
@@ -155,7 +156,7 @@ export const processRouter = server.router({
       })
     )
     .query(({ input }) => {
-      log.debug(`Get remote host of process ${input}`);
+      // log.debug(`Get remote host of process ${input}`);
       const process = getProcess(input);
       return { remoteHost: process.remoteHost };
     }),
