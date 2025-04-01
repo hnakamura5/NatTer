@@ -41,6 +41,8 @@ import { useAtom } from "jotai";
 
 // import { log } from "@/datatypes/Logger";
 import { log } from "@/datatypes/Logger";
+import { InteractionAccordionSummary } from "./InteractionAccordion/Summary";
+import { InteractionAccordionDetail } from "./InteractionAccordion/Details";
 
 const queryOption = (pid: ProcessID, additionalMessage?: string) => ({
   refetchInterval: 500,
@@ -76,34 +78,6 @@ const AccordionStyle = styled(Box)(({ theme }) => ({
   borderRadius: "3px",
 }));
 
-function ProcessAccordionSummary(props: { cid: CommandID }) {
-  const theme = useTheme();
-  const CommandSummaryPadding = {
-    paddingX: "5px",
-    paddingTop: "5px",
-    paddingBottom: "4px",
-    marginY: "-15px",
-  };
-
-  return (
-    <AccordionStyle>
-      <AccordionSummary
-        expandIcon={
-          <ExpandMoreIcon
-            sx={{
-              color: theme.shell.textColor,
-              margin: -1,
-            }}
-          />
-        }
-        sx={CommandSummaryPadding}
-      >
-        <SummarySelector cid={props.cid} />
-      </AccordionSummary>
-    </AccordionStyle>
-  );
-}
-
 function ResponseSelector(props: { cid: CommandID }) {
   const pid = usePid();
   const cid = props.cid;
@@ -119,28 +93,6 @@ function ResponseSelector(props: { cid: CommandID }) {
   } else {
     return <AliveCommandResponse cid={cid} />;
   }
-}
-
-function ProcessAccordionDetail(props: {
-  cid: CommandID;
-  focalPoint: React.RefObject<HTMLDivElement>;
-}) {
-  const CommandDetailPadding = {
-    paddingLeft: 1.5,
-    paddingRight: 0,
-    paddingY: 1,
-    marginY: -1,
-  };
-
-  return (
-    <AccordionStyle>
-      <AccordionDetails sx={CommandDetailPadding}>
-        <div ref={props.focalPoint} tabIndex={0}>
-          <ResponseSelector cid={props.cid} />
-        </div>
-      </AccordionDetails>
-    </AccordionStyle>
-  );
 }
 
 function ProcessKeySender(props: {
@@ -355,8 +307,12 @@ function ProcessAccordion(props: ProcessAccordionProps) {
                     transition: { timeout: 300 },
                   }}
                 >
-                  <ProcessAccordionSummary cid={cid} />
-                  <ProcessAccordionDetail cid={cid} focalPoint={focalPoint} />
+                  <InteractionAccordionSummary>
+                    <SummarySelector cid={cid} />
+                  </InteractionAccordionSummary>
+                  <InteractionAccordionDetail focalPoint={focalPoint}>
+                    <ResponseSelector cid={cid} />
+                  </InteractionAccordionDetail>
                 </Accordion>
                 <div ref={bottom} id={`${idStr}-bottom`} />
               </GlobalFocusMap.Target>
