@@ -46,6 +46,24 @@ function CommandHeader(props: { command: Command }) {
   );
 }
 
+function CommandResponse(props: {
+  command: Command;
+  userInputHTML: string;
+  successHTML: string;
+  errorHTML: string;
+}) {
+  return (
+    <Box sx={{ marginRight: "10px", marginBottom: "2px" }}>
+      <CommandHeader command={props.command} />
+      <ChatLikeUserInput html={props.userInputHTML} />
+      <ChatLikeResponse
+        successHtml={props.successHTML}
+        errorHtml={props.errorHTML}
+      />
+    </Box>
+  );
+}
+
 function RecordedCommandResponse(props: { cid: CommandID }) {
   const pid = usePid();
   const commandQuery = api.shell.command.useQuery(
@@ -67,16 +85,12 @@ function RecordedCommandResponse(props: { cid: CommandID }) {
   const command = commandQuery.data;
 
   return (
-    <Box sx={{ marginRight: "10px", marginBottom: "2px" }}>
-      <CommandHeader command={command} />
-      <ChatLikeUserInput
-        html={command.styledCommand || `<span>${command.command}</span>`}
-      />
-      <ChatLikeResponse
-        successHtml={command.stdoutHTML || ""}
-        errorHtml={command.stderrHTML || ""}
-      />
-    </Box>
+    <CommandResponse
+      command={command}
+      userInputHTML={command.styledCommand || `<span>${command.command}</span>`}
+      successHTML={command.stdoutHTML || ""}
+      errorHTML={command.stderrHTML || ""}
+    />
   );
 }
 
@@ -160,15 +174,11 @@ export function AliveCommandResponse(props: { cid: CommandID }) {
   const command = commandQuery.data;
 
   return (
-    <Box>
-      <CommandHeader command={commandQuery.data} />
-      <ChatLikeUserInput
-        html={command.styledCommand || `<span>${command.command}</span>`}
-      />
-      <ChatLikeResponse
-        successHtml={stdoutHTML || ""}
-        errorHtml={command.stderrHTML || ""}
-      />
-    </Box>
+    <CommandResponse
+      command={command}
+      userInputHTML={command.styledCommand || `<span>${command.command}</span>`}
+      successHTML={stdoutHTML}
+      errorHTML={command.stderrHTML || ""}
+    />
   );
 }

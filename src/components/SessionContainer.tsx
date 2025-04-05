@@ -25,7 +25,7 @@ import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { Config, ShellConfig } from "@/datatypes/Config";
 
 import { log } from "@/datatypes/Logger";
-import XtermCustom from "./ProcessAccordion/XtermCustom";
+import XtermCustom from "./XtermCustom";
 
 const VerticalBox = styled(Box)({
   display: "flex",

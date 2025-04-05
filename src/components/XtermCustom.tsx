@@ -17,16 +17,12 @@ import { useTheme } from "@/AppState";
 import { Theme } from "@/datatypes/Theme";
 import { ErrorBoundary } from "react-error-boundary";
 import { CommandID, ProcessID, TerminalID } from "@/datatypes/Command";
-import {
-  CommandHeader,
-  ResponseStyle,
-} from "@/components/ProcessAccordion/CommandResponseCommon";
 
 import { api } from "@/api";
 
 import { log } from "@/datatypes/Logger";
 import { usePid } from "@/SessionStates";
-import { eventStabilizer } from "../Utils";
+import { eventStabilizer } from "./Utils";
 
 function pxToNumber(px: string) {
   return parseInt(px.replace("px", ""));

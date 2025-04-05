@@ -64,17 +64,6 @@ function SummarySelector(props: { cid: CommandID }) {
   return <CommandSummary command={command.data} />;
 }
 
-const AccordionStyle = styled(Box)(({ theme }) => ({
-  color: theme.shell.textColor,
-  backgroundColor: theme.shell.backgroundColor,
-  fontFamily: theme.shell.font,
-  fontSize: theme.shell.fontSize,
-  textAlign: "left",
-  overflow: "hidden",
-  overflowWrap: "anywhere",
-  borderRadius: "3px",
-}));
-
 function ResponseSelector(props: { cid: CommandID }) {
   const pid = usePid();
   const cid = props.cid;
