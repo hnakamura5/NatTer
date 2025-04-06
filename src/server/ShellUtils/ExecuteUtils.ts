@@ -14,7 +14,7 @@ import {
   isExitCodeOK,
   parenCommand,
 } from "@/datatypes/ShellSpecification";
-import { ShellInteractKind } from "@/datatypes/ShellInteract";
+import { ShellInteractKind } from "@/datatypes/Interact";
 import { Terminal } from "@xterm/headless";
 import stripAnsi from "strip-ansi";
 import { SerializeAddon } from "@xterm/addon-serialize";

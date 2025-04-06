@@ -5,7 +5,6 @@ import { colorLine, RightAlignBox } from "./CommonStyle";
 
 const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.shell.secondaryBackgroundColor,
-  marginBottom: "8px",
   borderRadius: "3px",
   padding: "3px 5px 3px 5px",
 }));

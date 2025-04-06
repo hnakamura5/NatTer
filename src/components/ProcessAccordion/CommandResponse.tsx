@@ -49,8 +49,8 @@ function CommandHeader(props: { command: Command }) {
 function CommandResponse(props: {
   command: Command;
   userInputHTML: string;
-  successHTML: string;
-  errorHTML: string;
+  successHTML?: string;
+  errorHTML?: string;
 }) {
   return (
     <Box sx={{ marginRight: "10px", marginBottom: "2px" }}>
@@ -87,9 +87,9 @@ function RecordedCommandResponse(props: { cid: CommandID }) {
   return (
     <CommandResponse
       command={command}
-      userInputHTML={command.styledCommand || `<span>${command.command}</span>`}
-      successHTML={command.stdoutHTML || ""}
-      errorHTML={command.stderrHTML || ""}
+      userInputHTML={command.styledCommand || (`<span>${command.command}</span>`)}
+      successHTML={command.stdoutHTML}
+      errorHTML={command.stderrHTML}
     />
   );
 }

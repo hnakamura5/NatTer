@@ -17,13 +17,17 @@ import {
   CommandIDSchema,
   CommandSchema,
   emptyCommand,
-  ProcessID,
-  ProcessIDSchema,
 } from "@/datatypes/Command";
+import {
+  SessionID,
+  ProcessIDSchema,
+  SessionIDSchema,
+  ProcessID,
+} from "@/datatypes/SessionID";
 
 import { server } from "@/server/tRPCServer";
 import { observable } from "@trpc/server/observable";
-import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
+import { ShellInteractKindSchema } from "@/datatypes/Interact";
 import {
   Process,
   newProcess,
@@ -47,6 +51,7 @@ import {
   getProcess,
   getShellSpec,
 } from "./processServer";
+import { assertSessionExists } from "./sessionServer";
 
 export const StdoutEventSchema = z.object({
   cid: CommandIDSchema,
@@ -197,11 +202,13 @@ const proc = server.procedure;
 export const shellRouter = server.router({
   // Start a new process of shell.
   start: proc
-    .input(ShellConfigSchema)
+    .input(z.object({ sessionID: SessionIDSchema, config: ShellConfigSchema }))
     .output(ProcessIDSchema)
     .mutation(async (opts) => {
+      const { sessionID, config } = opts.input;
+      assertSessionExists(sessionID);
       try {
-        return startProcess(opts.input);
+        return startProcess(config);
       } catch (e) {
         log.error(`proc start error: `, e);
         throw e;

@@ -1,6 +1,6 @@
 import ShellSession from "@/components/ShellSession";
 import HoverMenusBar from "@/components/HoverMenusBar";
-import { ShellInputBox, TerminalInputBox } from "@/components/InputBox";
+import { ShellInputBox, TerminalInputBox } from "@/components/InputSubmit";
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Provider as JotaiProvider } from "jotai";
@@ -9,13 +9,15 @@ import styled from "@emotion/styled";
 import CurrentBar from "@/components/CurrentBar";
 
 import { api } from "@/api";
-import { ProcessID, TerminalID } from "@/datatypes/Command";
+import { ProcessID, SessionID } from "@/datatypes/SessionID";
 import {
   InputText,
   SessionStateJotaiStore,
   shellConfigContext,
   pidContext,
+  sessionContext,
   usePid,
+  useSession,
 } from "@/SessionStates";
 import { ErrorBoundary } from "react-error-boundary";
 import { EasyFocus } from "@/components/EasyFocus";
@@ -62,33 +64,40 @@ function getDefaultShell(config: Config): ShellConfig {
 }
 
 function CommonSessionTemplate(props: {
+  sessionID: SessionID;
   pid: ProcessID;
   children: React.ReactNode;
 }) {
   return (
-    <pidContext.Provider value={props.pid}>
-      <VerticalBox>
-        <HoverMenusBar />
-        <FullWidthBox>
-          <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
-        </FullWidthBox>
-      </VerticalBox>
-    </pidContext.Provider>
+    <sessionContext.Provider value={props.sessionID}>
+      <pidContext.Provider value={props.pid}>
+        <VerticalBox>
+          <HoverMenusBar />
+          <FullWidthBox>
+            <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
+          </FullWidthBox>
+        </VerticalBox>
+      </pidContext.Provider>
+    </sessionContext.Provider>
   );
 }
 
 function SessionForTerminal(props: { config: ShellConfig }) {
+  const sessionID = useSession();
   const starter = api.terminal.start.useMutation();
   const stopper = api.terminal.stop.useMutation();
   const [pid, setPid] = useState<ProcessID | undefined>(undefined);
   // Start the terminal process.
   useEffect(() => {
     starter
-      .mutateAsync(props.config, {
-        onError: (error) => {
-          log.error(`start terminal fetch error: ${error}`);
-        },
-      })
+      .mutateAsync(
+        { sessionID: sessionID, config: props.config },
+        {
+          onError: (error) => {
+            log.error(`start terminal fetch error: ${error}`);
+          },
+        }
+      )
       .then((result) => {
         log.debug(`start terminal fetch set pid: ${result}`);
         setPid(result);
@@ -106,7 +115,7 @@ function SessionForTerminal(props: { config: ShellConfig }) {
   // Session for terminal
   // XtermCustom is flex, so filled from bottom by HorizontalFromBottomBox.
   return (
-    <CommonSessionTemplate pid={pid}>
+    <CommonSessionTemplate sessionID={sessionID} pid={pid}>
       <TerminalInputBox />
       <XtermCustom />
     </CommonSessionTemplate>
@@ -114,6 +123,7 @@ function SessionForTerminal(props: { config: ShellConfig }) {
 }
 
 function SessionForShell(props: { config: ShellConfig }) {
+  const sessionID = useSession();
   const [pid, setPid] = useState<ProcessID | undefined>(undefined);
   const starter = api.shell.start.useMutation();
   const stopper = api.shell.stop.useMutation();
@@ -123,11 +133,17 @@ function SessionForShell(props: { config: ShellConfig }) {
   useEffect(() => {
     log.debug(`SessionForShell start`);
     starter
-      .mutateAsync(props.config, {
-        onError: (error) => {
-          log.error(`start fetch shell error: ${error}`);
+      .mutateAsync(
+        {
+          sessionID: sessionID,
+          config: props.config,
         },
-      })
+        {
+          onError: (error) => {
+            log.error(`start fetch shell error: ${error}`);
+          },
+        }
+      )
       .then((result) => {
         log.debug(`start fetch shell set pid: ${result}`);
         setPid(result);
@@ -146,7 +162,7 @@ function SessionForShell(props: { config: ShellConfig }) {
 
   // Session for non interactive shell
   return (
-    <CommonSessionTemplate pid={pid}>
+    <CommonSessionTemplate sessionID={sessionID} pid={pid}>
       <ShellInputBox />
       <CurrentBar />
       <ShellSession />
@@ -168,38 +184,60 @@ interface SessionContainerProps {}
 function SessionContainer(props: SessionContainerProps) {
   const config = useConfig();
   const theme = useTheme();
+  const newSession = api.session.newSession.useMutation();
+
+  const [sessionID, setSessionID] = useState<SessionID | undefined>(undefined);
 
   const defaultShell = getDefaultShell(config);
 
+  useEffect(() => {
+    log.debug(`SessionContainer new session`);
+    newSession
+      .mutateAsync({ title: "Session 1" })
+      .then((result) => {
+        log.debug(`SessionContainer new session set sessionID: ${result}`);
+        setSessionID(result);
+      })
+      .catch((error) => {
+        log.error(`SessionContainer new session error: ${error}`);
+      });
+  }, []);
+
+  if (sessionID === undefined) {
+    return <Box>Loading...</Box>;
+  }
+
   return (
     <ErrorBoundary fallbackRender={SessionContainerError}>
-      <EasyFocus.Provider
-        jumpKey={(e) => {
-          return e.ctrlKey && e.key === "j";
-        }}
-        exitKey={(e) => {
-          return e.key === "Escape";
-        }}
-        badgeStyle={{
-          inputtedTagTextColor: "#FF5722",
-          backgroundColor: "#1A237E",
-          boundaryColor: theme.system.focusedFrameColor,
-        }}
-      >
-        <GlobalFocusMap.Provider>
-          <shellConfigContext.Provider value={defaultShell}>
-            <JotaiProvider store={SessionStateJotaiStore}>
-              <Box
-                sx={{
-                  backgroundColor: theme.system.backgroundColor,
-                }}
-              >
-                <SessionForConfig config={defaultShell} />
-              </Box>
-            </JotaiProvider>
-          </shellConfigContext.Provider>
-        </GlobalFocusMap.Provider>
-      </EasyFocus.Provider>
+      <sessionContext.Provider value={sessionID}>
+        <EasyFocus.Provider
+          jumpKey={(e) => {
+            return e.ctrlKey && e.key === "j";
+          }}
+          exitKey={(e) => {
+            return e.key === "Escape";
+          }}
+          badgeStyle={{
+            inputtedTagTextColor: "#FF5722",
+            backgroundColor: "#1A237E",
+            boundaryColor: theme.system.focusedFrameColor,
+          }}
+        >
+          <GlobalFocusMap.Provider>
+            <shellConfigContext.Provider value={defaultShell}>
+              <JotaiProvider store={SessionStateJotaiStore}>
+                <Box
+                  sx={{
+                    backgroundColor: theme.system.backgroundColor,
+                  }}
+                >
+                  <SessionForConfig config={defaultShell} />
+                </Box>
+              </JotaiProvider>
+            </shellConfigContext.Provider>
+          </GlobalFocusMap.Provider>
+        </EasyFocus.Provider>
+      </sessionContext.Provider>
     </ErrorBoundary>
   );
 }

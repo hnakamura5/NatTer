@@ -9,14 +9,10 @@ import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { Unicode11Addon } from "@xterm/addon-unicode11";
 import "@xterm/xterm/css/xterm.css";
 
-import { Box } from "@mui/system";
-import styled from "@emotion/styled";
-
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/AppState";
 import { Theme } from "@/datatypes/Theme";
 import { ErrorBoundary } from "react-error-boundary";
-import { CommandID, ProcessID, TerminalID } from "@/datatypes/Command";
 
 import { api } from "@/api";
 
@@ -65,10 +61,6 @@ function newTerminal(theme: Theme): terminalHandle {
     serialize: serializeAddon,
     search: searchAddon,
   };
-}
-
-interface XtermCustomProps {
-  pid: TerminalID;
 }
 
 export default function XtermCustom() {

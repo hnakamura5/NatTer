@@ -12,7 +12,6 @@ import {
 import styled from "@emotion/styled";
 import { useConfig, useTheme } from "@/AppState";
 
-import { api } from "@/api";
 import { useCallback, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import FocusBoundary from "@/components/FocusBoundary";
@@ -35,12 +34,15 @@ import {
   ContextSubMenu,
   ContextMenuStyleBox,
   ContextSubMenuStyleBox,
-} from "./Menu/ContextMenu";
-import { SubMenu, SubMenuItem } from "./Menu/SubMenu";
-import { MenuItem } from "./Menu/MenuItem";
+} from "@/components/Menu/ContextMenu";
+import { SubMenu, SubMenuItem } from "@/components/Menu/SubMenu";
+import { MenuItem } from "@/components/Menu/MenuItem";
 import { CommandID } from "@/datatypes/Command";
 import { set } from "zod";
-import { HistoryProvider, useHistory } from "./InputBox/HistoryProvider";
+import {
+  HistoryProvider,
+  useHistory,
+} from "@/components/InputBox/HistoryProvider";
 
 function InputBoxContextMenuContents() {
   return (
@@ -71,9 +73,9 @@ const OverToLeft = styled(Box)(({ theme }) => ({
   width: `calc(100% + ${theme.system.hoverMenuWidth})`,
 }));
 
-interface InputBoxProps {}
+export interface InputBoxProps {}
 
-function InputBox(
+export function InputBox(
   props: InputBoxProps & {
     submit: (command: string, styledCommand?: string) => void;
   }
@@ -174,76 +176,4 @@ function InputBox(
 
 function InputBoxError() {
   return <Box>InputBox load error.</Box>;
-}
-
-export function TerminalInputBox(props: InputBoxProps) {
-  const pid = usePid();
-  const executeTerminal = api.terminal.execute.useMutation();
-  const numHistory = api.terminal.numHistory.useQuery(pid, {
-    refetchInterval: 1000,
-  });
-  const history = api.terminal.history.useMutation();
-  const submit = useCallback(
-    (command: string, styledCommand?: string) => {
-      if (command === "") {
-        log.debug("InputBox: empty command submitted");
-        return;
-      }
-      executeTerminal.mutate(
-        { pid: pid, command: command },
-        {
-          onError: (error) => {
-            log.error(`failed to execute: ${pid}`, error);
-          },
-        }
-      );
-    },
-    [pid, executeTerminal]
-  );
-
-  return (
-    <HistoryProvider
-      size={numHistory.data}
-      get={(index: number) => history.mutateAsync({ pid: pid, index: index })}
-    >
-      <InputBox {...props} submit={submit} />
-    </HistoryProvider>
-  );
-}
-
-export function ShellInputBox(props: InputBoxProps) {
-  const pid = usePid();
-  const executeShell = api.shell.execute.useMutation();
-  const numCommands = api.shell.numCommands.useQuery(pid);
-  const getCommand = api.shell.commandAsync.useMutation();
-  const submit = useCallback(
-    (command: string, styledCommand?: string) => {
-      if (command === "") {
-        log.debug("InputBox: empty command submitted");
-        return;
-      }
-      executeShell.mutate(
-        { pid: pid, command: command, styledCommand: styledCommand },
-        {
-          onError: (error) => {
-            log.error(`failed to execute: ${pid}`, error);
-          },
-        }
-      );
-    },
-    [pid, executeShell]
-  );
-
-  return (
-    <HistoryProvider
-      size={numCommands.data}
-      get={(index: number) =>
-        getCommand
-          .mutateAsync({ pid: pid, cid: index })
-          .then((command) => command.command)
-      }
-    >
-      <InputBox {...props} submit={submit} />
-    </HistoryProvider>
-  );
 }

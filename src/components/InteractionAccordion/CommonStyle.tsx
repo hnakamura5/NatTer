@@ -15,7 +15,7 @@ export const AccordionStyle = styled(Box)(({ theme }) => ({
 export const LeftAlignBox = styled(Box)(({ theme }) => ({
   overflow: "auto",
   maxHeight: "calc(50vh - 50px)",
-  margin: "10px 5px 10px 5px", // top right bottom left
+  margin: "20px 5px 10px 5px", // top right bottom left
   backgroundColor: theme.shell.secondaryBackgroundColor,
   borderRadius: "8px",
   alignSelf: "flex-start", // Key property for left alignment in a flex column/cross-axis start alignment
@@ -30,6 +30,7 @@ export const RightAlignBox = styled(Box)({
     maxWidth: "90%",
     minWidth: "min(50%, 480px)",
   },
+  margin: "15px 10px 10px 0px", // top right bottom left
   display: "flex",
   justifyContent: "flex-end",
 });

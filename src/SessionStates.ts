@@ -1,6 +1,6 @@
 import { atom, createStore } from "jotai";
 import React from "react";
-import { ProcessID } from "@/datatypes/Command";
+import { ProcessID, SessionID } from "@/datatypes/SessionID";
 import { FileManagerState } from "@/components/FileManager";
 import { log } from "@/datatypes/Logger";
 
@@ -8,10 +8,22 @@ import * as monaco from "monaco-editor";
 import { ShellConfig } from "./datatypes/Config";
 
 // Defines the state with scope of one session
+export const sessionContext = React.createContext<SessionID | undefined>(
+  undefined
+);
+export function useSession(): SessionID {
+  const session = React.useContext(sessionContext);
+  if (session === undefined) {
+    const message = "useSession must be used within a sessionContext";
+    log.error(message);
+    throw new Error(message);
+  }
+  return session;
+}
 
 // ProcessID is the identifier of the process.
 export const pidContext = React.createContext<ProcessID | undefined>(undefined);
-export const usePid = () => {
+export function usePid(): ProcessID {
   const pid = React.useContext(pidContext);
   if (pid === undefined) {
     const message = "usePid must be used within a pidContext";
@@ -19,12 +31,12 @@ export const usePid = () => {
     throw new Error(message);
   }
   return pid;
-};
+}
 
 export const shellConfigContext = React.createContext<ShellConfig | undefined>(
   undefined
 );
-export const useShellConfig = () => {
+export function useShellConfig(): ShellConfig {
   const shellConfig = React.useContext(shellConfigContext);
   if (shellConfig === undefined) {
     const message = "useShellConfig must be used within a ShellConfigContext";
@@ -32,7 +44,7 @@ export const useShellConfig = () => {
     throw new Error(message);
   }
   return shellConfig;
-};
+}
 
 export const SessionStateJotaiStore = createStore();
 

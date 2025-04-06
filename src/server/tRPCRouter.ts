@@ -8,8 +8,11 @@ import { iconServerRouter } from "@/server/iconServer";
 import { languageServerRouter } from "@/server/languageServer";
 import { terminalRouter } from "./terminalServer";
 import { processRouter } from "./processServer";
+import { aiRouter } from "./chatAIServer";
+import { sessionRouter } from "./sessionServer";
 
 export const router = server.router({
+  session: sessionRouter,
   shell: shellRouter,
   fs: fileSystemRouter,
   icon: iconServerRouter,
@@ -18,5 +21,6 @@ export const router = server.router({
   lsp: languageServerRouter,
   terminal: terminalRouter,
   process: processRouter,
+  ai: aiRouter,
 });
 export type AppRouter = typeof router;

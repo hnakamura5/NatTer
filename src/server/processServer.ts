@@ -1,28 +1,19 @@
+import os from "node:os";
 import {
   Command,
   CommandID,
   CommandIDSchema,
   CommandSchema,
   emptyCommand,
-  ProcessID,
-  ProcessIDSchema,
 } from "@/datatypes/Command";
 import {
-  Process,
-  newProcess,
-  clockIncrement,
-  newProcessID,
-} from "@/server/types/Process";
-import {
-  ShellSpecification,
-  ShellSpecificationSchema,
-  getCurrentCommand,
-  getUserCommand,
-} from "@/datatypes/ShellSpecification";
-
-import os from "node:os";
-
-import { readShellSpecs } from "./configServer";
+  SessionID,
+  SessionIDSchema,
+  ProcessID,
+  ProcessIDSchema,
+} from "@/datatypes/SessionID";
+import { Process, newProcess, newProcessID } from "@/server/types/Process";
+import { ShellSpecification } from "@/datatypes/ShellSpecification";
 
 import { log } from "@/datatypes/Logger";
 import { IShell, ITerminalPTy } from "./ChildProcess/interface";
@@ -30,12 +21,13 @@ import { ShellConfig, ShellConfigSchema } from "@/datatypes/Config";
 import { remoteHostFromConfig, RemoteHostSchema } from "@/datatypes/SshConfig";
 import { server } from "./tRPCServer";
 import { z } from "zod";
-import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
+import { ShellInteractKindSchema } from "@/datatypes/Interact";
 import { localUserHomeDir } from "./ConfigUtils/paths";
+import { readShellSpecs } from "./configServer";
 
 const ProcessSpecs = new Map<string, ShellSpecification>();
-const processHolder = new Map<ProcessID, Process>();
-const commandsOfProcessID = new Map<ProcessID, Command[]>();
+const processHolder = new Map<ProcessID["id"], Process>();
+const commandsOfProcessID = new Map<ProcessID["id"], Command[]>();
 
 export function setupShellProcess() {
   log.debug(`ShellProcess setup.`);
@@ -57,7 +49,7 @@ export function shutdownShellProcess() {
 }
 
 export function getProcess(pid: ProcessID): Process {
-  const result = processHolder.get(pid);
+  const result = processHolder.get(pid.id);
   if (result === undefined) {
     const message = `Process ${pid} not found.`;
     log.error(message);
@@ -77,8 +69,8 @@ export function getShellSpec(name: string): ShellSpecification {
 }
 
 function addProcess(pid: ProcessID, process: Process) {
-  processHolder.set(pid, process);
-  commandsOfProcessID.set(pid, []);
+  processHolder.set(pid.id, process);
+  commandsOfProcessID.set(pid.id, []);
 }
 
 export function addNewProcess(
@@ -128,7 +120,7 @@ export function addCommand(pid: ProcessID, command: Command) {
 }
 
 export function getCommands(pid: ProcessID): Command[] {
-  const result = commandsOfProcessID.get(pid);
+  const result = commandsOfProcessID.get(pid.id);
   if (result === undefined) {
     const message = `Commands of Process ${pid} not found`;
     log.error(message);

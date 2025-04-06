@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
+import { ShellInteractKindSchema } from "@/datatypes/Interact";
 import { LanguageServerConfigSchema } from "@/components/LanguageServerConfigs";
 import { PathKindSchema, SshConnectionSchema } from "./SshConfig";
 

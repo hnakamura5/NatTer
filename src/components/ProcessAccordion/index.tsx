@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box } from "@mui/system";
 import DomPurify from "dompurify";
 
@@ -9,7 +8,7 @@ import { api } from "@/api";
 import { Command } from "@/datatypes/Command";
 
 import { ErrorBoundary } from "react-error-boundary";
-import FocusBoundary from "./FocusBoundary";
+import FocusBoundary from "@/components/FocusBoundary";
 import { EasyFocus } from "@/components/EasyFocus";
 import {
   useKeybindOfCommand,
@@ -26,20 +25,17 @@ import {
 } from "@/components/ProcessAccordion/CommandResponse";
 import { CommandSummary } from "@/components/ProcessAccordion/CommandSummary";
 import { usePid } from "@/SessionStates";
-import { CommandID, ProcessID } from "@/datatypes/Command";
+import { CommandID } from "@/datatypes/Command";
+import { ProcessID } from "@/datatypes/SessionID";
 
-import { useHotkeys } from "react-hotkeys-hook";
 import {
   evaluateKeyboardEventToTerminalCode,
   isFixedKeyboardEvent,
 } from "@/datatypes/Keybind";
-import { set } from "zod";
-import { useAtom } from "jotai";
 
-// import { log } from "@/datatypes/Logger";
 import { log } from "@/datatypes/Logger";
-import { InteractionAccordionSummary } from "./InteractionAccordion/Summary";
-import { InteractionAccordionDetail } from "./InteractionAccordion/Details";
+import { InteractionAccordionSummary } from "@/components/InteractionAccordion/Summary";
+import { InteractionAccordionDetail } from "@/components/InteractionAccordion/Details";
 
 const queryOption = (pid: ProcessID, additionalMessage?: string) => ({
   refetchInterval: 500,
@@ -141,7 +137,7 @@ interface ProcessAccordionProps {
   isLast?: boolean;
 }
 
-function ProcessAccordion(props: ProcessAccordionProps) {
+export function ProcessAccordion(props: ProcessAccordionProps) {
   const pid = usePid();
   const cid = props.cid;
   const idStr = IDString(pid, cid);
@@ -251,10 +247,6 @@ function ProcessAccordion(props: ProcessAccordionProps) {
     keybindRef
   );
 
-  //TODO: log.debug(`command: ${command.command}, id: ${props.listIndex}`);
-  //TODO: log.debug(`stderr: ${command.stderr}`);
-  // log.debug(idStr);
-
   return (
     <ErrorBoundary
       fallbackRender={ProcessAccordionError}
@@ -313,5 +305,3 @@ function ProcessAccordion(props: ProcessAccordionProps) {
 function ProcessAccordionError() {
   return <Box>ProcessAccordion load error.</Box>;
 }
-
-export default ProcessAccordion;

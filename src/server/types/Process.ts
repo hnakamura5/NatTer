@@ -4,7 +4,8 @@ import { ITerminalPTy, IShell } from "@/server/ChildProcess/interface";
 import { ShellConfig } from "@/datatypes/Config";
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
 import { Command } from "@/datatypes/Command";
-import { ProcessID, CommandID } from "@/datatypes/Command";
+import { ProcessID } from "@/datatypes/SessionID";
+import { CommandID } from "@/datatypes/Command";
 
 import { EventEmitter, on } from "node:events";
 import * as iconv from "iconv-lite";
@@ -13,6 +14,7 @@ import { log } from "@/datatypes/Logger";
 import { RemoteHost } from "@/datatypes/SshConfig";
 
 import { randomUUID } from "node:crypto";
+import { newUUID } from "../cryptoServer";
 
 export type Process = {
   id: ProcessID;
@@ -66,12 +68,7 @@ export function clockIncrement(process: Process) {
   return process.clock;
 }
 
-const usedTerminalID: Set<ProcessID> = new Set();
 export function newProcessID(): ProcessID {
-  let result = randomUUID();
-  while (usedTerminalID.has(result)) {
-    result = randomUUID();
-  }
-  usedTerminalID.add(result);
-  return result;
+  const result = newUUID();
+  return { type: "process", id: result };
 }

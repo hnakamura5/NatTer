@@ -9,10 +9,16 @@ import {
   Command,
   CommandID,
   CommandSchema,
-  ProcessID,
-  ProcessIDSchema,
   newCommand,
 } from "@/datatypes/Command";
+
+import {
+  SessionID,
+  SessionIDSchema,
+  ProcessID,
+  ProcessIDSchema,
+} from "@/datatypes/SessionID";
+
 import { spawnChildTerminal } from "./ChildProcess/spawn";
 
 import { ITerminalPTy } from "@/server/ChildProcess/interface";
@@ -27,6 +33,7 @@ import {
   getNumCommands,
   getProcess,
 } from "./processServer";
+import { assertSessionExists } from "./sessionServer";
 
 function startTerminal(shellConfig: ShellConfig) {
   const term = spawnChildTerminal(
@@ -79,12 +86,19 @@ function sendKey(term: ITerminalPTy, key: string) {
 const proc = server.procedure;
 export const terminalRouter = server.router({
   start: proc
-    .input(ShellConfigSchema)
+    .input(
+      z.object({
+        sessionID: SessionIDSchema,
+        config: ShellConfigSchema,
+      })
+    )
     .output(ProcessIDSchema)
     .mutation(async (opts) => {
+      const { sessionID, config } = opts.input;
+      assertSessionExists(sessionID);
       try {
-        log.debug(`Start terminal ${opts.input.name}`);
-        return startTerminal(opts.input);
+        log.debug(`Start terminal ${config.name}`);
+        return startTerminal(config);
       } catch (e) {
         console.error(e);
         throw e;

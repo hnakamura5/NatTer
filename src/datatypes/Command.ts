@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ProcessID, ProcessIDSchema } from "@/datatypes/SessionID";
 
 // function stripAnsi(text: string): string {
 //   const ansiUp = new AnsiUp();
@@ -8,12 +9,6 @@ import { z } from "zod";
 // Command ID (-1 is silent command)
 export const CommandIDSchema = z.number().int().min(-1);
 export type CommandID = z.infer<typeof CommandIDSchema>;
-
-export const ProcessIDSchema = z.string();
-export type ProcessID = z.infer<typeof ProcessIDSchema>;
-
-export const TerminalIDSchema = z.string();
-export type TerminalID = string;
 
 export const CommandSchema = z.object({
   pid: ProcessIDSchema,

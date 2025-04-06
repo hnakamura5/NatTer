@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { PathKindSchema } from "./SshConfig";
-import { ShellInteractKindSchema } from "@/datatypes/ShellInteract";
+import { ShellInteractKindSchema } from "@/datatypes/Interact";
 import JSON5 from "json5";
 
 const ScopeSchema = z.object({

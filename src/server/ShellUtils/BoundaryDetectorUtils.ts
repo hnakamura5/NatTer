@@ -1,5 +1,5 @@
 import { ShellSpecification } from "@/datatypes/ShellSpecification";
-import { ShellInteractKind } from "@/datatypes/ShellInteract";
+import { ShellInteractKind } from "@/datatypes/Interact";
 import { Command } from "@/datatypes/Command";
 import { log } from "@/datatypes/Logger";
 
