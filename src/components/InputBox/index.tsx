@@ -75,6 +75,7 @@ const OverToLeft = styled(Box)(({ theme }) => ({
 
 export interface InputBoxProps {}
 
+// Requires History Provider.
 export function InputBox(
   props: InputBoxProps & {
     submit: (command: string, styledCommand?: string) => void;
