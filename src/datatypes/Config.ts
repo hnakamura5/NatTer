@@ -1,7 +1,12 @@
 import { z } from "zod";
-import { ShellInteractKindSchema } from "@/datatypes/Interact";
+import {
+  InteractKind,
+  InteractKindSchema,
+  ShellInteractKindSchema,
+} from "@/datatypes/Interact";
 import { LanguageServerConfigSchema } from "@/components/LanguageServerConfigs";
 import { PathKindSchema, SshConnectionSchema } from "./SshConfig";
+import { ChatAIConfigSchema } from "./AIModelConnectionConfigs";
 
 const ShellConfigCommon = z.object({
   language: z.string(),
@@ -44,7 +49,7 @@ export const ShellConfigSchema = z.discriminatedUnion("type", [
   LocalShellConfigSchema,
   SshShellConfigSchema,
 ]);
-
+// Discriminated Union of LocalShellConfig and SshShellConfig
 export type ShellConfig = z.infer<typeof ShellConfigSchema>;
 
 export function shellConfigExecutable(
@@ -57,6 +62,7 @@ export function shellConfigExecutable(
   }
 }
 
+// Application Global config.
 export const ConfigSchema = z.object({
   locale: z.string().optional(),
   theme: z.string().optional(),
@@ -96,3 +102,15 @@ export function encodeOSPathToVirtual(
     return path;
   }
 }
+
+// Session identification information exposed to the client.
+export const SessionInteractionSchema = z.object({
+  interaction: InteractKindSchema,
+  name: z.string(),
+});
+
+export type SessionInteraction = z.infer<typeof SessionInteractionSchema>;
+
+// Asserting SessionInteraction has member interact of InteractKind.
+type AssertSubtype<TSubtype extends TBase, TBase> = never;
+type Assert = AssertSubtype<SessionInteraction, { interaction: InteractKind }>;

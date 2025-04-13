@@ -3,13 +3,13 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOllama } from "@langchain/ollama";
 import { ChatAnthropic } from "@langchain/anthropic";
 import {
-  ChatAIConnection,
+  ChatAIConnectionConfig,
   SupportedProvider,
-} from "@/datatypes/AIModelConnection";
+} from "@/datatypes/AIModelConnectionConfigs";
 
 import { readChatAIs } from "@/server/configServer";
 
-export function getLLM(connection: ChatAIConnection) {
+export function getLLM(connection: ChatAIConnectionConfig) {
   switch (connection.provider) {
     case "openai":
       return new ChatOpenAI({
@@ -35,7 +35,7 @@ export function getLLM(connection: ChatAIConnection) {
 
 export async function getConnectionFromName(
   name: string
-): Promise<ChatAIConnection> {
+): Promise<ChatAIConnectionConfig> {
   const chatAIs = readChatAIs();
   for (const chatAI of await chatAIs) {
     if (chatAI.name === name) {

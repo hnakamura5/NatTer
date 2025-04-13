@@ -18,11 +18,11 @@
   },
   {
     "key": "Ctrl+U",
-    "command": "FocusCommandUp",
+    "command": "FocusListUp",
   },
   {
     "key": "Ctrl+Shift+U",
-    "command": "FocusCommandDown",
+    "command": "FocusListDown",
   },
   {
     "key": "Alt+P",

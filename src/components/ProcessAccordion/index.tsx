@@ -227,17 +227,17 @@ export function ProcessAccordion(props: ProcessAccordionProps) {
     keybindRef
   );
   useKeybindOfCommand(
-    "FocusCommandUp",
+    "FocusListUp",
     () => {
-      log.debug(`FocusCommandUp: ${pid}-${cid}`);
+      log.debug(`FocusListUp: ${pid}-${cid}`);
       handleGFM.focus(IDString(pid, cid - 1));
     },
     keybindRef
   );
   useKeybindOfCommand(
-    "FocusCommandDown",
+    "FocusListDown",
     () => {
-      log.debug(`FocusCommandDown: ${pid}-${cid}`);
+      log.debug(`FocusListDown: ${pid}-${cid}`);
       if (props.isLast) {
         handleGFM.focus(GlobalFocusMap.GlobalKey.InputBox);
       } else {

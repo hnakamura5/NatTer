@@ -52,6 +52,7 @@ import {
   getShellSpec,
 } from "./processServer";
 import { assertSessionExists } from "./sessionServer";
+import { readConfig } from "./configServer";
 
 export const StdoutEventSchema = z.object({
   cid: CommandIDSchema,
@@ -124,7 +125,13 @@ function selectExecutor(config: ShellConfig) {
   }
 }
 
-function startProcess(config: ShellConfig): ProcessID {
+async function startProcess(configName: string): Promise<ProcessID> {
+  const config = (await readConfig()).shells.find(
+    (shell) => shell.name === configName
+  );
+  if (!config || config.interact !== "command") {
+    throw new Error(`Shell ${configName} is not defined`);
+  }
   const { name, executable, args, language, encoding } = config;
   log.debug(`Start process ${name} config:`, config);
   const shell = spawnChildShell(config, `"${executable}"`, args || [], {
@@ -202,13 +209,13 @@ const proc = server.procedure;
 export const shellRouter = server.router({
   // Start a new process of shell.
   start: proc
-    .input(z.object({ sessionID: SessionIDSchema, config: ShellConfigSchema }))
+    .input(z.object({ sessionID: SessionIDSchema, name: z.string() }))
     .output(ProcessIDSchema)
     .mutation(async (opts) => {
-      const { sessionID, config } = opts.input;
+      const { sessionID, name } = opts.input;
       assertSessionExists(sessionID);
       try {
-        return startProcess(config);
+        return startProcess(name);
       } catch (e) {
         log.error(`proc start error: `, e);
         throw e;

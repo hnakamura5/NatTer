@@ -10,6 +10,7 @@ import {
 } from "../../components/LanguageServerConfigs";
 import { useEffect, useState } from "react";
 import { api } from "@/api";
+import DOMPurify from "dompurify";
 
 // https://github.com/Shopify/theme-tools/blob/main/packages/codemirror-language-client/playground/src/playground.ts
 
@@ -95,8 +96,10 @@ export function useCodeMirrorLanguageClient(
             const htmlString = markdown.render(
               completionItem.documentation.value
             );
-            log.debug(`useCodeMirrorLanguageClient: infoRenderer=${htmlString}`);
-            divNode.innerHTML = htmlString;
+            log.debug(
+              `useCodeMirrorLanguageClient: infoRenderer=${htmlString}`
+            );
+            divNode.innerHTML = DOMPurify.sanitize(htmlString);
             return divNode;
           },
           hoverRenderer: (view, hover) => {
@@ -105,7 +108,9 @@ export function useCodeMirrorLanguageClient(
             const htmlString = markdown.render(
               flattenAsMarkdown(hover.contents)
             );
-            log.debug(`useCodeMirrorLanguageClient: hoverRenderer=${htmlString}`);
+            log.debug(
+              `useCodeMirrorLanguageClient: hoverRenderer=${htmlString}`
+            );
             divNode.innerHTML = htmlString;
             return {
               dom: divNode,

@@ -1,5 +1,5 @@
 import "@/App.css";
-import SessionContainer from "@/components/SessionContainer";
+import SessionContainer from "@/components/Session/SessionContainer";
 import { ipcLink } from "electron-trpc/renderer";
 import { api } from "@/api";
 

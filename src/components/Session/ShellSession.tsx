@@ -7,7 +7,7 @@ import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
 import { usePid } from "@/SessionStates";
 
 import { log } from "@/datatypes/Logger";
-import { hasScrollbarY } from "./Utils";
+import { hasScrollbarY } from "../Utils";
 
 interface SessionProps {}
 

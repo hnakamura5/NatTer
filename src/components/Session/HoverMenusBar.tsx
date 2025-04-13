@@ -25,7 +25,7 @@ import { FileManager } from "@/components/FileManager";
 import { FileManagerStateAtom, usePid } from "@/SessionStates";
 import FocusBoundary from "@/components/FocusBoundary";
 import { UnderConstruction } from "@/components/UnderConstruction";
-import { GlobalFocusMap } from "./GlobalFocusMap";
+import { GlobalFocusMap } from "../GlobalFocusMap";
 import { set } from "zod";
 import { useAtom } from "jotai";
 import { log } from "@/datatypes/Logger";

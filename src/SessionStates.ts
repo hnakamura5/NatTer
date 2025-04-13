@@ -4,7 +4,6 @@ import { ProcessID, SessionID } from "@/datatypes/SessionID";
 import { FileManagerState } from "@/components/FileManager";
 import { log } from "@/datatypes/Logger";
 
-import * as monaco from "monaco-editor";
 import { ShellConfig } from "./datatypes/Config";
 
 // Defines the state with scope of one session

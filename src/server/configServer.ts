@@ -5,6 +5,10 @@ import {
   ConfigSchema,
   PartialConfig,
   PartialConfigSchema,
+  SessionInteraction,
+  SessionInteractionSchema,
+  ShellConfig,
+  ShellConfigSchema,
 } from "@/datatypes/Config";
 import {
   KeybindListSchema,
@@ -18,12 +22,12 @@ import {
 } from "@/datatypes/Keybind";
 // Import the new AI schemas
 import {
-  ChatAIConnection,
+  ChatAIConnectionConfig,
   ChatAIConnectionArray,
-  ChatAIConnectionSchema,
+  ChatAIConnectionConfigSchema,
   parseChatAIConnection,
   parseChatAIConnectionArray,
-} from "@/datatypes/AIModelConnection"; // Adjust path if needed
+} from "@/datatypes/AIModelConnectionConfigs"; // Adjust path if needed
 
 import fs from "node:fs/promises";
 import path, { parse } from "node:path";
@@ -162,18 +166,64 @@ export function readLabels(locale: string) {
     });
 }
 
-const chatATManager = () =>
-  new BuiltinAndUserConfigDirectoryManager<ChatAIConnection[]>(
+const chatAIManager = () =>
+  new BuiltinAndUserConfigDirectoryManager<ChatAIConnectionConfig[]>(
     chatAIDir(),
     userChatAIDir(),
     parseChatAIConnectionArray
   );
-export function readChatAIs(): Promise<ChatAIConnection[]> {
-  return chatATManager()
+export function readChatAIs(): Promise<ChatAIConnectionConfig[]> {
+  return chatAIManager()
     .readConfigFiles()
     .then((configs) => {
       return configs.flat();
     });
+}
+
+export async function getShellConfig(name: string): Promise<ShellConfig> {
+  const config = await readConfig();
+  const shellConfig = config.shells.find((shell) => shell.name === name);
+  if (!shellConfig) {
+    throw new Error(`Shell ${name} is not defined`);
+  }
+  return shellConfig;
+}
+
+export async function getDefaultShell(): Promise<SessionInteraction> {
+  const config = await readConfig();
+  const defaultShell = config.defaultShell;
+  // Use this as default if no default shell is defined.
+  const firstShell = config.shells[0];
+  if (!defaultShell) {
+    log.debug(
+      `Default shell is not defined, using ${firstShell.name} `,
+      firstShell
+    );
+    return {
+      interaction: firstShell.interact,
+      name: firstShell.name,
+    };
+  }
+  const shellConfig = config.shells.find(
+    (shell) => shell.name === defaultShell
+  );
+  if (shellConfig !== undefined) {
+    log.debug(`Default shell is ${defaultShell} `, shellConfig);
+    return {
+      interaction: shellConfig.interact,
+      name: shellConfig.name,
+    };
+  }
+  const chatConfigs = await readChatAIs();
+  const chatConfig = chatConfigs.find((chatAI) => chatAI.name === defaultShell);
+  if (chatConfig !== undefined) {
+    log.debug(`Default shell is ${defaultShell} `, chatConfig);
+    return {
+      interaction: "chatAI",
+      name: chatConfig.name,
+    };
+  }
+  throw new Error(`Default shell ${defaultShell} is not defined`);
 }
 
 const proc = server.procedure;
@@ -218,4 +268,13 @@ export const configurationRouter = server.router({
       return chatAIs.map((chatAI) => chatAI.name);
     });
   }),
+  getDefaultShell: proc.output(SessionInteractionSchema).mutation(async () => {
+    return getDefaultShell();
+  }),
+  getShellConfig: proc
+    .input(z.string())
+    .output(ShellConfigSchema)
+    .mutation(async (opts) => {
+      return getShellConfig(opts.input);
+    }),
 });

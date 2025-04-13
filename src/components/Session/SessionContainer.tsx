@@ -1,12 +1,16 @@
-import ShellSession from "@/components/ShellSession";
-import HoverMenusBar from "@/components/HoverMenusBar";
-import { ShellInputBox, TerminalInputBox } from "@/components/InputSubmit";
+import ShellSession from "@/components/Session/ShellSession";
+import HoverMenusBar from "@/components/Session/HoverMenusBar";
+import {
+  ChatAIInputBox,
+  ShellInputBox,
+  TerminalInputBox,
+} from "@/components/Session/InputSubmit";
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Provider as JotaiProvider } from "jotai";
 
 import styled from "@emotion/styled";
-import CurrentBar from "@/components/CurrentBar";
+import CurrentBar from "@/components/Session/CurrentBar";
 
 import { api } from "@/api";
 import { ProcessID, SessionID } from "@/datatypes/SessionID";
@@ -24,10 +28,16 @@ import { EasyFocus } from "@/components/EasyFocus";
 import { useConfig, useTheme } from "@/AppState";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 
-import { Config, ShellConfig } from "@/datatypes/Config";
+import { Config, SessionInteraction, ShellConfig } from "@/datatypes/Config";
 
 import { log } from "@/datatypes/Logger";
-import XtermCustom from "./XtermCustom";
+import XtermCustom from "../XtermCustom";
+import {
+  ChatAIConfig,
+  ChatAIConnectionConfig,
+} from "@/datatypes/AIModelConnectionConfigs";
+import { getShellConfig } from "@/server/configServer";
+import { ChatAISession } from "./ChatAISession";
 
 const VerticalBox = styled(Box)({
   display: "flex",
@@ -63,26 +73,50 @@ function getDefaultShell(config: Config): ShellConfig {
   return config.shells[0];
 }
 
-function CommonSessionTemplate(props: {
-  sessionID: SessionID;
-  pid: ProcessID;
-  children: React.ReactNode;
-}) {
+function CommonSessionAligner(props: { children: React.ReactNode }) {
   return (
-    <sessionContext.Provider value={props.sessionID}>
-      <pidContext.Provider value={props.pid}>
-        <VerticalBox>
-          <HoverMenusBar />
-          <FullWidthBox>
-            <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
-          </FullWidthBox>
-        </VerticalBox>
-      </pidContext.Provider>
-    </sessionContext.Provider>
+    <VerticalBox>
+      <HoverMenusBar />
+      <FullWidthBox>
+        <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
+      </FullWidthBox>
+    </VerticalBox>
   );
 }
 
-function SessionForTerminal(props: { config: ShellConfig }) {
+function CommonSessionTemplateForShell(props: {
+  sessionID: SessionID;
+  pid: ProcessID;
+  configName: string;
+  children: React.ReactNode;
+}) {
+  const [shellConfig, setShellConfig] = useState<ShellConfig | undefined>(
+    undefined
+  );
+  const getShellConfig = api.config.getShellConfig.useMutation();
+
+  useEffect(() => {
+    getShellConfig.mutateAsync(props.configName).then((result) => {
+      setShellConfig(result);
+    });
+  }, [props.configName]);
+
+  if (!shellConfig) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <shellConfigContext.Provider value={shellConfig}>
+      <sessionContext.Provider value={props.sessionID}>
+        <pidContext.Provider value={props.pid}>
+          <CommonSessionAligner>{props.children}</CommonSessionAligner>
+        </pidContext.Provider>
+      </sessionContext.Provider>
+    </shellConfigContext.Provider>
+  );
+}
+
+function SessionForTerminal(props: { name: string }) {
   const sessionID = useSession();
   const starter = api.terminal.start.useMutation();
   const stopper = api.terminal.stop.useMutation();
@@ -91,7 +125,7 @@ function SessionForTerminal(props: { config: ShellConfig }) {
   useEffect(() => {
     starter
       .mutateAsync(
-        { sessionID: sessionID, config: props.config },
+        { sessionID: sessionID, name: props.name },
         {
           onError: (error) => {
             log.error(`start terminal fetch error: ${error}`);
@@ -107,7 +141,7 @@ function SessionForTerminal(props: { config: ShellConfig }) {
         stopper.mutate(pid);
       }
     };
-  }, []);
+  }, [props.name, sessionID]);
 
   if (pid === undefined) {
     return <Box>Loading...</Box>;
@@ -115,19 +149,24 @@ function SessionForTerminal(props: { config: ShellConfig }) {
   // Session for terminal
   // XtermCustom is flex, so filled from bottom by HorizontalFromBottomBox.
   return (
-    <CommonSessionTemplate sessionID={sessionID} pid={pid}>
+    <CommonSessionTemplateForShell
+      sessionID={sessionID}
+      pid={pid}
+      configName={props.name}
+    >
       <TerminalInputBox />
       <XtermCustom />
-    </CommonSessionTemplate>
+    </CommonSessionTemplateForShell>
   );
 }
 
-function SessionForShell(props: { config: ShellConfig }) {
+function SessionForShell(props: { name: string }) {
   const sessionID = useSession();
   const [pid, setPid] = useState<ProcessID | undefined>(undefined);
   const starter = api.shell.start.useMutation();
   const stopper = api.shell.stop.useMutation();
-  log.debug(`SessionForShell config: ${props.config.name} pid: ${pid}`);
+
+  log.debug(`SessionForShell name: ${props.name} pid: ${pid}`);
   // Start the shell process.
   // TODO: This is a temporary solution. We should start out of this component.
   useEffect(() => {
@@ -136,7 +175,7 @@ function SessionForShell(props: { config: ShellConfig }) {
       .mutateAsync(
         {
           sessionID: sessionID,
-          config: props.config,
+          name: props.name,
         },
         {
           onError: (error) => {
@@ -154,7 +193,7 @@ function SessionForShell(props: { config: ShellConfig }) {
         stopper.mutate(pid);
       }
     };
-  }, []);
+  }, [props.name, sessionID]);
 
   if (pid === undefined) {
     return <Box>Loading...</Box>;
@@ -162,19 +201,36 @@ function SessionForShell(props: { config: ShellConfig }) {
 
   // Session for non interactive shell
   return (
-    <CommonSessionTemplate sessionID={sessionID} pid={pid}>
+    <CommonSessionTemplateForShell
+      sessionID={sessionID}
+      pid={pid}
+      configName={props.name}
+    >
       <ShellInputBox />
       <CurrentBar />
       <ShellSession />
-    </CommonSessionTemplate>
+    </CommonSessionTemplateForShell>
   );
 }
 
-function SessionForConfig(props: { config: ShellConfig }) {
-  if (props.config.interact === "terminal") {
-    return <SessionForTerminal config={props.config} />;
-  } else {
-    return <SessionForShell config={props.config} />;
+function SessionForChatAI(props: { name: string }) {
+  const sessionID = useSession();
+
+  return (
+    <CommonSessionAligner>
+      <ChatAIInputBox chatAIName={props.name} />
+      <ChatAISession chatAIName={props.name} />
+    </CommonSessionAligner>
+  );
+}
+
+function SessionForInteraction(props: { interaction: SessionInteraction }) {
+  if (props.interaction.interaction === "terminal") {
+    return <SessionForTerminal name={props.interaction.name} />;
+  } else if (props.interaction.interaction === "command") {
+    return <SessionForShell name={props.interaction.name} />;
+  } else if (props.interaction.interaction === "chatAI") {
+    return <SessionForChatAI name={props.interaction.name} />;
   }
 }
 
@@ -182,13 +238,14 @@ function SessionForConfig(props: { config: ShellConfig }) {
 interface SessionContainerProps {}
 
 function SessionContainer(props: SessionContainerProps) {
-  const config = useConfig();
   const theme = useTheme();
   const newSession = api.session.newSession.useMutation();
+  const getDefaultShell = api.config.getDefaultShell.useMutation();
 
+  const [interaction, setInteraction] = useState<
+    SessionInteraction | undefined
+  >();
   const [sessionID, setSessionID] = useState<SessionID | undefined>(undefined);
-
-  const defaultShell = getDefaultShell(config);
 
   useEffect(() => {
     log.debug(`SessionContainer new session`);
@@ -201,9 +258,13 @@ function SessionContainer(props: SessionContainerProps) {
       .catch((error) => {
         log.error(`SessionContainer new session error: ${error}`);
       });
+    // TODO Get this as props?
+    getDefaultShell.mutateAsync().then((result) => {
+      setInteraction(result);
+    });
   }, []);
 
-  if (sessionID === undefined) {
+  if (sessionID === undefined || interaction === undefined) {
     return <Box>Loading...</Box>;
   }
 
@@ -224,17 +285,15 @@ function SessionContainer(props: SessionContainerProps) {
           }}
         >
           <GlobalFocusMap.Provider>
-            <shellConfigContext.Provider value={defaultShell}>
-              <JotaiProvider store={SessionStateJotaiStore}>
-                <Box
-                  sx={{
-                    backgroundColor: theme.system.backgroundColor,
-                  }}
-                >
-                  <SessionForConfig config={defaultShell} />
-                </Box>
-              </JotaiProvider>
-            </shellConfigContext.Provider>
+            <JotaiProvider store={SessionStateJotaiStore}>
+              <Box
+                sx={{
+                  backgroundColor: theme.system.backgroundColor,
+                }}
+              >
+                <SessionForInteraction interaction={interaction} />
+              </Box>
+            </JotaiProvider>
           </GlobalFocusMap.Provider>
         </EasyFocus.Provider>
       </sessionContext.Provider>

@@ -34,8 +34,15 @@ import {
   getProcess,
 } from "./processServer";
 import { assertSessionExists } from "./sessionServer";
+import { readConfig } from "./configServer";
 
-function startTerminal(shellConfig: ShellConfig) {
+async function startTerminal(configName: string): Promise<ProcessID> {
+  const shellConfig = (await readConfig()).shells.find(
+    (shell) => shell.name === configName
+  );
+  if (!shellConfig || shellConfig.interact !== "terminal") {
+    throw new Error(`Terminal ${configName} is not defined`);
+  }
   const term = spawnChildTerminal(
     shellConfig,
     shellConfig.executable || "",
@@ -89,16 +96,16 @@ export const terminalRouter = server.router({
     .input(
       z.object({
         sessionID: SessionIDSchema,
-        config: ShellConfigSchema,
+        name: z.string(),
       })
     )
     .output(ProcessIDSchema)
     .mutation(async (opts) => {
-      const { sessionID, config } = opts.input;
+      const { sessionID, name } = opts.input;
       assertSessionExists(sessionID);
       try {
-        log.debug(`Start terminal ${config.name}`);
-        return startTerminal(config);
+        log.debug(`Start terminal ${name}`);
+        return startTerminal(name);
       } catch (e) {
         console.error(e);
         throw e;

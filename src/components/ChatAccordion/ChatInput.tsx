@@ -7,6 +7,7 @@ interface ChatInputProps {
   isLoading: boolean; // General loading state for the mutation
 }
 
+// Input used in each chat accordion, which is tied with the chat session.
 export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
   const [inputValue, setInputValue] = useState("");
 
@@ -47,11 +48,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
         variant="contained"
         onClick={handleSend}
         disabled={isLoading || !inputValue.trim()}
-        sx={{ minWidth: 'auto', p: '8px' }} // Adjust padding for better size
+        sx={{ minWidth: "auto", p: "8px" }} // Adjust padding for better size
       >
-        {isLoading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
+        {isLoading ? (
+          <CircularProgress size={24} color="inherit" />
+        ) : (
+          <SendIcon />
+        )}
       </Button>
     </Box>
   );
 };
-

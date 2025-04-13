@@ -18,7 +18,7 @@ import FocusBoundary from "@/components/FocusBoundary";
 import React from "react";
 import { EasyFocus } from "@/components/EasyFocus";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
-import { InputText, usePid, useShellConfig } from "@/SessionStates";
+import { InputText } from "@/SessionStates";
 import { useAtom } from "jotai";
 
 import { ControlButtons } from "@/components/InputBox/ControlButtons";
@@ -83,7 +83,6 @@ export function InputBox(
 ) {
   const historyHandle = useHistory();
   const theme = useTheme();
-  const pid = usePid();
   const inputBoxRef = React.useRef<HTMLElement>(null);
 
   const [text, setText] = useAtom(InputText);
@@ -93,9 +92,9 @@ export function InputBox(
   const keybindRef = useKeybindOfCommandScopeRef();
   // Focus commands.
   useKeybindOfCommand(
-    "FocusCommandUp",
+    "FocusListUp",
     () => {
-      log.debug(`FocusCommandUp from Input`);
+      log.debug(`FocusListUp from Input`);
       handleGFM.focus(GlobalFocusMap.GlobalKey.LastCommand);
     },
     keybindRef
@@ -136,7 +135,7 @@ export function InputBox(
     <ErrorBoundary fallbackRender={InputBoxError}>
       <OverToLeft>
         <FocusBoundary defaultBorderColor={theme.shell.backgroundColor}>
-          <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox-${pid}`}>
+          <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox`}>
             <GlobalFocusMap.Target
               focusKey={GlobalFocusMap.GlobalKey.InputBox}
               callBeforeFocus={() => {
@@ -154,7 +153,7 @@ export function InputBox(
                 />
                 <ContextMenu items={<InputBoxContextMenuContents />}>
                   <Input
-                    id={`input-${pid}`}
+                    id={`input`}
                     inputBoxRef={
                       // TODO: any better way?
                       inputBoxRef
