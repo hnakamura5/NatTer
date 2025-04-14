@@ -43,6 +43,7 @@ import {
   HistoryProvider,
   useHistory,
 } from "@/components/InputBox/HistoryProvider";
+import { LanguageServerExecutableArgs } from "../LanguageServerConfigs";
 
 function InputBoxContextMenuContents() {
   return (
@@ -73,7 +74,9 @@ const OverToLeft = styled(Box)(({ theme }) => ({
   width: `calc(100% + ${theme.system.hoverMenuWidth})`,
 }));
 
-export interface InputBoxProps {}
+export interface InputBoxProps {
+  languageServerConfig?: LanguageServerExecutableArgs;
+}
 
 // Requires History Provider.
 export function InputBox(
@@ -163,6 +166,7 @@ export function InputBox(
                       // User change invalidates history.
                       historyHandle.reset();
                     }}
+                    languageServerConfig={props.languageServerConfig}
                   />
                 </ContextMenu>
               </Paper>

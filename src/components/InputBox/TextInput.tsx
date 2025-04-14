@@ -32,6 +32,7 @@ import { Theme } from "@/datatypes/Theme";
 import { CodeMirrorInput } from "./CodeMirrorInput";
 import { codeMirrorTheme } from "./CodeMirrorTheme";
 import { ShellConfig } from "@/datatypes/Config";
+import { LanguageServerExecutableArgs } from "../LanguageServerConfigs";
 
 function codeToHTMLWithTheme(
   code: string,
@@ -70,10 +71,9 @@ export function Input(props: {
   submit: (command: string, styledCommand?: string) => void;
   onChange?: (value: string) => void;
   inputBoxRef: React.RefObject<HTMLElement>;
+  languageServerConfig?: LanguageServerExecutableArgs;
 }) {
-  const pid = usePid();
   const config = useConfig();
-  const shellConfig = useShellConfig();
   const theme = useTheme();
   // const [text, setText] = useState<string>("");
   const [text, setText] = useAtom(InputText);
@@ -156,7 +156,7 @@ export function Input(props: {
   }
   return (
     <StyledCodeMirrorInput
-        // TODO: add pid to the id but how to test?
+      // TODO: add pid to the id but how to test?
       id={`input`}
       value={text}
       language={language}
@@ -178,15 +178,8 @@ export function Input(props: {
       onKeyDown={(e) => {
         handleKeyDown(e);
       }}
-      languageServerConfig={
-        shellConfig && shellConfig.languageServer
-          ? {
-              // TODO: Get current shell config
-              executable: shellConfig.languageServer.executable,
-              args: shellConfig.languageServer.args,
-            }
-          : undefined
-      }
+      // TODO: Eliminate the use of shellConfig to avoid to call useShellConfig()
+      languageServerConfig={props.languageServerConfig}
     />
   );
 }

@@ -11,6 +11,7 @@ import { InputBox, InputBoxProps } from "@/components/InputBox";
 
 export function TerminalInputBox(props: InputBoxProps) {
   const pid = usePid();
+  const shellConfig = useShellConfig();
   const executeTerminal = api.terminal.execute.useMutation();
   const numHistory = api.terminal.numHistory.useQuery(pid, {
     refetchInterval: 1000,
@@ -39,13 +40,25 @@ export function TerminalInputBox(props: InputBoxProps) {
       size={numHistory.data}
       get={(index: number) => history.mutateAsync({ pid: pid, index: index })}
     >
-      <InputBox {...props} submit={submit} />
+      <InputBox
+        {...props}
+        submit={submit}
+        languageServerConfig={
+          shellConfig.languageServer
+            ? {
+                executable: shellConfig.languageServer.executable,
+                args: shellConfig.languageServer.args,
+              }
+            : undefined
+        }
+      />
     </HistoryProvider>
   );
 }
 
 export function ShellInputBox(props: InputBoxProps) {
   const pid = usePid();
+  const shellConfig = useShellConfig();
   const executeShell = api.shell.execute.useMutation();
   const numCommands = api.shell.numCommands.useQuery(pid);
   const getCommand = api.shell.commandAsync.useMutation();
@@ -76,7 +89,18 @@ export function ShellInputBox(props: InputBoxProps) {
           .then((command) => command.command)
       }
     >
-      <InputBox {...props} submit={submit} />
+      <InputBox
+        {...props}
+        submit={submit}
+        languageServerConfig={
+          shellConfig.languageServer
+            ? {
+                executable: shellConfig.languageServer.executable,
+                args: shellConfig.languageServer.args,
+              }
+            : undefined
+        }
+      />
     </HistoryProvider>
   );
 }
