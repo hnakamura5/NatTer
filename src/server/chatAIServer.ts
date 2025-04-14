@@ -2,7 +2,7 @@ import { server } from "@/server/tRPCServer";
 import { z } from "zod";
 
 import MarkdownIt from "markdown-it";
-import DOMPurify from "dompurify";
+import sanitizeHtml from "sanitize-html";
 
 import {
   HumanMessage,
@@ -138,7 +138,7 @@ async function chatOneShot(
   session.historyContext.push(aiMessage);
   // Return the AI's response
   return renderOutputToHTML
-    ? DOMPurify.sanitize(markdown.render(response))
+    ? sanitizeHtml(markdown.render(response))
     : response;
 }
 
@@ -148,6 +148,9 @@ async function chatSubmit(session: ChatSession, message: string) {
   session.userInputHistory.push(message);
   const userMessage = new HumanMessage(message);
   session.historyContext.push(userMessage);
+  log.debug(
+    "chatSubmit User message: " + message + " in " + session.connection.name
+  );
   llm
     .pipe(new StringOutputParser())
     .stream(session.historyContext)
@@ -164,9 +167,16 @@ async function chatSubmit(session: ChatSession, message: string) {
       // Stream the response from the LLM
       try {
         for await (const chunk of stream) {
+          log.debug(
+            "chatSubmit AI message chunk: " +
+              chunk +
+              " in " +
+              session.connection.name
+          );
           response.content = response.content + chunk;
-          // set rendered response
-          response.contentHTML = DOMPurify.sanitize(
+          // Set rendered response.
+          // TODO: Markdown only?
+          response.contentHTML = sanitizeHtml(
             markdown.render(response.content)
           );
         }

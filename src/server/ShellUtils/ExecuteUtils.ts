@@ -19,7 +19,6 @@ import { Terminal } from "@xterm/headless";
 import stripAnsi from "strip-ansi";
 import { SerializeAddon } from "@xterm/addon-serialize";
 
-import DOMPurify from "dompurify";
 import { AnsiUp } from "@/datatypes/ansiUpCustom";
 
 import { log } from "@/datatypes/Logger";

@@ -3,6 +3,8 @@ import styled from "@emotion/styled";
 import { useTheme } from "@/AppState";
 import { colorLine, LeftAlignBox } from "./CommonStyle";
 
+import DOMPurify from "dompurify";
+
 export type ChatLikeResponseProps = {
   successHtml?: string;
   errorHtml?: string;
@@ -18,7 +20,7 @@ export function ChatLikeResponse(props: ChatLikeResponseProps) {
             <Box sx={colorLine(theme.shell.stdoutColor)}>
               <div
                 dangerouslySetInnerHTML={{
-                  __html: props.successHtml,
+                  __html: DOMPurify.sanitize(props.successHtml),
                 }}
               />
             </Box>
@@ -27,7 +29,7 @@ export function ChatLikeResponse(props: ChatLikeResponseProps) {
             <Box sx={colorLine(theme.shell.stderrColor)}>
               <div
                 dangerouslySetInnerHTML={{
-                  __html: props.errorHtml,
+                  __html: DOMPurify.sanitize(props.errorHtml),
                 }}
               />
             </Box>

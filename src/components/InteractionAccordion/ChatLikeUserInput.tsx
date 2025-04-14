@@ -3,6 +3,8 @@ import styled from "@emotion/styled";
 import { useTheme } from "@/AppState";
 import { colorLine, RightAlignBox } from "./CommonStyle";
 
+import DOMPurify from "dompurify";
+
 const StyledBox = styled(Box)(({ theme }) => ({
   backgroundColor: theme.shell.secondaryBackgroundColor,
   borderRadius: "3px",
@@ -27,7 +29,9 @@ export function ChatLikeUserInput(props: ChatLikeUserInputProps) {
   return (
     <RightAlignBox>
       <StyledBox sx={colorLine(theme.shell.useCommandColor)}>
-        <HTMLContainer dangerouslySetInnerHTML={{ __html: props.html }} />
+        <HTMLContainer
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(props.html) }}
+        />
       </StyledBox>
     </RightAlignBox>
   );

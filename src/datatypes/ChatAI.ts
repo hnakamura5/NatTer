@@ -34,7 +34,7 @@ export function newChatMessageExchange(
   return {
     userInput: {
       content: user,
-      contentHTML: userHTML || `<p>${user}</p>`,
+      contentHTML: userHTML || `<span>${user}</span>`,
       appendFiles: appendFiles,
     },
     aiResponse: [],
