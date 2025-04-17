@@ -11,6 +11,7 @@ import { useState } from "react";
 
 export type ChatSummaryProps = {
   chatID: ChatID;
+  index: number;
 };
 
 export function ChatSummary(props: ChatSummaryProps) {

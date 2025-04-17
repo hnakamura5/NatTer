@@ -23,8 +23,8 @@ export function ChatAccordion(props: ChatAccordionProps) {
     return <CircularProgress />;
   }
   return (
-    <InteractionAccordion >
-      <ChatSummary chatID={chatID} />
+    <InteractionAccordion>
+      <ChatSummary chatID={chatID} index={index} />
       <ChatAccordionDetail chatID={chatID} index={index} />
       {/* <ChatInput chatID={chatID} /> */}
     </InteractionAccordion>
