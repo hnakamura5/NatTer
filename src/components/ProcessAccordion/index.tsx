@@ -147,6 +147,7 @@ export function ProcessAccordion(props: ProcessAccordionProps) {
   const top = useRef<HTMLDivElement>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const [scrollIntoView, setScrollIntoView] = useState<boolean>(false);
+  log.debug(`ProcessAccordion cid: ${cid}`);
   useEffect(() => {
     if (scrollIntoView) {
       setTimeout(() => {
@@ -262,6 +263,7 @@ export function ProcessAccordion(props: ProcessAccordionProps) {
             sx={{
               borderRadius: "5px",
               marginBottom: "8px",
+              marginRight: "3px",
             }}
           >
             <EasyFocus.Land
