@@ -11,6 +11,7 @@ import { InteractionAccordion } from "../InteractionAccordion/Accordion";
 export type ChatAccordionProps = {
   chatID: ChatID;
   index: number;
+  isLast?: boolean;
 };
 
 export function ChatAccordion(props: ChatAccordionProps) {

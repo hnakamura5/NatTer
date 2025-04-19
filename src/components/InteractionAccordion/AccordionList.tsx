@@ -17,7 +17,7 @@ export function InteractionAccordionList(props: InteractionAccordionListProps) {
     [props.length]
   );
   return (
-    <ErrorBoundary fallbackRender={SessionError}>
+    <ErrorBoundary fallbackRender={AccordionListError}>
       <Box
         sx={{
           height: "calc(100vh - 50px)", // TODO: calculate using actual height.
@@ -53,6 +53,6 @@ export function InteractionAccordionList(props: InteractionAccordionListProps) {
   );
 }
 
-function SessionError() {
-  return <Box>Session load error.</Box>;
+function AccordionListError() {
+  return <Box>AccordionList load error.</Box>;
 }

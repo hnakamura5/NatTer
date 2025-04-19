@@ -9,16 +9,14 @@ import { usePid } from "@/SessionStates";
 import { log } from "@/datatypes/Logger";
 import { hasScrollbarY } from "../Utils";
 import { Virtuoso } from "react-virtuoso";
+import { InteractionAccordionList } from "../InteractionAccordion/AccordionList";
 
 interface SessionProps {}
 
-function ShellSession(props: SessionProps) {
+export default function ShellSession(props: SessionProps) {
   const pid = usePid();
   // Length is used as the trigger of the event of submitting new command.
   const [length, setLength] = useState<number>(0);
-  // Ref to the box containing all the process accordions.
-  const boxRef = useRef<HTMLDivElement>(null);
-  const [hasScrollbarY, setHasScrollbarY] = useState<boolean>(false);
   // Handle to focus on the last command.
   const handleGFM = GFM.useHandle();
   // Effect on the length change, that is, new command is added.
@@ -27,11 +25,10 @@ function ShellSession(props: SessionProps) {
     // ProcessAccordion will switch focus to the input box if it is the last command.
     handleGFM.focus(GFM.GlobalKey.LastCommand);
   }, [handleGFM, length]);
-  // Detecting scrollbar.
 
   // Fetching commands.
   const numCommands = api.shell.numCommands.useQuery(pid, {
-    refetchInterval: 200,
+    refetchInterval: 300,
     onError: (error) => {
       log.error(`num commands fetch: ${pid}`, error);
     },
@@ -45,51 +42,11 @@ function ShellSession(props: SessionProps) {
     setLength(numCommands.data);
   }
 
-  log.debug(`ShellSession: length: ${length} hasScrollbarY: ${hasScrollbarY}`);
-
-  // TODO try other virtualizers
+  log.debug(`ShellSession: length: ${length}`);
   return (
-    <ErrorBoundary fallbackRender={SessionError}>
-      <Box
-        sx={{
-          height: "calc(100vh - 50px)", // TODO: calculate using actual height.
-        }}
-      >
-        <Virtuoso
-          style={{
-            height: "100%",
-          }}
-          data={Array.from({ length }, (_, i) => i)}
-          itemContent={(_, i) => {
-            return (
-              <Box
-                sx={{
-                  margin: `10px ${
-                    hasScrollbarY ? "10px" : "15px" // right
-                  } 10px 15px`, // bottom left
-                }}
-              >
-                <ProcessAccordion cid={i} isLast={i === length - 1} />
-              </Box>
-            );
-          }}
-          alignToBottom
-          scrollerRef={(scroller) => {
-            if (scroller && scroller instanceof HTMLElement) {
-              log.debug(
-                `scroller.scrollHeight: ${scroller.scrollHeight} scroller.clientHeight: ${scroller.clientHeight} hasScrollbarY: ${hasScrollbarY}`
-              );
-              setHasScrollbarY(scroller.scrollHeight > scroller.clientHeight);
-            }
-          }}
-        />
-      </Box>
-    </ErrorBoundary>
+    <InteractionAccordionList
+      length={length}
+      member={(i) => <ProcessAccordion cid={i} isLast={i === length - 1} />}
+    />
   );
 }
-
-function SessionError() {
-  return <Box>Session load error.</Box>;
-}
-
-export default ShellSession;
