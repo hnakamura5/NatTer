@@ -53,10 +53,6 @@ function ShellSession(props: SessionProps) {
       <Box
         sx={{
           height: "calc(100vh - 50px)", // TODO: calculate using actual height.
-          padding: `0px ${
-            hasScrollbarY ? "12px" : "17px" // right
-          } 0px 20px`, // top right bottom left
-          margin: "20px 5px 10px 5px",
         }}
       >
         <Virtuoso
@@ -65,11 +61,24 @@ function ShellSession(props: SessionProps) {
           }}
           data={Array.from({ length }, (_, i) => i)}
           itemContent={(_, i) => {
-            return <ProcessAccordion cid={i} isLast={i === length - 1} />;
+            return (
+              <Box
+                sx={{
+                  margin: `10px ${
+                    hasScrollbarY ? "10px" : "15px" // right
+                  } 10px 15px`, // bottom left
+                }}
+              >
+                <ProcessAccordion cid={i} isLast={i === length - 1} />
+              </Box>
+            );
           }}
           alignToBottom
           scrollerRef={(scroller) => {
             if (scroller && scroller instanceof HTMLElement) {
+              log.debug(
+                `scroller.scrollHeight: ${scroller.scrollHeight} scroller.clientHeight: ${scroller.clientHeight} hasScrollbarY: ${hasScrollbarY}`
+              );
               setHasScrollbarY(scroller.scrollHeight > scroller.clientHeight);
             }
           }}

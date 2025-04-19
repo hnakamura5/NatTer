@@ -21,9 +21,6 @@ export function InteractionAccordionList(props: InteractionAccordionListProps) {
       <Box
         sx={{
           height: "calc(100vh - 50px)", // TODO: calculate using actual height.
-          padding: `0px ${
-            hasScrollbarY ? "0px" : "5px" // right
-          } 0px 0px`, // top right bottom left
         }}
       >
         <Virtuoso
@@ -32,12 +29,22 @@ export function InteractionAccordionList(props: InteractionAccordionListProps) {
           }}
           data={array}
           itemContent={(_, i) => {
-            return props.member(i);
+            return (
+              <Box
+                sx={{
+                  margin: `10px ${
+                    hasScrollbarY ? "10px" : "15px" // right
+                  } 10px 15px`, // bottom left
+                }}
+              >
+                {props.member(i)}
+              </Box>
+            );
           }}
           alignToBottom
           scrollerRef={(scroller) => {
             if (scroller && scroller instanceof HTMLElement) {
-              setHasScrollbarY(scroller.scrollHeight > scroller.clientHeight);
+              setHasScrollbarY(scroller.scrollHeight >= scroller.clientHeight);
             }
           }}
         />

@@ -262,8 +262,8 @@ export function ProcessAccordion(props: ProcessAccordionProps) {
             boundaryRef={boundaryRef}
             sx={{
               borderRadius: "5px",
-              marginBottom: "8px",
-              marginRight: "3px",
+              //marginBottom: "8px",
+              // marginRight: "3px",
             }}
           >
             <EasyFocus.Land
