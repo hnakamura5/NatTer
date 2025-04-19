@@ -16,8 +16,6 @@ function ShellSession(props: SessionProps) {
   const pid = usePid();
   // Length is used as the trigger of the event of submitting new command.
   const [length, setLength] = useState<number>(0);
-  // Ref to scroll to the bottom of the session. (Now not used.)
-  const bottom = useRef<HTMLDivElement>(null);
   // Ref to the box containing all the process accordions.
   const boxRef = useRef<HTMLDivElement>(null);
   const [hasScrollbarY, setHasScrollbarY] = useState<boolean>(false);
@@ -56,8 +54,9 @@ function ShellSession(props: SessionProps) {
         sx={{
           height: "calc(100vh - 50px)", // TODO: calculate using actual height.
           padding: `0px ${
-            hasScrollbarY ? "0px" : "5px" // right
-          } 0px 8px`, // top right bottom left
+            hasScrollbarY ? "12px" : "17px" // right
+          } 0px 20px`, // top right bottom left
+          margin: "20px 5px 10px 5px",
         }}
       >
         <Virtuoso
@@ -75,7 +74,6 @@ function ShellSession(props: SessionProps) {
             }
           }}
         />
-        <div ref={bottom} />
       </Box>
     </ErrorBoundary>
   );
