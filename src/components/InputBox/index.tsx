@@ -68,12 +68,6 @@ const Paper = styled(Box)(({ theme }) => ({
   paddingBottom: "3px",
 }));
 
-const OverToLeft = styled(Box)(({ theme }) => ({
-  position: "relative",
-  left: `calc(-${theme.system.hoverMenuWidth})`,
-  width: `calc(100% + ${theme.system.hoverMenuWidth})`,
-}));
-
 export interface InputBoxProps {
   languageServerConfig?: LanguageServerExecutableArgs;
 }
@@ -136,44 +130,42 @@ export function InputBox(
 
   return (
     <ErrorBoundary fallbackRender={InputBoxError}>
-      <OverToLeft>
-        <FocusBoundary defaultBorderColor={theme.shell.backgroundColor}>
-          <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox`}>
-            <GlobalFocusMap.Target
-              focusKey={GlobalFocusMap.GlobalKey.InputBox}
-              callBeforeFocus={() => {
-                return Promise.resolve(false);
-              }}
-              focusRef={inputBoxRef}
-            >
-              <Paper>
-                <ControlButtons
-                  submit={(command: string, styledCommand?: string) => {
-                    // Submit invalidates history.
+      <FocusBoundary defaultBorderColor={theme.shell.backgroundColor}>
+        <EasyFocus.Land focusTarget={inputBoxRef} name={`InputBox`}>
+          <GlobalFocusMap.Target
+            focusKey={GlobalFocusMap.GlobalKey.InputBox}
+            callBeforeFocus={() => {
+              return Promise.resolve(false);
+            }}
+            focusRef={inputBoxRef}
+          >
+            <Paper>
+              <ContextMenu items={<InputBoxContextMenuContents />}>
+                <Input
+                  id={`input`}
+                  inputBoxRef={
+                    // TODO: any better way?
+                    inputBoxRef
+                  }
+                  submit={props.submit}
+                  onChange={(value) => {
+                    // User change invalidates history.
                     historyHandle.reset();
-                    props.submit(command, styledCommand);
                   }}
+                  languageServerConfig={props.languageServerConfig}
                 />
-                <ContextMenu items={<InputBoxContextMenuContents />}>
-                  <Input
-                    id={`input`}
-                    inputBoxRef={
-                      // TODO: any better way?
-                      inputBoxRef
-                    }
-                    submit={props.submit}
-                    onChange={(value) => {
-                      // User change invalidates history.
-                      historyHandle.reset();
-                    }}
-                    languageServerConfig={props.languageServerConfig}
-                  />
-                </ContextMenu>
-              </Paper>
-            </GlobalFocusMap.Target>
-          </EasyFocus.Land>
-        </FocusBoundary>
-      </OverToLeft>
+              </ContextMenu>
+              <ControlButtons
+                submit={(command: string, styledCommand?: string) => {
+                  // Submit invalidates history.
+                  historyHandle.reset();
+                  props.submit(command, styledCommand);
+                }}
+              />
+            </Paper>
+          </GlobalFocusMap.Target>
+        </EasyFocus.Land>
+      </FocusBoundary>
     </ErrorBoundary>
   );
 }

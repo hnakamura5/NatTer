@@ -17,12 +17,6 @@ import { EasyFocus } from "@/components/EasyFocus";
 import { GlobalFocusMap } from "@/components/GlobalFocusMap";
 import { InputText, usePid, useShellConfig } from "@/SessionStates";
 import { useAtom } from "jotai";
-import { CommandID } from "@/datatypes/Command";
-import {
-  KeybindScope,
-  useKeybindOfCommand,
-  useKeybindOfCommandScopeRef,
-} from "@/components/KeybindScope";
 
 import { log } from "@/datatypes/Logger";
 import { MonacoInput } from "./MonacoInput";

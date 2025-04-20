@@ -7,8 +7,6 @@ import { GlobalFocusMap as GFM } from "@/components/GlobalFocusMap";
 import { usePid } from "@/SessionStates";
 
 import { log } from "@/datatypes/Logger";
-import { hasScrollbarY } from "../Utils";
-import { Virtuoso } from "react-virtuoso";
 import { InteractionAccordionList } from "../InteractionAccordion/AccordionList";
 
 interface SessionProps {}
