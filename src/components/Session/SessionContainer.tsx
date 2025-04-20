@@ -44,21 +44,6 @@ import MuiDrawer from "@mui/material/Drawer";
 import { Theme } from "@/datatypes/Theme";
 import DrawerSidebarLayout from "../DrawerSidebarLayout";
 
-const VerticalBox = styled(Box)({
-  display: "flex",
-  flexDirection: "row",
-  height: "100vh",
-});
-
-const HorizontalFromBottomBox = styled(Box)({
-  display: "flex",
-  flexDirection: "column-reverse",
-  height: "100%",
-  width: "100%",
-  overflowX: "hidden",
-  boxSizing: "border-box",
-});
-
 const FullWidthBox = styled(Box)(({ theme }) => ({
   display: "flex",
   flexGrow: 1,

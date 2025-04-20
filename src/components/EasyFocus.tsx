@@ -1,5 +1,12 @@
-import React, { useEffect } from "react";
+import React, {
+  useEffect,
+  useState,
+  RefObject,
+  useContext,
+  useRef,
+} from "react";
 import { log } from "@/datatypes/Logger";
+import { createPortal } from "react-dom";
 
 type FocusTagType = { input: string; rest: string } | undefined;
 
@@ -211,6 +218,7 @@ function JumpProvider(props: {
     React.RefObject<HTMLElement> | undefined
   >(undefined);
   const [jumping, setJumping] = React.useState(false);
+  const [isMounted, setIsMounted] = useState(false); // Ensure portal target exists
 
   manager.setInvokeFocus(setJumpTo, setJumping);
   useEffect(() => {
@@ -234,41 +242,60 @@ function JumpProvider(props: {
           }`
         );
         target?.focus();
-      }, 100);
+      }, 200);
     } else if (jumping) {
-      log.debug(`EasyFocus JumpProvider useEffect: retrieve focus to provider`);
+      log.debug(
+        `EasyFocus JumpProvider useEffect: retrieve focus to provider :`,
+        props.providerRef.current
+      );
       // Retrieve the focus to the provider on starting the jump action.
       props.providerRef.current?.focus();
     }
   }, [jumpTo, jumping]);
 
-  return (
+  const portalContent = (
     <div
       tabIndex={-1}
       ref={props.providerRef}
       onBlur={(e) => {
-        // When the focus is out of the provider, exit the jump action.
-        if (e.target === props.providerRef.current) {
-          manager.exitJump();
-        }
+        manager.exitJump();
       }}
       onKeyDown={(e) => {
         if (props.jumpKey(e)) {
+          e.preventDefault();
           manager.jump();
         }
-        if (props.exitKey(e)) {
-          manager.exitJump();
-        }
-        if (!e.ctrlKey && !e.altKey && !e.metaKey) {
-          manager.inputKey(e.key);
-        }
-        if (e.key === "Backspace") {
-          manager.backspace();
+        // Only process exit/input/backspace if already jumping
+        if (manager.isJumping()) {
+          if (props.exitKey(e)) {
+            e.preventDefault();
+            manager.exitJump();
+          }
+          // Only process typing keys if jumping
+          if (
+            !e.ctrlKey &&
+            !e.altKey &&
+            !e.metaKey &&
+            e.key.length === 1 &&
+            manager.alphabet.includes(e.key.toLowerCase())
+          ) {
+            e.preventDefault();
+            manager.inputKey(e.key.toLowerCase());
+          }
+          if (e.key === "Backspace") {
+            e.preventDefault();
+            manager.backspace();
+          }
         }
       }}
-    >
+    />
+  );
+
+  return (
+    <>
       {props.children}
-    </div>
+      {createPortal(portalContent, document.body)}
+    </>
   );
 }
 
@@ -291,14 +318,35 @@ export module EasyFocus {
     const ref = React.createRef<HTMLDivElement>();
     const manager = new Manager(props.alphabet);
     const handle = new EasyFocusHandle(manager);
+
+    // Need to add the global key listener here to let the portal handle
+    // the initial jumpKey press as well.
+    useEffect(() => {
+      const handleGlobalKeyDown = (event: KeyboardEvent) => {
+        if (
+          !manager.isJumping() &&
+          props.jumpKey(event as unknown as React.KeyboardEvent<HTMLElement>)
+        ) {
+          event.preventDefault();
+          manager.jump();
+        }
+      };
+      document.addEventListener("keydown", handleGlobalKeyDown);
+      log.debug("EasyFocus Global jumpKey listener added");
+      return () => {
+        document.removeEventListener("keydown", handleGlobalKeyDown);
+        log.debug("EasyFocus Global jumpKey listener removed");
+      };
+    }, [props.jumpKey, props.alphabet]);
+
     return (
       <ManagerContext.Provider value={manager}>
         <ThemeContext.Provider value={props.badgeStyle}>
           <HandleContext.Provider value={handle}>
             <JumpProvider
+              providerRef={ref}
               jumpKey={props.jumpKey}
               exitKey={props.exitKey}
-              providerRef={ref}
             >
               {props.children}
             </JumpProvider>
