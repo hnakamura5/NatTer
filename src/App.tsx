@@ -47,13 +47,22 @@ function App() {
   window.testMain.callTest("testMain.callTest from App.tsx");
 
   return (
-    <api.Provider client={trpcAPIClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>
-        <AppStateProvider>
-          <SessionContainer />
-        </AppStateProvider>
-      </QueryClientProvider>
-    </api.Provider>
+    <div
+      style={{
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <api.Provider client={trpcAPIClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <AppStateProvider>
+            <SessionContainer />
+          </AppStateProvider>
+        </QueryClientProvider>
+      </api.Provider>
+    </div>
   );
 }
 

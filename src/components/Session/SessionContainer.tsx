@@ -53,14 +53,20 @@ const VerticalBox = styled(Box)({
 const HorizontalFromBottomBox = styled(Box)({
   display: "flex",
   flexDirection: "column-reverse",
-  justifyContent: "flex-start",
   height: "100%",
+  width: "100%",
+  overflowX: "hidden",
+  boxSizing: "border-box",
 });
 
 const FullWidthBox = styled(Box)(({ theme }) => ({
-  width: `calc(100vw - ${theme.system.hoverMenuWidth} - 10px)`,
+  display: "flex",
+  flexGrow: 1,
+  width: "100%",
+  flexDirection: "column",
   margin: 0,
   padding: 0,
+  minHeight: 0,
 }));
 
 function getDefaultShell(config: Config): ShellConfig {
@@ -98,9 +104,7 @@ function CommonSessionAligner(props: { children: React.ReactNode }) {
         <SideMenu drawerOpen={drawerOpen} setDrawerOpen={setDrawerOpen} />
       }
     >
-      <FullWidthBox>
-        <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
-      </FullWidthBox>
+      <FullWidthBox>{props.children}</FullWidthBox>
     </DrawerSidebarLayout>
   );
 }
@@ -227,9 +231,31 @@ function SessionForShell(props: { name: string }) {
       pid={pid}
       configName={props.name}
     >
-      <ShellInputBox />
-      <CurrentBar />
-      <ShellSession />
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          width: "100%",
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexGrow: 1, // Takes remaining space
+            minHeight: 0, // Allows shrinking
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <ShellSession />
+        </Box>
+        <Box sx={{ flexShrink: 0 }}>
+          <CurrentBar />
+          <ShellInputBox />
+        </Box>
+      </Box>
     </CommonSessionTemplateForShell>
   );
 }
@@ -307,13 +333,7 @@ function SessionContainer(props: SessionContainerProps) {
         >
           <GlobalFocusMap.Provider>
             <JotaiProvider store={SessionStateJotaiStore}>
-              <Box
-                sx={{
-                  backgroundColor: theme.system.backgroundColor,
-                }}
-              >
-                <SessionForInteraction interaction={interaction} />
-              </Box>
+              <SessionForInteraction interaction={interaction} />
             </JotaiProvider>
           </GlobalFocusMap.Provider>
         </EasyFocus.Provider>

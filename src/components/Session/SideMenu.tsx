@@ -191,6 +191,7 @@ function SideMenuItem(props: {
 
 const StyledList = styled(List)({
   paddingTop: 0,
+  paddingBottom: 0,
   display: "flex",
   flexDirection: "column",
   height: "100%",

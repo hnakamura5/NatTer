@@ -52,6 +52,15 @@ const Drawer = styled(MuiDrawer, {
   ],
 }));
 
+const Main = styled(Box)(({ theme }) => ({
+  display: "flex", // Use flex for its children
+  flexDirection: "column", // Stack children vertically
+  flexGrow: 1, // Crucial: take remaining horizontal space
+  height: "100%", // Take full height from parent
+  minWidth: 0, // Prevent content from expanding container width
+  overflow: "hidden", // Hide overflow from this container level
+}));
+
 export type DrawerSidebarLayoutProps = {
   drawerOpen: boolean;
   sidebarList: ReactNode;
@@ -61,11 +70,11 @@ export type DrawerSidebarLayoutProps = {
 export default function DrawerSidebarLayout(props: DrawerSidebarLayoutProps) {
   const { drawerOpen, sidebarList, children } = props;
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", flexGrow: 1, width: "100%", height: "100%" }}>
       <Drawer variant="permanent" open={drawerOpen}>
         {sidebarList}
       </Drawer>
-      {children}
+      <Main>{children}</Main>
     </Box>
   );
 }

@@ -20,12 +20,20 @@ export function InteractionAccordionList(props: InteractionAccordionListProps) {
     <ErrorBoundary fallbackRender={AccordionListError}>
       <Box
         sx={{
-          height: "calc(100vh - 50px)", // TODO: calculate using actual height.
+          display: "flex", // Use flex to allow Virtuoso's height: 100%
+          flexGrow: 1, // *** Key Change: Take available vertical space ***
+          flexDirection: "column", // Stack Virtuoso
+          minHeight: 0, // *** Key Change: Allow shrinking below content size ***
+          width: "100%", // Maintain full width
+          height: "100%",
+          overflow: "hidden",
         }}
       >
+        <Box>{"Placeholder for test"}</Box>
         <Virtuoso
           style={{
             height: "100%",
+            width: "100%",
           }}
           data={array}
           itemContent={(_, i) => {
