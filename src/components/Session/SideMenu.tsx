@@ -11,6 +11,8 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SellIcon from "@mui/icons-material/Sell";
 import BookmarksIcon from "@mui/icons-material/Bookmarks";
 import InfoIcon from "@mui/icons-material/Info";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 import { ClickAwayListener } from "@mui/material";
 
@@ -29,6 +31,7 @@ import { GlobalFocusMap } from "../GlobalFocusMap";
 import { set } from "zod";
 import { useAtom } from "jotai";
 import { log } from "@/datatypes/Logger";
+import { SidebarListItem } from "../DrawerSidebarLayout/SidebarListItem";
 
 function FileManagerWrapper(props: {
   focusRef: React.RefObject<HTMLDivElement>;
@@ -80,7 +83,9 @@ function DummyPopup() {
 function Item(props: {
   children: React.ReactNode;
   anchorRef: React.RefObject<HTMLDivElement>;
-  handleClick: (event: React.MouseEvent<HTMLElement>) => void;
+  text: string;
+  drawerOpen: boolean;
+  handleClick: () => void;
 }) {
   const theme = useTheme();
   const BlockListItem = styled(ListItem)({
@@ -92,28 +97,40 @@ function Item(props: {
 
   return (
     <div ref={props.anchorRef}>
-      <BlockListItem>
-        <ListItemButton
-          onClick={props.handleClick}
-          sx={{
-            padding: "6px 0px 6px 5px", // top right bottom left
-          }}
-        >
-          <ListItemIcon>{props.children}</ListItemIcon>
-        </ListItemButton>
-      </BlockListItem>
+      <SidebarListItem
+        text={props.text}
+        onClick={props.handleClick}
+        icon={props.children}
+        drawerOpen={props.drawerOpen}
+      />
     </div>
   );
 }
 
 type IconType = typeof FolderIcon;
 
-interface HoverMenusBarProps {}
+function SideMenuStyledIcon(props: { icon: IconType; color: string }) {
+  const theme = useTheme();
+  return (
+    <props.icon
+      sx={{
+        color: theme.system.defaultIconColor,
+        fontSize: theme.system.hoverMenuIconSize,
+        margin: 0,
+        "& .MuiListItemIcon-root": {
+          margin: 0,
+        },
+      }}
+    />
+  );
+}
 
-function HoverMenuItem(props: {
+function SideMenuItem(props: {
   icon: IconType;
+  text: string;
   color: string;
   popup: React.ReactNode;
+  drawerOpen: boolean;
   focusKey?: GlobalFocusMap.Key;
   focusRef?: React.RefObject<HTMLElement>;
 }) {
@@ -123,7 +140,7 @@ function HoverMenuItem(props: {
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const [open, setOpen] = React.useState(false);
 
-  const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+  const handleClick = useCallback(() => {
     setAnchorEl(anchorRef.current);
     setOpen((currentOpen) => !currentOpen);
   }, []);
@@ -160,65 +177,90 @@ function HoverMenuItem(props: {
           <Popper open={open} anchorEl={anchorEl} placement="right-start">
             {props.popup}
           </Popper>
-          <Item handleClick={handleClick} anchorRef={anchorRef}>
-            <props.icon
-              sx={{
-                color: theme.system.defaultIconColor,
-                fontSize: theme.system.hoverMenuIconSize,
-                margin: 0,
-                "& .MuiListItemIcon-root": {
-                  margin: 0,
-                },
-              }}
-            />
-          </Item>
+          <SidebarListItem
+            text={props.text}
+            onClick={handleClick}
+            icon={<SideMenuStyledIcon icon={props.icon} color={props.color} />}
+            drawerOpen={props.drawerOpen}
+          />
         </div>
       </ClickAwayListener>
     </GlobalFocusMap.Target>
   );
 }
-const VerticalList = styled(List)(({ theme }) => ({
+
+const StyledList = styled(List)({
+  paddingTop: 0,
   display: "flex",
   flexDirection: "column",
-  padding: 0,
-  backgroundColor: theme.system.secondaryBackgroundColor,
-}));
+  height: "100%",
+});
 
-function HoverMenusBar(props: HoverMenusBarProps) {
+const ToggleButtonContainer = styled(Box)({
+  marginTop: "auto",
+});
+
+interface SideMenuListProps {
+  drawerOpen: boolean;
+  setDrawerOpen: (open: boolean) => void;
+}
+
+export default function SideMenu(props: SideMenuListProps) {
   const theme = useTheme();
   const fileTreeRef = React.useRef<HTMLDivElement>(null);
 
   return (
-    <VerticalList>
-      <HoverMenuItem
+    <StyledList>
+      <SideMenuItem
         icon={FolderIcon}
+        text="File Manager"
         color={theme.shell.directoryColor}
         popup={<FileManagerWrapper focusRef={fileTreeRef} />}
+        drawerOpen={props.drawerOpen}
         focusKey={GlobalFocusMap.GlobalKey.FileView}
         focusRef={fileTreeRef}
       />
-      <HoverMenuItem
+      <SideMenuItem
         icon={BookmarksIcon}
+        text="Bookmarks"
         color={theme.system.bookmarkColor}
         popup={<UnderConstruction issueURL="https://github.com/hnakamura5" />}
+        drawerOpen={props.drawerOpen}
       />
-      <HoverMenuItem
+      <SideMenuItem
         icon={SellIcon}
+        text="Tags"
         color={theme.system.tagColor}
         popup={<UnderConstruction />}
+        drawerOpen={props.drawerOpen}
       />
-      <HoverMenuItem
+      <SideMenuItem
         icon={InfoIcon}
+        text="Info"
         color={theme.system.infoColor}
         popup={<UnderConstruction />}
+        drawerOpen={props.drawerOpen}
       />
-      <HoverMenuItem
+      <SideMenuItem
         icon={SettingsIcon}
+        text="Settings"
         color={theme.system.settingsColor}
         popup={<UnderConstruction />}
+        drawerOpen={props.drawerOpen}
       />
-    </VerticalList>
+      <ToggleButtonContainer>
+        <SidebarListItem
+          text={props.drawerOpen ? "Collapse Menu" : "Expand Menu"}
+          onClick={() => props.setDrawerOpen(!props.drawerOpen)}
+          icon={
+            <SideMenuStyledIcon
+              icon={props.drawerOpen ? ChevronLeftIcon : ChevronRightIcon}
+              color={theme.system.defaultIconColor}
+            />
+          }
+          drawerOpen={props.drawerOpen}
+        />
+      </ToggleButtonContainer>
+    </StyledList>
   );
 }
-
-export default HoverMenusBar;

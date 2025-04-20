@@ -1,5 +1,5 @@
 import ShellSession from "@/components/Session/ShellSession";
-import HoverMenusBar from "@/components/Session/HoverMenusBar";
+import SideMenu from "@/components/Session/SideMenu";
 import {
   ChatAIInputBox,
   ShellInputBox,
@@ -9,7 +9,7 @@ import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Provider as JotaiProvider } from "jotai";
 
-import styled from "@emotion/styled";
+import styled, { CSSObject } from "@emotion/styled";
 import CurrentBar from "@/components/Session/CurrentBar";
 
 import { api } from "@/api";
@@ -38,6 +38,11 @@ import {
 } from "@/datatypes/AIModelConnectionConfigs";
 import { getShellConfig } from "@/server/configServer";
 import { ChatAISession } from "./ChatAISession";
+
+import Grid from "@mui/material/Grid2";
+import MuiDrawer from "@mui/material/Drawer";
+import { Theme } from "@/datatypes/Theme";
+import DrawerSidebarLayout from "../DrawerSidebarLayout";
 
 const VerticalBox = styled(Box)({
   display: "flex",
@@ -73,14 +78,30 @@ function getDefaultShell(config: Config): ShellConfig {
   return config.shells[0];
 }
 
+// function CommonSessionAligner(props: { children: React.ReactNode }) {
+//   return (
+//     <VerticalBox>
+//       <HoverMenusBar />
+//       <FullWidthBox>
+//         <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
+//       </FullWidthBox>
+//     </VerticalBox>
+//   );
+// }
+
 function CommonSessionAligner(props: { children: React.ReactNode }) {
+  const [drawerOpen, setDrawerOpen] = useState(true);
   return (
-    <VerticalBox>
-      <HoverMenusBar />
+    <DrawerSidebarLayout
+      drawerOpen={drawerOpen}
+      sidebarList={
+        <SideMenu drawerOpen={drawerOpen} setDrawerOpen={setDrawerOpen} />
+      }
+    >
       <FullWidthBox>
         <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
       </FullWidthBox>
-    </VerticalBox>
+    </DrawerSidebarLayout>
   );
 }
 
