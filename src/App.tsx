@@ -15,6 +15,8 @@ import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
 import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
+import { Box } from "@mui/material";
+import styled from "@emotion/styled";
 
 // Monaco loader configuration
 // See https://github.com/suren-atoyan/monaco-react#loader-config
@@ -37,6 +39,18 @@ self.MonacoEnvironment = {
 };
 monacoLoader.config({ monaco });
 
+const StyledSessionBox = styled(Box)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+  width: "100%",
+  overflow: "hidden",
+  backgroundColor: theme.shell.sessionBackgroundColor,
+  color: theme.shell.textColor,
+  fontFamily: theme.shell.font,
+  fontSize: theme.shell.fontSize,
+}));
+
 function App() {
   const [queryClient] = useState(() => new QueryClient());
   const [trpcAPIClient] = useState(() =>
@@ -47,22 +61,15 @@ function App() {
   window.testMain.callTest("testMain.callTest from App.tsx");
 
   return (
-    <div
-      style={{
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <api.Provider client={trpcAPIClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <AppStateProvider>
+    <api.Provider client={trpcAPIClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AppStateProvider>
+          <StyledSessionBox>
             <SessionContainer />
-          </AppStateProvider>
-        </QueryClientProvider>
-      </api.Provider>
-    </div>
+          </StyledSessionBox>
+        </AppStateProvider>
+      </QueryClientProvider>
+    </api.Provider>
   );
 }
 

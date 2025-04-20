@@ -44,21 +44,9 @@ export default function ShellSession(props: SessionProps) {
 
   log.debug(`ShellSession: length: ${length}`);
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        flexGrow: 1,
-        height: "100%",
-        width: "100%",
-        minHeight: 0,
-        overflow: "hidden",
-      }}
-    >
-      <InteractionAccordionList
-        length={length}
-        member={(i) => <ProcessAccordion cid={i} isLast={i === length - 1} />}
-      />
-    </Box>
+    <InteractionAccordionList
+      length={length}
+      member={(i) => <ProcessAccordion cid={i} isLast={i === length - 1} />}
+    />
   );
 }

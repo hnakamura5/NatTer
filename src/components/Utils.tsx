@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, CSSProperties } from "react";
 
 export function hasScrollbarX(element?: HTMLElement | null) {
   if (!element) {
@@ -54,4 +54,27 @@ export function eventStabilizer<T extends unknown[]>(
       callback(...args);
     }, interval || 200); // 200ms debounce in default.
   };
+}
+export const flexColumnGrowHeight: CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  flexGrow: 1,
+  height: "100%",
+  minWidth: 0,
+};
+
+export function FlexColumnGrowHeightBox(props: { children: ReactNode }) {
+  return <div style={flexColumnGrowHeight}>{props.children}</div>;
+}
+
+export const flexRowGrowWidth: CSSProperties = {
+  display: "flex",
+  flexDirection: "row",
+  flexGrow: 1,
+  width: "100%",
+  minHeight: 0,
+};
+
+export function FlexRowGrowWidthBox(props: { children: ReactNode }) {
+  return <div style={flexRowGrowWidth}>{props.children}</div>;
 }

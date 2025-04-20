@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { styled, useTheme, Theme, CSSObject } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
+import { FlexColumnGrowHeightBox } from "../Utils";
 const drawerWidth = 240;
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -52,15 +53,6 @@ const Drawer = styled(MuiDrawer, {
   ],
 }));
 
-const Main = styled(Box)(({ theme }) => ({
-  display: "flex", // Use flex for its children
-  flexDirection: "column", // Stack children vertically
-  flexGrow: 1, // Crucial: take remaining horizontal space
-  height: "100%", // Take full height from parent
-  minWidth: 0, // Prevent content from expanding container width
-  overflow: "hidden", // Hide overflow from this container level
-}));
-
 export type DrawerSidebarLayoutProps = {
   drawerOpen: boolean;
   sidebarList: ReactNode;
@@ -74,7 +66,7 @@ export default function DrawerSidebarLayout(props: DrawerSidebarLayoutProps) {
       <Drawer variant="permanent" open={drawerOpen}>
         {sidebarList}
       </Drawer>
-      <Main>{children}</Main>
+      {children}
     </Box>
   );
 }

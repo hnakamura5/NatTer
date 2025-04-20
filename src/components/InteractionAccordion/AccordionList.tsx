@@ -4,6 +4,7 @@ import { useState, ReactNode, useMemo } from "react";
 import { Virtuoso } from "react-virtuoso";
 
 import { log } from "@/datatypes/Logger";
+import { FlexColumnGrowHeightBox } from "../Utils";
 
 interface InteractionAccordionListProps {
   length: number;
@@ -18,18 +19,7 @@ export function InteractionAccordionList(props: InteractionAccordionListProps) {
   );
   return (
     <ErrorBoundary fallbackRender={AccordionListError}>
-      <Box
-        sx={{
-          display: "flex", // Use flex to allow Virtuoso's height: 100%
-          flexGrow: 1, // *** Key Change: Take available vertical space ***
-          flexDirection: "column", // Stack Virtuoso
-          minHeight: 0, // *** Key Change: Allow shrinking below content size ***
-          width: "100%", // Maintain full width
-          height: "100%",
-          overflow: "hidden",
-        }}
-      >
-        <Box>{"Placeholder for test"}</Box>
+      <FlexColumnGrowHeightBox>
         <Virtuoso
           style={{
             height: "100%",
@@ -40,9 +30,9 @@ export function InteractionAccordionList(props: InteractionAccordionListProps) {
             return (
               <Box
                 sx={{
-                  margin: `10px ${
-                    hasScrollbarY ? "10px" : "15px" // right
-                  } 10px 15px`, // bottom left
+                  margin: `16px ${
+                    hasScrollbarY ? "16px" : "21px" // right
+                  } 16px 21px`, // bottom left
                 }}
               >
                 {props.member(i)}
@@ -56,7 +46,7 @@ export function InteractionAccordionList(props: InteractionAccordionListProps) {
             }
           }}
         />
-      </Box>
+      </FlexColumnGrowHeightBox>
     </ErrorBoundary>
   );
 }

@@ -28,10 +28,10 @@ import { FileManagerStateAtom, usePid } from "@/SessionStates";
 import FocusBoundary from "@/components/FocusBoundary";
 import { UnderConstruction } from "@/components/UnderConstruction";
 import { GlobalFocusMap } from "../GlobalFocusMap";
-import { set } from "zod";
 import { useAtom } from "jotai";
 import { log } from "@/datatypes/Logger";
 import { SidebarListItem } from "../DrawerSidebarLayout/SidebarListItem";
+import { flexColumnGrowHeight } from "../Utils";
 
 function FileManagerWrapper(props: {
   focusRef: React.RefObject<HTMLDivElement>;
@@ -80,33 +80,6 @@ function DummyPopup() {
   );
 }
 
-function Item(props: {
-  children: React.ReactNode;
-  anchorRef: React.RefObject<HTMLDivElement>;
-  text: string;
-  drawerOpen: boolean;
-  handleClick: () => void;
-}) {
-  const theme = useTheme();
-  const BlockListItem = styled(ListItem)({
-    display: "block",
-    padding: 0,
-    margin: 0,
-    width: theme.system.hoverMenuWidth,
-  });
-
-  return (
-    <div ref={props.anchorRef}>
-      <SidebarListItem
-        text={props.text}
-        onClick={props.handleClick}
-        icon={props.children}
-        drawerOpen={props.drawerOpen}
-      />
-    </div>
-  );
-}
-
 type IconType = typeof FolderIcon;
 
 function SideMenuStyledIcon(props: { icon: IconType; color: string }) {
@@ -134,8 +107,6 @@ function SideMenuItem(props: {
   focusKey?: GlobalFocusMap.Key;
   focusRef?: React.RefObject<HTMLElement>;
 }) {
-  const theme = useTheme();
-
   const anchorRef = React.useRef<HTMLDivElement>(null);
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
   const [open, setOpen] = React.useState(false);
@@ -189,13 +160,12 @@ function SideMenuItem(props: {
   );
 }
 
-const StyledList = styled(List)({
+const StyledList = styled(List)(({ theme }) => ({
+  ...flexColumnGrowHeight,
   paddingTop: 0,
   paddingBottom: 0,
-  display: "flex",
-  flexDirection: "column",
-  height: "100%",
-});
+  backgroundColor: theme.system.backgroundColor,
+}));
 
 const ToggleButtonContainer = styled(Box)({
   marginTop: "auto",

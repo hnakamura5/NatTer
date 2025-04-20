@@ -19,7 +19,7 @@ function IconText(props: { icon: React.ReactNode; text?: string }) {
 }
 const CurrentBarStyle = styled(Box)(({ theme }) => ({
   color: theme.shell.textColor,
-  backgroundColor: theme.system.secondaryBackgroundColor,
+  backgroundColor: theme.system.backgroundColor,
   fontFamily: theme.shell.font,
   fontSize: theme.shell.fontSize,
   textAlign: "left",

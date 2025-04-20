@@ -9,7 +9,7 @@ import { Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Provider as JotaiProvider } from "jotai";
 
-import styled, { CSSObject } from "@emotion/styled";
+import styled from "@emotion/styled";
 import CurrentBar from "@/components/Session/CurrentBar";
 
 import { api } from "@/api";
@@ -32,17 +32,10 @@ import { Config, SessionInteraction, ShellConfig } from "@/datatypes/Config";
 
 import { log } from "@/datatypes/Logger";
 import XtermCustom from "../XtermCustom";
-import {
-  ChatAIConfig,
-  ChatAIConnectionConfig,
-} from "@/datatypes/AIModelConnectionConfigs";
-import { getShellConfig } from "@/server/configServer";
 import { ChatAISession } from "./ChatAISession";
 
-import Grid from "@mui/material/Grid2";
-import MuiDrawer from "@mui/material/Drawer";
-import { Theme } from "@/datatypes/Theme";
 import DrawerSidebarLayout from "../DrawerSidebarLayout";
+import { FlexColumnGrowHeightBox } from "../Utils";
 
 const FullWidthBox = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -53,32 +46,6 @@ const FullWidthBox = styled(Box)(({ theme }) => ({
   padding: 0,
   minHeight: 0,
 }));
-
-function getDefaultShell(config: Config): ShellConfig {
-  if (config.defaultShell) {
-    const defaultShell = config.shells.find(
-      (shell) => shell.name === config.defaultShell
-    );
-    if (defaultShell) {
-      return defaultShell;
-    }
-  }
-  if (!config.shells.length) {
-    throw new Error("No shell is defined in the config.json");
-  }
-  return config.shells[0];
-}
-
-// function CommonSessionAligner(props: { children: React.ReactNode }) {
-//   return (
-//     <VerticalBox>
-//       <HoverMenusBar />
-//       <FullWidthBox>
-//         <HorizontalFromBottomBox>{props.children}</HorizontalFromBottomBox>
-//       </FullWidthBox>
-//     </VerticalBox>
-//   );
-// }
 
 function CommonSessionAligner(props: { children: React.ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(true);
@@ -216,42 +183,22 @@ function SessionForShell(props: { name: string }) {
       pid={pid}
       configName={props.name}
     >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          width: "100%",
-          overflow: "hidden",
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            flexGrow: 1, // Takes remaining space
-            minHeight: 0, // Allows shrinking
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
-          <ShellSession />
-        </Box>
-        <Box sx={{ flexShrink: 0 }}>
-          <CurrentBar />
-          <ShellInputBox />
-        </Box>
-      </Box>
+      <FlexColumnGrowHeightBox>
+        <ShellSession />
+      </FlexColumnGrowHeightBox>
+      <CurrentBar />
+      <ShellInputBox />
     </CommonSessionTemplateForShell>
   );
 }
 
 function SessionForChatAI(props: { name: string }) {
-  const sessionID = useSession();
-
   return (
     <CommonSessionAligner>
+      <FlexColumnGrowHeightBox>
+        <ChatAISession chatAIName={props.name} />
+      </FlexColumnGrowHeightBox>
       <ChatAIInputBox chatAIName={props.name} />
-      <ChatAISession chatAIName={props.name} />
     </CommonSessionAligner>
   );
 }
