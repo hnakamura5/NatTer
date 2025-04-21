@@ -48,7 +48,7 @@ const FullWidthBox = styled(Box)(({ theme }) => ({
 }));
 
 function CommonSessionAligner(props: { children: React.ReactNode }) {
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   return (
     <DrawerSidebarLayout
       drawerOpen={drawerOpen}

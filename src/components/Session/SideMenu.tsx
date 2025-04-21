@@ -144,7 +144,7 @@ function SideMenuItem(props: {
           setOpen(false);
         }}
       >
-        <div>
+        <div ref={anchorRef}>
           <Popper open={open} anchorEl={anchorEl} placement="right-start">
             {props.popup}
           </Popper>
