@@ -29,8 +29,13 @@ export function SubMenuItem(props: { children: ReactNode }) {
     <MenuItem>
       <div style={{ display: "flex", flex: 1 }}>
         {props.children}
-        <InlineFullFillPadding />
-        <span style={{ verticalAlign: "middle", marginTop: "3px" }}>
+        <span
+          style={{
+            verticalAlign: "middle",
+            marginTop: "3px",
+            marginLeft: "auto",
+          }}
+        >
           <ChevronRightIcon
             sx={{ scale: 1.4, fontSize: theme.system.fontSize }}
           />
@@ -41,7 +46,7 @@ export function SubMenuItem(props: { children: ReactNode }) {
 }
 
 export type SubMenuProps = {
-  label: ReactNode;
+  triggerItem: ReactNode;
   disabled?: boolean;
   children: ReactNode;
 };
@@ -50,7 +55,7 @@ export function SubMenu(props: SubMenuProps) {
   return (
     <RadixContextMenu.Sub>
       <RadixContextMenu.SubTrigger disabled={props.disabled}>
-        {props.label}
+        {props.triggerItem}
       </RadixContextMenu.SubTrigger>
       <RadixContextMenu.Portal>
         <RadixContextMenu.SubContent>

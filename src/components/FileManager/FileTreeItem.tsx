@@ -6,7 +6,7 @@ import { api } from "@/api";
 import { useTheme } from "@/AppState";
 import { log } from "@/datatypes/Logger";
 import { useFileManagerHandle } from "./FileManagerHandle";
-import { ContextMenu } from "../Menu/ContextMenu";
+import { ContextMenuContext } from "../Menu/ContextMenu";
 import { FileTreeFileItemContextMenu } from "./FileTreeItemContextMenu";
 import {
   DirectoryLabel,
@@ -81,8 +81,8 @@ function DirectoryLabelOrRenamingInput(props: {
     );
   } else {
     return (
-      <ContextMenu
-        items={
+      <ContextMenuContext
+        menuItems={
           <FileTreeFileItemContextMenu
             stat={props.stat}
             setRenamingMode={props.setRenamingMode}
@@ -94,7 +94,7 @@ function DirectoryLabelOrRenamingInput(props: {
           isExpanded={props.isExpanded}
           baseName={props.baseName}
         />
-      </ContextMenu>
+      </ContextMenuContext>
     );
   }
 }
@@ -119,8 +119,8 @@ function FileLabelOrRenamingInput(props: {
     );
   } else {
     return (
-      <ContextMenu
-        items={
+      <ContextMenuContext
+        menuItems={
           <FileTreeFileItemContextMenu
             stat={props.stat}
             setRenamingMode={props.setRenamingMode}
@@ -128,7 +128,7 @@ function FileLabelOrRenamingInput(props: {
         }
       >
         <FileLabel stat={props.stat} baseName={props.baseName} />
-      </ContextMenu>
+      </ContextMenuContext>
     );
   }
 }
@@ -137,7 +137,7 @@ export const ListMargin = "3px";
 
 const StyledTreeItem = styled(MuiTreeItem)(({ theme }) => ({
   color: theme.system.textColor,
-  backgroundColor: theme.system.secondaryBackgroundColor,
+  backgroundColor: theme.system.fileManagerBackgroundColor,
   textAlign: "left",
   margin: `-${ListMargin} 0px -${ListMargin} 0px`,
   padding: "0px 0px 0px 3px", // top right bottom left

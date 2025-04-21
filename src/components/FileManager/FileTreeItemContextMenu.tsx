@@ -1,10 +1,5 @@
 import { FileManagerHandle, useFileManagerHandle } from "./FileManagerHandle";
-import {
-  ContextMenuStyleBox,
-  ContextSubMenuStyleBox,
-  ContextSubMenu,
-  ContextDivider,
-} from "@/components/Menu/ContextMenu";
+import { ContextSubMenu, ContextDivider } from "@/components/Menu/ContextMenu";
 import styled from "@emotion/styled";
 import { useEffect, useState } from "react";
 import { FileStat } from "@/datatypes/UniversalPath";
@@ -38,7 +33,14 @@ export function DeleteSubMenu(props: { filePath: string }) {
   const contextLabels = labels.fileManager.context;
   const handle = useFileManagerHandle();
   return (
-    <ContextSubMenuStyleBox>
+    <ContextSubMenu
+      triggerItem={
+        <IconSubMenuItem
+          icon={<EmptySpaceIcon sx={IconStyle} />}
+          label={contextLabels.delete}
+        />
+      }
+    >
       <IconMenuItem
         icon={<DeleteIcon sx={IconStyle} />}
         label={contextLabels.trash}
@@ -59,11 +61,13 @@ export function DeleteSubMenu(props: { filePath: string }) {
           });
         }}
       />
-    </ContextSubMenuStyleBox>
+    </ContextSubMenu>
   );
 }
 
 export function CopyPathSubMenu(props: { filePath: string; baseName: string }) {
+  const labels = useLabels();
+  const contextLabels = labels.fileManager.context;
   const handle = useFileManagerHandle();
   const [subPaths, setSubPaths] = useState<string[]>([]);
   const relativePath = handle.getRelativePathFromActive(props.filePath);
@@ -77,7 +81,14 @@ export function CopyPathSubMenu(props: { filePath: string; baseName: string }) {
   }, []);
 
   return (
-    <ContextSubMenuStyleBox>
+    <ContextSubMenu
+      triggerItem={
+        <IconSubMenuItem
+          icon={<ContentCopyIcon sx={IconStyle} />}
+          label={contextLabels.copyPath}
+        />
+      }
+    >
       {relativePath !== props.baseName ? (
         <IconMenuItem
           key={props.baseName}
@@ -108,7 +119,7 @@ export function CopyPathSubMenu(props: { filePath: string; baseName: string }) {
           />
         );
       })}
-    </ContextSubMenuStyleBox>
+    </ContextSubMenu>
   );
 }
 
@@ -130,7 +141,7 @@ export function FileTreeFileItemContextMenu(
     remoteHost: handle.getRemoteHost(),
   };
   return (
-    <ContextMenuStyleBox>
+    <>
       <IconMenuItem
         icon={
           isDir ? (
@@ -158,7 +169,7 @@ export function FileTreeFileItemContextMenu(
           handle.cutToInternalClipboard(uPath);
         }}
       />
-      {isDir ? (
+      {isDir && (
         <IconMenuItem
           icon={<ContentPasteIcon sx={IconStyle} />}
           label={contextLabels.paste}
@@ -166,19 +177,8 @@ export function FileTreeFileItemContextMenu(
             handle.pasteFromInternalClipboard(uPath);
           }}
         />
-      ) : (
-        <></>
       )}
-      <ContextSubMenu
-        label={
-          <IconSubMenuItem
-            icon={<EmptySpaceIcon sx={IconStyle} />}
-            label={contextLabels.delete}
-          />
-        }
-      >
-        <DeleteSubMenu filePath={filePath} />
-      </ContextSubMenu>
+      <DeleteSubMenu filePath={filePath} />
       <IconMenuItem
         icon={<EditIcon sx={IconStyle} />}
         label={contextLabels.rename}
@@ -187,16 +187,7 @@ export function FileTreeFileItemContextMenu(
         }}
       />
       <ContextDivider />
-      <ContextSubMenu
-        label={
-          <IconSubMenuItem
-            icon={<ContentCopyIcon sx={IconStyle} />}
-            label={contextLabels.copyPath}
-          />
-        }
-      >
-        <CopyPathSubMenu filePath={filePath} baseName={props.stat.baseName} />
-      </ContextSubMenu>
+      <CopyPathSubMenu filePath={filePath} baseName={props.stat.baseName} />
       <ContextDivider />
       <IconMenuItem
         icon={<FeedIcon sx={IconStyle} />}
@@ -206,6 +197,6 @@ export function FileTreeFileItemContextMenu(
           // TODO: Show properties
         }}
       />
-    </ContextMenuStyleBox>
+    </>
   );
 }

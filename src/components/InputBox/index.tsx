@@ -30,10 +30,8 @@ import {
 
 import { log } from "@/datatypes/Logger";
 import {
-  ContextMenu,
+  ContextMenuContext,
   ContextSubMenu,
-  ContextMenuStyleBox,
-  ContextSubMenuStyleBox,
 } from "@/components/Menu/ContextMenu";
 import { SubMenu, SubMenuItem } from "@/components/Menu/SubMenu";
 import { MenuItem } from "@/components/Menu/MenuItem";
@@ -49,10 +47,8 @@ function InputBoxContextMenuContents() {
   return (
     <>
       <MenuItem>test</MenuItem>
-      <ContextSubMenu label={<SubMenuItem>nest</SubMenuItem>}>
-        <ContextSubMenuStyleBox>
-          <MenuItem>nested test</MenuItem>
-        </ContextSubMenuStyleBox>
+      <ContextSubMenu triggerItem={<SubMenuItem>nest</SubMenuItem>}>
+        <MenuItem>nested test</MenuItem>
       </ContextSubMenu>
     </>
   );
@@ -140,7 +136,7 @@ export function InputBox(
             focusRef={inputBoxRef}
           >
             <Paper>
-              <ContextMenu items={<InputBoxContextMenuContents />}>
+              <ContextMenuContext menuItems={<InputBoxContextMenuContents />}>
                 <Input
                   id={`input`}
                   inputBoxRef={
@@ -154,7 +150,7 @@ export function InputBox(
                   }}
                   languageServerConfig={props.languageServerConfig}
                 />
-              </ContextMenu>
+              </ContextMenuContext>
               <ControlButtons
                 submit={(command: string, styledCommand?: string) => {
                   // Submit invalidates history.
