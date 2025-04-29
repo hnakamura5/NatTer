@@ -133,7 +133,7 @@ function FileLabelOrRenamingInput(props: {
   }
 }
 
-export const ListMargin = "3px";
+export const ListMargin = "0px";
 
 const StyledTreeItem = styled(MuiTreeItem)(({ theme }) => ({
   color: theme.system.textColor,

@@ -51,7 +51,7 @@ const FileManagerFrame = styled(Box)(({ theme }) => ({
 }));
 
 const FileTreeFrame = styled(Box)(({ theme }) => ({
-  maxHeight: "70vh",
+  height: "50vh",
   overflowY: "auto",
 }));
 
