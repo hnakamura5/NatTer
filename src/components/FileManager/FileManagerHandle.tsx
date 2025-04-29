@@ -2,6 +2,9 @@ import { createContext, useContext } from "react";
 import { UniversalPath, UniversalPathArray } from "@/datatypes/UniversalPath";
 import { RemoteHost } from "@/datatypes/SshConfig";
 
+import { api } from "@/api";
+import { log } from "@/datatypes/Logger";
+
 // Global handle in FileManager.
 export interface FileManagerHandle {
   move: (src: UniversalPath, dest: UniversalPath) => void;
@@ -59,3 +62,4 @@ export function useFileManagerHandle() {
   }
   return handle;
 }
+
