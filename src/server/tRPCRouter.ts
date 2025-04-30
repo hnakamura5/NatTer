@@ -10,6 +10,7 @@ import { terminalRouter } from "./terminalServer";
 import { processRouter } from "./processServer";
 import { aiRouter } from "./chatAIServer";
 import { sessionRouter } from "./sessionServer";
+import { fileManagerRouter } from "./fileManagerServer";
 
 export const router = server.router({
   session: sessionRouter,
@@ -22,5 +23,6 @@ export const router = server.router({
   terminal: terminalRouter,
   process: processRouter,
   ai: aiRouter,
+  fileManager: fileManagerRouter,
 });
 export type AppRouter = typeof router;

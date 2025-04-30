@@ -41,6 +41,7 @@ import {
   univPathToString,
 } from "@/datatypes/UniversalPath";
 import { useFileManagerHandleForState } from "./FileManager/FileManagerHandleForState";
+import { FileTreeView } from "./FileManager/FileTreeView";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   color: theme.system.textColor,
@@ -55,10 +56,10 @@ const FileTreeFrame = styled(Box)(({ theme }) => ({
   overflowY: "auto",
 }));
 
-const FileTreeView = styled(MuiTreeView)(({ theme }) => ({
-  color: theme.system.textColor,
-  padding: `${ListMargin} 0px ${ListMargin} 0px`, // top right bottom left
-}));
+// const FileTreeView = styled(MuiTreeView)(({ theme }) => ({
+//   color: theme.system.textColor,
+//   padding: `${ListMargin} 0px ${ListMargin} 0px`, // top right bottom left
+// }));
 
 export type FileManagerState = {
   activePath: string;
@@ -160,6 +161,7 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
       state,
       props.setState
     );
+    log.debug(`FileManager: currentPath: ${currentPath}`);
 
     return (
       <DndContext
@@ -209,7 +211,8 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
               <FileManagerFrame>
                 <FileManagerHeader />
                 <FileTreeFrame>
-                  <FileTreeView
+                  <FileTreeView uPath={{ path: currentPath, remoteHost }} />
+                  {/* <FileTreeView
                     onExpandedItemsChange={(e, items) => {
                       setExpandedItems(items);
                     }}
@@ -231,7 +234,7 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
                       showTop={false}
                       expandedItems={expandedItems}
                     />
-                  </FileTreeView>
+                  </FileTreeView> */}
                 </FileTreeFrame>
               </FileManagerFrame>
             </div>

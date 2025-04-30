@@ -62,6 +62,18 @@ function parsePath(uPath: UniversalPath) {
   };
 }
 
+async function fullList(uPath: UniversalPath) {
+  return univFs
+    .list(uPath)
+    .then((list) => {
+      return list.map((p) => ({
+        baseName: p,
+        full: univPath.join(uPath, p).path,
+      }));
+    })
+    .catch(() => []);
+}
+
 // TODO: add remote support.
 export const fileSystemRouter = server.router({
   list: proc
@@ -71,6 +83,46 @@ export const fileSystemRouter = server.router({
       const filePath = opts.input;
       return univFs.list(filePath).catch(() => {
         return [] as string[];
+      });
+    }),
+
+  fullList: proc
+    .input(UniversalPathScheme)
+    .output(
+      z.array(
+        z.object({
+          baseName: z.string(),
+          full: z.string(),
+        })
+      )
+    )
+    .query(async (opts) => {
+      const filePath = opts.input;
+      return fullList(filePath);
+    }),
+
+  fullListAsync: proc
+    .input(UniversalPathScheme)
+    .output(
+      z.array(
+        z.object({
+          baseName: z.string(),
+          full: z.string(),
+        })
+      )
+    )
+    .mutation(async (opts) => {
+      const filePath = opts.input;
+      return fullList(filePath);
+    }),
+
+  parsedList: proc
+    .input(UniversalPathScheme)
+    .output(z.array(PathParsedScheme))
+    .query(async (opts) => {
+      const filePath = opts.input;
+      return univFs.list(filePath).then((list) => {
+        return list.map((p) => parsePath(univPath.join(filePath, p)));
       });
     }),
 
