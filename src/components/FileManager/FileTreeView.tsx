@@ -13,6 +13,7 @@ import { DirectoryLabel, FileLabel } from "./FileTreeItemLabel";
 import { NestedFileTreeNode } from "@/datatypes/PathListForTree";
 import { RemoteHostID } from "@/server/FileSystem/univFs";
 import { RemoteHost } from "@/datatypes/SshConfig";
+import { useResizeObserver } from "../Utils";
 
 type FileTreeNode = NestedFileTreeNode;
 
@@ -132,6 +133,14 @@ export function FileTreeView(props: FileTreeViewProps) {
   const treeRef = useRef<TreeApi<FileTreeNode>>(null);
   const loaded = useMemo(() => new Set<string>(), []);
   const [tree, setTree] = useState<FileTreeNode[]>([]);
+  const [treeHeight, setTreeHeight] = useState<number | undefined>(undefined);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  useResizeObserver(containerRef, () => {
+    if (containerRef.current) {
+      setTreeHeight(containerRef.current?.clientHeight);
+    }
+  });
 
   const nestedList = api.fileManager.nestedListAsync.useMutation();
   const reloadTree = useCallback(
@@ -196,8 +205,16 @@ export function FileTreeView(props: FileTreeViewProps) {
   );
 
   return (
-    <Tree data={tree} ref={treeRef} width={"100%"} openByDefault={false}>
-      {TreeNode}
-    </Tree>
+    <div style={{ height: "100%" }} ref={containerRef}>
+      <Tree
+        data={tree}
+        ref={treeRef}
+        width={"100%"}
+        height={treeHeight}
+        openByDefault={false}
+      >
+        {TreeNode}
+      </Tree>
+    </div>
   );
 }

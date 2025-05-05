@@ -55,6 +55,20 @@ export function eventStabilizer<T extends unknown[]>(
     }, interval || 200); // 200ms debounce in default.
   };
 }
+
+export function useResizeObserver(
+  divRef: React.RefObject<HTMLDivElement>,
+  callback: (entries: ResizeObserverEntry[]) => void
+) {
+  const observer = new ResizeObserver((entries) => {
+    callback(entries);
+  });
+  if (divRef.current) {
+    observer.observe(divRef.current);
+  }
+  return observer;
+}
+
 export const flexColumnGrowHeight: CSSProperties = {
   display: "flex",
   flexDirection: "column",
