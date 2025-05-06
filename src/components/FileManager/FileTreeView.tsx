@@ -13,7 +13,7 @@ import { DirectoryLabel, FileLabel } from "./FileTreeItemLabel";
 import { NestedFileTreeNode } from "@/datatypes/PathListForTree";
 import { RemoteHostID } from "@/server/FileSystem/univFs";
 import { RemoteHost } from "@/datatypes/SshConfig";
-import { useResizeObserver } from "../Utils";
+import { eventStabilizer, useResizeObserver } from "../Utils";
 
 type FileTreeNode = NestedFileTreeNode;
 
@@ -35,6 +35,7 @@ function FileTreeItem(
 ) {
   const node = props.node;
   const data = node.data;
+  const handle = useFileManagerHandle();
 
   const stat = api.fs.stat.useQuery(data.uPath, {
     onError: () => {
@@ -52,20 +53,27 @@ function FileTreeItem(
     },
   });
 
+  const clickTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
   const handleClick = useCallback(
     async (e: React.MouseEvent) => {
       log.debug(
         `FileTreeItem: handleClick ${data.uPath.path}, isDir: ${stat.data?.isDir}, children: ${node.children}`
       );
       e.stopPropagation();
-      if (stat.data?.isDir && !data.loaded) {
-        props.onLoad(data.uPath.path, data.indexes).then(() => {
-          log.debug(`FileTreeItem: handleClick loaded ${data.uPath.path}`);
-          node.toggle();
-        });
-      } else {
-        node.toggle();
+      if (clickTimeout.current) {
+        return;
       }
+      clickTimeout.current = setTimeout(() => {
+        clickTimeout.current = undefined;
+        if (stat.data?.isDir && !data.loaded) {
+          props.onLoad(data.uPath.path, data.indexes).then(() => {
+            log.debug(`FileTreeItem: handleClick loaded ${data.uPath.path}`);
+            node.toggle();
+          });
+        } else {
+          node.toggle();
+        }
+      }, 300);
     },
     [stat.data]
   );
@@ -74,7 +82,24 @@ function FileTreeItem(
     return <div>Loading...</div>;
   }
   return (
-    <div style={props.style} onClick={handleClick}>
+    <div
+      style={props.style}
+      onClick={handleClick}
+      onDoubleClick={(e) => {
+        if (clickTimeout.current) {
+          clearTimeout(clickTimeout.current);
+          clickTimeout.current = undefined;
+        }
+        handle.moveActivePathTo(data.uPath.path);
+        e.stopPropagation();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handle.moveActivePathTo(data.uPath.path);
+          e.stopPropagation();
+        }
+      }}
+    >
       <ContextMenuContext
         menuItems={
           <FileTreeFileItemContextMenu
