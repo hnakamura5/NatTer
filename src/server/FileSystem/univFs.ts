@@ -242,7 +242,7 @@ export namespace univFs {
     if (isRemote(uPath)) {
       const client = await getRemoteClient(uPath.remoteHost!);
       const stats = await client.stat(uPath.path);
-      log.debug(`Stat file from remote: ${uPath.path}`);
+      // log.debug(`Stat file from remote: ${uPath.path}`);
       const mtime = new Date(stats.modifyTime).toISOString();
       const atime = new Date(stats.accessTime).toISOString();
       return univLift(uPath, (pathLib, path) => ({
@@ -263,7 +263,7 @@ export namespace univFs {
       }));
     } else {
       const stats = await fs.stat(uPath.path);
-      log.debug(`Stat file from local: ${uPath.path}`);
+      // log.debug(`Stat file from local: ${uPath.path}`);
       return univLift(uPath, (pathLib, path) => ({
         fullPath: pathLib.normalize(path),
         baseName: pathLib.basename(path),

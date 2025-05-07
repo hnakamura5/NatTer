@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 import {
   UniversalPath,
   univPathToString,
@@ -91,247 +91,260 @@ export function useFileManagerHandleForState(
   const writeClipboard = api.os.writeClipboard.useMutation();
   const readClipboard = api.os.readClipboard.useMutation();
 
-  const handle: FileManagerHandle & FileManagerPaneHandle = {
-    getActivePath: () => activePath,
-    moveActivePathTo: (path) => {
-      log.debug(`Try Move active to path: ${path}`);
-      return pathExistsAsync
-        .mutateAsync({
-          fullPath: { path, remoteHost },
-          fileOrDir: "directory",
-        })
-        .then((exists) => {
-          if (exists) {
-            if (activePath != path) {
-              historyBack.push(activePath);
+  // This is memo critical to prevent unexpected re-renders,
+  // which flashes context menu.
+  const handle: FileManagerHandle & FileManagerPaneHandle = useMemo(
+    () => ({
+      getActivePath: () => activePath,
+      moveActivePathTo: (path) => {
+        log.debug(`Try Move active to path: ${path}`);
+        return pathExistsAsync
+          .mutateAsync({
+            fullPath: { path, remoteHost },
+            fileOrDir: "directory",
+          })
+          .then((exists) => {
+            if (exists) {
+              if (activePath != path) {
+                historyBack.push(activePath);
+              }
+              setActivePath(path, true);
+              return true;
             }
-            setActivePath(path, true);
-            return true;
+            return false;
+          })
+          .catch(() => false);
+      },
+      navigateForward: () => {
+        log.debug("Navigate forward");
+        if (historyForward.length > 0) {
+          const path = historyForward.pop();
+          if (path) {
+            historyBack.push(activePath);
+            setActivePath(path);
           }
-          return false;
-        })
-        .catch(() => false);
-    },
-    navigateForward: () => {
-      log.debug("Navigate forward");
-      if (historyForward.length > 0) {
-        const path = historyForward.pop();
-        if (path) {
-          historyBack.push(activePath);
-          setActivePath(path);
         }
-      }
-    },
-    navigateBack: () => {
-      log.debug("Navigate back");
-      if (history.length > 0) {
-        const path = historyBack.pop();
-        if (path) {
-          historyForward.push(activePath);
-          setActivePath(path);
+      },
+      navigateBack: () => {
+        log.debug("Navigate back");
+        if (history.length > 0) {
+          const path = historyBack.pop();
+          if (path) {
+            historyForward.push(activePath);
+            setActivePath(path);
+          }
         }
-      }
-    },
-    trackingCurrent: () => {
-      log.debug(`Get Tracking current: ${trackingCurrent}`);
-      return trackingCurrent;
-    },
-    setKeepTrackCurrent: (value) => {
-      log.debug(`Set keep track current: ${value}`);
-      if (value) {
-        setActivePath(current);
-      }
-      setTrackingCurrent(value);
-    },
-    addBookmark: (path) => {
-      log.debug(`Add bookmark: ${path}`);
-    },
-    getBookmarks: () => {
-      log.debug("get bookmarks");
-      return [];
-    },
-    getRecentDirectories: () => {
-      log.debug("get recent directories");
-      return historyRecent;
-    },
-    splitPane: () => {
-      console.log("split pane");
-    },
-    move: (src, dest) => {
-      log.debug(`Move: ${univPathToString(src)} -> ${univPathToString(dest)}`);
-      move.mutate({ src: src, dest: dest });
-    },
-    moveTo: (src, destDir) => {
-      log.debug(
-        `MoveTo: ${univPathToString(src)} -> ${univPathToString(destDir)}`
-      );
-      moveTo.mutate({ src: src, destDir: destDir });
-    },
-    moveStructural: (src, destDir) => {
-      log.debug(
-        `Move Structural: ${univPathArrayToString(src)} -> ${univPathToString(
-          destDir
-        )}`
-      );
-      moveStructural.mutate({ src: src, destDir: destDir });
-    },
-    cutToInternalClipboard: (src) => {
-      log.debug(`Cut Clipboard: ${src}`);
-      // TODO: RemoteHost?
-      setInternalClipboard({
-        clipType: "FileCut",
-        args: [src.path],
-      });
-      writeClipboard.mutate(src.path);
-    },
-    cutSelectedToInternalClipboard: () => {
-      log.debug(`Cut Clipboard: `, selectedItems);
-      clipSelection("FileCut");
-    },
-    remove: (filePath) => {
-      log.debug(`Remove: `, filePath);
-      remove.mutate(filePath);
-    },
-    removeSelection: () => {
-      log.debug(`Remove Selection: `, selectedItems);
-      selectedItems.forEach((item) =>
-        remove.mutate({ path: item, remoteHost })
-      );
-    },
-    trash: (filePath) => {
-      log.debug(`Trash: `, filePath);
-      trash.mutate(filePath);
-    },
-    trashSelection: () => {
-      log.debug(`Trash Selection: `, selectedItems);
-      selectedItems.forEach((item) => trash.mutate({ path: item, remoteHost }));
-    },
-    copy: (src, dest) => {
-      log.debug(`Copy: ${univPathToString(src)} -> ${univPathToString(dest)}`);
-      copy.mutate({ src: src, dest: dest });
-    },
-    copyTo: (src, destDir) => {
-      log.debug(
-        `CopyTo: ${univPathToString(src)} -> ${univPathToString(destDir)}`
-      );
-      copyTo.mutate({ src: src, destDir: destDir });
-    },
-    copyStructural: (src, destDir) => {
-      log.debug(
-        `Copy Structural: ${univPathArrayToString(src)} -> ${univPathToString(
-          destDir
-        )}`
-      );
-      copyStructural.mutate({ src: src, destDir: destDir });
-    },
-    copyToInternalClipboard: (src) => {
-      log.debug(`Copy Clipboard: `, src);
-      setInternalClipboard({
-        clipType: "FileCopy",
-        args: [src.path],
-      });
-      writeClipboard.mutate(src.path);
-    },
-    copySelectionToInternalClipboard: () => {
-      log.debug(`Copy Clipboard: `, selectedItems);
-      clipSelection("FileCopy");
-    },
-    pasteFromInternalClipboard: (destDir?: UniversalPath) => {
-      const canonicalDest = getCanonicalTargetPath();
-      const actualDestDir =
-        destDir ||
-        (canonicalDest
-          ? {
-              path: canonicalDest,
-              remoteHost,
-            }
-          : undefined);
-      log.debug(
-        `Paste Clipboard: dest=${destDir}, actualDest=${actualDestDir} clipboard=`,
-        internalClipboard
-      );
-      if (internalClipboard && actualDestDir) {
-        if (internalClipboard.clipType === "FileCut") {
-          handle.moveStructural(
-            { paths: internalClipboard.args, remoteHost },
-            actualDestDir
-          );
-        } else if (internalClipboard.clipType === "FileCopy") {
-          handle.copyStructural(
-            { paths: internalClipboard.args, remoteHost },
-            actualDestDir
-          );
+      },
+      trackingCurrent: () => {
+        log.debug(`Get Tracking current: ${trackingCurrent}`);
+        return trackingCurrent;
+      },
+      setKeepTrackCurrent: (value) => {
+        log.debug(`Set keep track current: ${value}`);
+        if (value) {
+          setActivePath(current);
         }
-      }
-    },
-    startRenaming: (src) => {
-      log.debug(`Rename: ${src}`);
-      setRenamingPath(src);
-    },
-    getRenamingPath: () => {
-      log.debug(`Get Rename Path: ${renamingPath}`);
-      return renamingPath;
-    },
-    submitRenaming: (newBaseName) => {
-      log.debug(`Submit Rename: ${newBaseName}`);
-      if (renamingPath) {
-        parsePathAsync
-          .mutateAsync({ path: renamingPath, remoteHost })
-          .then((parsed) => {
-            setRenamingPath(undefined);
-            const newPath = parsed.dir + "/" + newBaseName;
-            move.mutate({
-              src: { path: renamingPath, remoteHost },
-              dest: { path: newPath, remoteHost },
+        setTrackingCurrent(value);
+      },
+      addBookmark: (path) => {
+        log.debug(`Add bookmark: ${path}`);
+      },
+      getBookmarks: () => {
+        log.debug("get bookmarks");
+        return [];
+      },
+      getRecentDirectories: () => {
+        log.debug("get recent directories");
+        return historyRecent;
+      },
+      splitPane: () => {
+        console.log("split pane");
+      },
+      move: (src, dest) => {
+        log.debug(
+          `Move: ${univPathToString(src)} -> ${univPathToString(dest)}`
+        );
+        move.mutate({ src: src, dest: dest });
+      },
+      moveTo: (src, destDir) => {
+        log.debug(
+          `MoveTo: ${univPathToString(src)} -> ${univPathToString(destDir)}`
+        );
+        moveTo.mutate({ src: src, destDir: destDir });
+      },
+      moveStructural: (src, destDir) => {
+        log.debug(
+          `Move Structural: ${univPathArrayToString(src)} -> ${univPathToString(
+            destDir
+          )}`
+        );
+        moveStructural.mutate({ src: src, destDir: destDir });
+      },
+      cutToInternalClipboard: (src) => {
+        log.debug(`Cut Clipboard: ${src}`);
+        // TODO: RemoteHost?
+        setInternalClipboard({
+          clipType: "FileCut",
+          args: [src.path],
+        });
+        writeClipboard.mutate(src.path);
+      },
+      cutSelectedToInternalClipboard: () => {
+        log.debug(`Cut Clipboard: `, selectedItems);
+        clipSelection("FileCut");
+      },
+      remove: (filePath) => {
+        log.debug(`Remove: `, filePath);
+        remove.mutate(filePath);
+      },
+      removeSelection: () => {
+        log.debug(`Remove Selection: `, selectedItems);
+        selectedItems.forEach((item) =>
+          remove.mutate({ path: item, remoteHost })
+        );
+      },
+      trash: (filePath) => {
+        log.debug(`Trash: `, filePath);
+        trash.mutate(filePath);
+      },
+      trashSelection: () => {
+        log.debug(`Trash Selection: `, selectedItems);
+        selectedItems.forEach((item) =>
+          trash.mutate({ path: item, remoteHost })
+        );
+      },
+      copy: (src, dest) => {
+        log.debug(
+          `Copy: ${univPathToString(src)} -> ${univPathToString(dest)}`
+        );
+        copy.mutate({ src: src, dest: dest });
+      },
+      copyTo: (src, destDir) => {
+        log.debug(
+          `CopyTo: ${univPathToString(src)} -> ${univPathToString(destDir)}`
+        );
+        copyTo.mutate({ src: src, destDir: destDir });
+      },
+      copyStructural: (src, destDir) => {
+        log.debug(
+          `Copy Structural: ${univPathArrayToString(src)} -> ${univPathToString(
+            destDir
+          )}`
+        );
+        copyStructural.mutate({ src: src, destDir: destDir });
+      },
+      copyToInternalClipboard: (src) => {
+        log.debug(`Copy Clipboard: `, src);
+        setInternalClipboard({
+          clipType: "FileCopy",
+          args: [src.path],
+        });
+        writeClipboard.mutate(src.path);
+      },
+      copySelectionToInternalClipboard: () => {
+        log.debug(`Copy Clipboard: `, selectedItems);
+        clipSelection("FileCopy");
+      },
+      pasteFromInternalClipboard: (destDir?: UniversalPath) => {
+        const canonicalDest = getCanonicalTargetPath();
+        const actualDestDir =
+          destDir ||
+          (canonicalDest
+            ? {
+                path: canonicalDest,
+                remoteHost,
+              }
+            : undefined);
+        log.debug(
+          `Paste Clipboard: dest=${destDir}, actualDest=${actualDestDir} clipboard=`,
+          internalClipboard
+        );
+        if (internalClipboard && actualDestDir) {
+          if (internalClipboard.clipType === "FileCut") {
+            handle.moveStructural(
+              { paths: internalClipboard.args, remoteHost },
+              actualDestDir
+            );
+          } else if (internalClipboard.clipType === "FileCopy") {
+            handle.copyStructural(
+              { paths: internalClipboard.args, remoteHost },
+              actualDestDir
+            );
+          }
+        }
+      },
+      startRenaming: (src) => {
+        log.debug(`Rename: ${src}`);
+        setRenamingPath(src);
+      },
+      getRenamingPath: () => {
+        log.debug(`Get Rename Path: ${renamingPath}`);
+        return renamingPath;
+      },
+      submitRenaming: (newBaseName) => {
+        log.debug(`Submit Rename: ${newBaseName}`);
+        if (renamingPath) {
+          parsePathAsync
+            .mutateAsync({ path: renamingPath, remoteHost })
+            .then((parsed) => {
+              setRenamingPath(undefined);
+              const newPath = parsed.dir + "/" + newBaseName;
+              move.mutate({
+                src: { path: renamingPath, remoteHost },
+                dest: { path: newPath, remoteHost },
+              });
             });
-          });
-      }
-    },
-    cancelRenaming: () => {
-      log.debug(`Cancel Rename`);
-      setRenamingPath(undefined);
-    },
-    selectItems: (items) => {
-      log.debug("Select Items", items);
-      setSelectedItems(items);
-    },
-    copyToOSClipboard: (text) => {
-      writeClipboard.mutate(text);
-    },
-    getFromOSClipboard: () => {
-      return readClipboard.mutateAsync();
-    },
-    getRelativePathFromActive: (path) => {
-      if (path.startsWith(activePath)) {
-        return path.slice(activePath.length + 1);
-      }
-      return path;
-    },
-    getSubPathList: (path) => {
-      return parsePathAsync.mutateAsync({ path, remoteHost }).then((parsed) => {
-        let accumulator = "";
-        const result: string[] = [];
-        for (let i = 0; i < parsed.dirHier.length; i++) {
-          const element = parsed.dirHier[i];
-          const isLast = i === parsed.dirHier.length - 1;
-          accumulator =
-            accumulator +
-            element +
-            (accumulator === "" || isLast ? "" : parsed.sep);
-          result.push(accumulator);
         }
-        return result.reverse();
-      });
-    },
-    openFile: (path) => {
-      if (!remoteHost) {
-        openPath.mutate(path);
-      }
-    },
-    getRemoteHost: () => remoteHost,
-    setRemoteHost: (host) => {
-      setState({ ...state, remoteHost: host });
-    },
-  };
+      },
+      cancelRenaming: () => {
+        log.debug(`Cancel Rename`);
+        setRenamingPath(undefined);
+      },
+      selectItems: (items) => {
+        log.debug("Select Items", items);
+        setSelectedItems(items);
+      },
+      copyToOSClipboard: (text) => {
+        writeClipboard.mutate(text);
+      },
+      getFromOSClipboard: () => {
+        return readClipboard.mutateAsync();
+      },
+      getRelativePathFromActive: (path) => {
+        if (path.startsWith(activePath)) {
+          return path.slice(activePath.length + 1);
+        }
+        return path;
+      },
+      getSubPathList: (path) => {
+        return parsePathAsync
+          .mutateAsync({ path, remoteHost })
+          .then((parsed) => {
+            let accumulator = "";
+            const result: string[] = [];
+            for (let i = 0; i < parsed.dirHier.length; i++) {
+              const element = parsed.dirHier[i];
+              const isLast = i === parsed.dirHier.length - 1;
+              accumulator =
+                accumulator +
+                element +
+                (accumulator === "" || isLast ? "" : parsed.sep);
+              result.push(accumulator);
+            }
+            return result.reverse();
+          });
+      },
+      openFile: (path) => {
+        if (!remoteHost) {
+          openPath.mutate(path);
+        }
+      },
+      getRemoteHost: () => remoteHost,
+      setRemoteHost: (host) => {
+        setState({ ...state, remoteHost: host });
+      },
+    }),
+    [activePath, trackingCurrent, remoteHost]
+  );
   return handle;
 }

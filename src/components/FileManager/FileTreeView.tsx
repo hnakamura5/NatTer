@@ -229,6 +229,8 @@ export function FileTreeView(props: FileTreeViewProps) {
     [loaded, reloadTree]
   );
 
+  log.debug(`FileTreeView render: ${path}`);
+
   return (
     <div style={{ height: "100%" }} ref={containerRef}>
       <Tree

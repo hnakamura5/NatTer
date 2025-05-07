@@ -140,6 +140,13 @@ export function FileTreeFileItemContextMenu(
     path: filePath,
     remoteHost: handle.getRemoteHost(),
   };
+  useEffect(() => {
+    log.debug(`FileTreeFileItemContextMenu: mount ${filePath}`);
+    return () => {
+      log.debug(`FileTreeFileItemContextMenu: unmount ${filePath}`);
+    };
+  }, []);
+  log.debug(`FileTreeFileItemContextMenu: render ${filePath} isDir:${isDir}`);
   return (
     <>
       <IconMenuItem

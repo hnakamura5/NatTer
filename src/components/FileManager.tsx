@@ -92,10 +92,8 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
   (props, ref) => {
     // Local state does not lives
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
-
-    useEffect(() => {
-      log.debug(`FileManager: componentDidMount`);
-    }, []);
+    // In order to avoid undefined state, initialize it with an empty state
+    const state = props.state || emptyState(props.current);
 
     useEffect(() => {
       // Initialize the state if it is not set
@@ -103,7 +101,7 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
         log.debug(`FileManager: state Effect`);
         props.setState(emptyState(props.current));
       }
-    }, [props.state === undefined]);
+    }, [state === undefined]);
     useEffect(() => {
       // Track to the current path of the shell
       if (state) {
@@ -116,10 +114,8 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
           });
         }
       }
-    }, [props.state, props, props.current]);
+    }, [state, props.current]);
 
-    // In order to avoid undefined state, initialize it with an empty state
-    const state = props.state || emptyState(props.current);
 
     // Sensor to avoid preventing treeitem expansion and selection
     const pointerSensor = useSensor(PointerSensor, {
@@ -161,7 +157,6 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
       state,
       props.setState
     );
-    log.debug(`FileManager: currentPath: ${currentPath}`);
 
     return (
       <DndContext
@@ -207,7 +202,10 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
       >
         <FileManagerHandleContext.Provider value={handle}>
           <FileKeybindings>
-            <div ref={ref} tabIndex={-1}>
+            <div
+              ref={ref}
+              tabIndex={-1}
+            >
               <FileManagerFrame>
                 <FileManagerHeader />
                 <FileTreeFrame>

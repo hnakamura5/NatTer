@@ -322,7 +322,7 @@ export const fileSystemRouter = server.router({
   pollChange: proc.input(UniversalPathScheme).subscription(async (opts) => {
     try {
       const filePath = opts.input;
-      log.debug(`pollChange start: `, filePath);
+      // log.debug(`pollChange start: `, filePath);
       const isDir = (await univFs.stat(filePath)).isDir;
       return observable<boolean>((observer) => {
         const onChange = () => {
