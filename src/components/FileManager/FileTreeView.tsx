@@ -15,6 +15,15 @@ import { RemoteHostID } from "@/server/FileSystem/univFs";
 import { RemoteHost } from "@/datatypes/SshConfig";
 import { eventStabilizer, useResizeObserver } from "../Utils";
 import { useTheme } from "@/AppState";
+import {
+  DirectoryLabelOrRenamingInput,
+  FileLabelOrRenamingInput,
+} from "./FileTreeItem";
+import {
+  KeybindScope,
+  useKeybindOfCommand,
+  useKeybindOfCommandScopeRef,
+} from "../KeybindScope";
 
 type FileTreeNode = NestedFileTreeNode;
 
@@ -39,6 +48,8 @@ function FileTreeItem(
   const data = node.data;
   const handle = useFileManagerHandle();
 
+  const [renamingMode, setRenamingMode] = useState(!!props.renamingMode);
+
   const stat = api.fs.stat.useQuery(data.uPath, {
     onError: () => {
       log.error(`Failed to stat ${data.uPath.path}`);
@@ -54,6 +65,7 @@ function FileTreeItem(
       }
     },
   });
+  const rename = api.fileManager.renameBaseName.useMutation();
 
   const clickTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
   const handleClick = useCallback(
@@ -87,67 +99,84 @@ function FileTreeItem(
         } else {
           node.toggle();
         }
-      }, 300);
+      }, 200);
     },
     [stat.data]
   );
 
-  const statusStyle: React.CSSProperties = useMemo(
-    () => ({
-      backgroundColor: node.isSelected
-        ? theme.system.selectionBackgroundColor
-        : node.isFocused
-        ? theme.system.focusBackgroundColor
-        : theme.system.fileManagerBackgroundColor,
-    }),
-    [node.isSelected, node.isFocused]
+  // Keybinds
+  const keybindRef = useKeybindOfCommandScopeRef();
+  useKeybindOfCommand(
+    "RenameFile",
+    () => {
+      log.debug(`FileTreeItem: rename ${data.uPath.path}`);
+      setRenamingMode(true);
+    },
+    keybindRef
   );
 
-  if (node.isFocused) {
-    log.debug(`FileTreeItem: isFocused ${data.uPath.path}`);
-  }
+  const statusStyle: React.CSSProperties = {
+    backgroundColor: node.isSelected
+      ? theme.system.selectionBackgroundColor
+      : node.isFocused
+      ? theme.system.focusBackgroundColor
+      : theme.system.fileManagerBackgroundColor,
+  };
 
   if (!stat.data) {
     return <div>Loading...</div>;
   }
   return (
-    <div
-      style={{ ...statusStyle, ...props.style }}
-      onClick={handleClick}
-      onDoubleClick={(e) => {
-        if (clickTimeout.current) {
-          clearTimeout(clickTimeout.current);
-          clickTimeout.current = undefined;
-        }
-        handle.moveActivePathTo(data.uPath.path);
-        e.stopPropagation();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
+    <KeybindScope keybindRef={keybindRef} id={data.uPath.path}>
+      <div
+        style={{ ...statusStyle, ...props.style }}
+        onClick={handleClick}
+        onDoubleClick={(e) => {
+          if (clickTimeout.current) {
+            clearTimeout(clickTimeout.current);
+            clickTimeout.current = undefined;
+          }
           handle.moveActivePathTo(data.uPath.path);
           e.stopPropagation();
-        }
-      }}
-    >
-      <ContextMenuContext
-        menuItems={
-          <FileTreeFileItemContextMenu
-            stat={stat.data}
-            setRenamingMode={(mode: boolean) => {}}
-          />
-        }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            log.debug(`FileTreeItem: key ${e.key} ${data.uPath.path}`);
+            handle.moveActivePathTo(data.uPath.path);
+            e.stopPropagation();
+          }
+        }}
       >
         {stat.data.isDir ? (
-          <DirectoryLabel
+          <DirectoryLabelOrRenamingInput
             stat={stat.data}
             baseName={data.baseName}
             isExpanded={node.isOpen}
+            renamingMode={renamingMode}
+            setRenamingMode={setRenamingMode}
+            submitRenaming={(baseName: string) => {
+              rename.mutate({
+                uPath: data.uPath,
+                newBaseName: baseName,
+              });
+            }}
           />
         ) : (
-          <FileLabel stat={stat.data} baseName={data.baseName} />
+          <FileLabelOrRenamingInput
+            stat={stat.data}
+            baseName={data.baseName}
+            renamingMode={renamingMode}
+            setRenamingMode={setRenamingMode}
+            submitRenaming={(baseName: string) => {
+              rename.mutate({
+                uPath: data.uPath,
+                newBaseName: baseName,
+              });
+            }}
+          />
         )}
-      </ContextMenuContext>
-    </div>
+      </div>
+    </KeybindScope>
   );
 }
 

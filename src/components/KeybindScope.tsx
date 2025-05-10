@@ -24,7 +24,6 @@ export function useKeybindOfCommand(
 ) {
   const keys = useKeybindList().get(command);
   const keyList = keys?.map((key) => key.key).join(", ") || [];
-
   // TODO: how to support args?
   const ref = useHotkeys(
     keyList || "",
@@ -77,6 +76,7 @@ export function useFixedKeybindsBlocker(keybindRef?: KeybindOfCommandScopeRef) {
 export function KeybindScope(props: {
   keybindRef?: KeybindOfCommandScopeRef;
   style?: React.CSSProperties;
+  id?: string;
   children: React.ReactNode;
 }) {
   const current = props.keybindRef?.current;
@@ -89,8 +89,12 @@ export function KeybindScope(props: {
         ref={current}
         tabIndex={-1}
         style={{ ...props.style, display: "contents" }}
+        id={props.id}
         onKeyDown={(e) => {
-          log.debug(`KeybindScope: key: ${e.key}`);
+          log.debug(`KeybindScope: key: ${e.key} #${props.id}`);
+        }}
+        onFocus={(e) => {
+          log.debug(`KeybindScope: focus #${props.id} target id=${e.target.id}`);
         }}
       >
         {props.children}

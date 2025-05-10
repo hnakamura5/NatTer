@@ -10,6 +10,7 @@ import {
   NestedFileTreeNode,
   NestedFileTreeNodeScheme,
 } from "@/datatypes/PathListForTree";
+import { changeDirectoryEvent, changeFileEvent } from "./FileSystemServer";
 
 async function flattenList(
   path: UniversalPath,
@@ -112,5 +113,19 @@ export const fileManagerRouter = server.router({
       const { uPath, baseIndexes, loaded } = opts.input;
       const expanded = new Set(loaded);
       return nestedList(uPath, baseIndexes || [], expanded);
+    }),
+
+  renameBaseName: proc
+    .input(
+      z.object({
+        uPath: UniversalPathScheme,
+        newBaseName: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const { uPath, newBaseName } = opts.input;
+      const newPath = univPath.join(univPath.dirname(uPath), newBaseName);
+      await univFs.move(uPath, newPath);
+      changeFileEvent(uPath);
     }),
 });

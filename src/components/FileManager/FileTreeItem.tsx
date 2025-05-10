@@ -60,7 +60,7 @@ function RenamingInput(props: {
   );
 }
 
-function DirectoryLabelOrRenamingInput(props: {
+export function DirectoryLabelOrRenamingInput(props: {
   stat: FileStat;
   isExpanded: boolean;
   baseName: string;
@@ -99,7 +99,7 @@ function DirectoryLabelOrRenamingInput(props: {
   }
 }
 
-function FileLabelOrRenamingInput(props: {
+export function FileLabelOrRenamingInput(props: {
   stat: FileStat;
   baseName: string;
   renamingMode: boolean;

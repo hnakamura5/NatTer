@@ -6,6 +6,7 @@ import {
 import React from "react";
 import { useFileManagerHandle } from "./FileManagerHandle";
 import { useKey } from "@dnd-kit/core/dist/components/DragOverlay/hooks";
+import { log } from "@/datatypes/Logger";
 
 export function FileKeybindings(props: { children: React.ReactNode }) {
   const handle = useFileManagerHandle();
@@ -13,7 +14,10 @@ export function FileKeybindings(props: { children: React.ReactNode }) {
   useKeybindOfCommand("Cut", handle.cutSelectedToInternalClipboard, keybindRef);
   useKeybindOfCommand(
     "Copy",
-    handle.copySelectionToInternalClipboard,
+    () => {
+      handle.copySelectionToInternalClipboard();
+      log.debug("Copy");
+    },
     keybindRef
   );
   useKeybindOfCommand(
@@ -25,5 +29,9 @@ export function FileKeybindings(props: { children: React.ReactNode }) {
   );
   useKeybindOfCommand("Delete", handle.trashSelection, keybindRef);
 
-  return <KeybindScope keybindRef={keybindRef}>{props.children}</KeybindScope>;
+  return (
+    <KeybindScope keybindRef={keybindRef} id="FileManager">
+      {props.children}
+    </KeybindScope>
+  );
 }

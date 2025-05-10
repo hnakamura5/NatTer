@@ -29,10 +29,10 @@ const proc = server.procedure;
 
 const eventEmitter = new EventEmitter();
 eventEmitter.setMaxListeners(1000);
-function changeFileEvent(uPath: UniversalPath) {
+export function changeFileEvent(uPath: UniversalPath) {
   changeDirectoryEvent(univPath.dirname(uPath));
 }
-function changeDirectoryEvent(uPath: UniversalPath) {
+export function changeDirectoryEvent(uPath: UniversalPath) {
   eventEmitter.emit(uPath.path);
 }
 
