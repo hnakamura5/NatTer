@@ -14,6 +14,7 @@ import { NestedFileTreeNode } from "@/datatypes/PathListForTree";
 import { RemoteHostID } from "@/server/FileSystem/univFs";
 import { RemoteHost } from "@/datatypes/SshConfig";
 import { eventStabilizer, useResizeObserver } from "../Utils";
+import { useTheme } from "@/AppState";
 
 type FileTreeNode = NestedFileTreeNode;
 
@@ -33,6 +34,7 @@ function FileTreeItem(
     onLoad: (fullPath: string, indexes: number[]) => Promise<void>;
   }
 ) {
+  const theme = useTheme();
   const node = props.node;
   const data = node.data;
   const handle = useFileManagerHandle();
@@ -59,12 +61,24 @@ function FileTreeItem(
       log.debug(
         `FileTreeItem: handleClick ${data.uPath.path}, isDir: ${stat.data?.isDir}, children: ${node.children}`
       );
+      // Implement of react-arborist click is not comprehensive
+      // (e.g. Not supporting ctrl+click).
       e.stopPropagation();
       if (clickTimeout.current) {
         return;
       }
       clickTimeout.current = setTimeout(() => {
         clickTimeout.current = undefined;
+        // Handle selection.
+        if (e.ctrlKey || e.metaKey) {
+          node.isSelected ? node.deselect() : node.selectMulti();
+        } else if (e.shiftKey) {
+          node.selectContiguous();
+        } else {
+          node.select();
+          node.activate();
+        }
+        // Handle open/close and children
         if (stat.data?.isDir && !data.loaded) {
           props.onLoad(data.uPath.path, data.indexes).then(() => {
             log.debug(`FileTreeItem: handleClick loaded ${data.uPath.path}`);
@@ -78,12 +92,27 @@ function FileTreeItem(
     [stat.data]
   );
 
+  const statusStyle: React.CSSProperties = useMemo(
+    () => ({
+      backgroundColor: node.isSelected
+        ? theme.system.selectionBackgroundColor
+        : node.isFocused
+        ? theme.system.focusBackgroundColor
+        : theme.system.fileManagerBackgroundColor,
+    }),
+    [node.isSelected, node.isFocused]
+  );
+
+  if (node.isFocused) {
+    log.debug(`FileTreeItem: isFocused ${data.uPath.path}`);
+  }
+
   if (!stat.data) {
     return <div>Loading...</div>;
   }
   return (
     <div
-      style={props.style}
+      style={{ ...statusStyle, ...props.style }}
       onClick={handleClick}
       onDoubleClick={(e) => {
         if (clickTimeout.current) {
@@ -239,6 +268,10 @@ export function FileTreeView(props: FileTreeViewProps) {
         width={"100%"}
         height={treeHeight}
         openByDefault={false}
+        onSelect={(nodes) => {
+          // TODO: Add colors to selected nodes
+          handle.selectItems(nodes.map((node) => node.data.uPath.path));
+        }}
       >
         {TreeNode}
       </Tree>
