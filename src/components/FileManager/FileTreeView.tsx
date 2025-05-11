@@ -6,179 +6,15 @@ import { log } from "@/datatypes/Logger";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { UniversalPath, univPathToString } from "@/datatypes/UniversalPath";
 import styled from "@emotion/styled";
-import { Box } from "@mui/material";
-import { ContextMenuContext } from "../Menu/ContextMenu";
-import { FileTreeFileItemContextMenu } from "./FileTreeItemContextMenu";
-import { DirectoryLabel, FileLabel } from "./FileTreeItemLabel";
-import { NestedFileTreeNode } from "@/datatypes/PathListForTree";
-import { RemoteHostID } from "@/server/FileSystem/univFs";
-import { RemoteHost } from "@/datatypes/SshConfig";
+import { FileTreeNode } from "@/datatypes/PathListForTree";
 import { eventStabilizer, useResizeObserver } from "../Utils";
 import { useTheme } from "@/AppState";
-import {
-  DirectoryLabelOrRenamingInput,
-  FileLabelOrRenamingInput,
-} from "./FileTreeItem";
+import { FileTreeItem } from "./FileTreeItem";
 import {
   KeybindScope,
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
 } from "../KeybindScope";
-
-type FileTreeNode = NestedFileTreeNode;
-
-const StyledTreeItem = styled(Box)(({ theme }) => ({
-  color: theme.system.textColor,
-  backgroundColor: theme.system.fileManagerBackgroundColor,
-  textAlign: "left",
-  margin: 0,
-  padding: "0px 0px 0px 3px", // top right bottom left
-  "& .MuiTreeItem-iconContainer": {
-    marginRight: "-7px",
-  },
-}));
-
-function FileTreeItem(
-  props: NodeRendererProps<FileTreeNode> & {
-    onLoad: (fullPath: string, indexes: number[]) => Promise<void>;
-  }
-) {
-  const theme = useTheme();
-  const node = props.node;
-  const data = node.data;
-  const handle = useFileManagerHandle();
-
-  const [renamingMode, setRenamingMode] = useState(!!props.renamingMode);
-
-  const stat = api.fs.stat.useQuery(data.uPath, {
-    onError: () => {
-      log.error(`Failed to stat ${data.uPath.path}`);
-    },
-  });
-  api.fs.pollChange.useSubscription(data.uPath, {
-    onError: () => {
-      log.error(`Failed to pollChange ${data.uPath.path}`);
-    },
-    onData: () => {
-      if (stat.data?.isDir) {
-        props.onLoad(data.uPath.path, data.indexes);
-      }
-    },
-  });
-  const rename = api.fileManager.renameBaseName.useMutation();
-
-  const clickTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
-  const handleClick = useCallback(
-    async (e: React.MouseEvent) => {
-      log.debug(
-        `FileTreeItem: handleClick ${data.uPath.path}, isDir: ${stat.data?.isDir}, children: ${node.children}`
-      );
-      // Implement of react-arborist click is not comprehensive
-      // (e.g. Not supporting ctrl+click).
-      e.stopPropagation();
-      if (clickTimeout.current) {
-        return;
-      }
-      clickTimeout.current = setTimeout(() => {
-        clickTimeout.current = undefined;
-        // Handle selection.
-        if (e.ctrlKey || e.metaKey) {
-          node.isSelected ? node.deselect() : node.selectMulti();
-        } else if (e.shiftKey) {
-          node.selectContiguous();
-        } else {
-          node.select();
-          node.activate();
-        }
-        // Handle open/close and children
-        if (stat.data?.isDir && !data.loaded) {
-          props.onLoad(data.uPath.path, data.indexes).then(() => {
-            log.debug(`FileTreeItem: handleClick loaded ${data.uPath.path}`);
-            node.toggle();
-          });
-        } else {
-          node.toggle();
-        }
-      }, 200);
-    },
-    [stat.data]
-  );
-
-  // Keybinds
-  const keybindRef = useKeybindOfCommandScopeRef();
-  useKeybindOfCommand(
-    "RenameFile",
-    () => {
-      log.debug(`FileTreeItem: rename ${data.uPath.path}`);
-      setRenamingMode(true);
-    },
-    keybindRef
-  );
-
-  const statusStyle: React.CSSProperties = {
-    backgroundColor: node.isSelected
-      ? theme.system.selectionBackgroundColor
-      : node.isFocused
-      ? theme.system.focusBackgroundColor
-      : theme.system.fileManagerBackgroundColor,
-  };
-
-  if (!stat.data) {
-    return <div>Loading...</div>;
-  }
-  return (
-    <KeybindScope keybindRef={keybindRef} id={data.uPath.path}>
-      <div
-        style={{ ...statusStyle, ...props.style }}
-        onClick={handleClick}
-        onDoubleClick={(e) => {
-          if (clickTimeout.current) {
-            clearTimeout(clickTimeout.current);
-            clickTimeout.current = undefined;
-          }
-          handle.moveActivePathTo(data.uPath.path);
-          e.stopPropagation();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            log.debug(`FileTreeItem: key ${e.key} ${data.uPath.path}`);
-            handle.moveActivePathTo(data.uPath.path);
-            e.stopPropagation();
-          }
-        }}
-      >
-        {stat.data.isDir ? (
-          <DirectoryLabelOrRenamingInput
-            stat={stat.data}
-            baseName={data.baseName}
-            isExpanded={node.isOpen}
-            renamingMode={renamingMode}
-            setRenamingMode={setRenamingMode}
-            submitRenaming={(baseName: string) => {
-              rename.mutate({
-                uPath: data.uPath,
-                newBaseName: baseName,
-              });
-            }}
-          />
-        ) : (
-          <FileLabelOrRenamingInput
-            stat={stat.data}
-            baseName={data.baseName}
-            renamingMode={renamingMode}
-            setRenamingMode={setRenamingMode}
-            submitRenaming={(baseName: string) => {
-              rename.mutate({
-                uPath: data.uPath,
-                newBaseName: baseName,
-              });
-            }}
-          />
-        )}
-      </div>
-    </KeybindScope>
-  );
-}
 
 function updateChildrenNodeOfIndexes(
   tree: FileTreeNode[],
@@ -298,7 +134,6 @@ export function FileTreeView(props: FileTreeViewProps) {
         height={treeHeight}
         openByDefault={false}
         onSelect={(nodes) => {
-          // TODO: Add colors to selected nodes
           handle.selectItems(nodes.map((node) => node.data.uPath.path));
         }}
       >

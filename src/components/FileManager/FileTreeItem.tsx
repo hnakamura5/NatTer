@@ -1,5 +1,3 @@
-import { TreeItem as MuiTreeItem, TreeItemProps } from "@mui/x-tree-view";
-import Input from "@mui/material/Input";
 import styled from "@emotion/styled";
 import { FileStat } from "@/datatypes/UniversalPath";
 import { api } from "@/api";
@@ -13,7 +11,7 @@ import {
   StatLoadingLabel,
   FileLabel,
 } from "./FileTreeItemLabel";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { IconForFileOrFolder } from "./FileIcon";
 import { InlineIconAdjustStyle } from "./FileIcon";
 
@@ -22,8 +20,10 @@ import {
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
 } from "@/components/KeybindScope";
-import { ListItemIcon } from "@mui/material";
 import { BasicInput } from "../BasicInput";
+import { NodeRendererProps } from "react-arborist";
+import { FileTreeNode } from "@/datatypes/PathListForTree";
+import { ErrorBoundary } from "react-error-boundary";
 
 function RenamingInput(props: {
   currentName: string;
@@ -133,164 +133,151 @@ export function FileLabelOrRenamingInput(props: {
   }
 }
 
-export const ListMargin = "0px";
+export function FileTreeItem(
+  props: NodeRendererProps<FileTreeNode> & {
+    onLoad: (fullPath: string, indexes: number[]) => Promise<void>;
+  }
+) {
+  const theme = useTheme();
+  const node = props.node;
+  const data = node.data;
+  const handle = useFileManagerHandle();
 
-const StyledTreeItem = styled(MuiTreeItem)(({ theme }) => ({
-  color: theme.system.textColor,
-  backgroundColor: theme.system.fileManagerBackgroundColor,
-  textAlign: "left",
-  margin: `-${ListMargin} 0px -${ListMargin} 0px`,
-  padding: "0px 0px 0px 3px", // top right bottom left
-  "& .MuiTreeItem-iconContainer": {
-    marginRight: "-7px",
-  },
-}));
-
-// TODO: Fast up the rendering of directories with many files. (e.g. prefetching)
-export function FileTreeItem(props: {
-  path: string;
-  key: string;
-  showTop: boolean;
-  expandedItems: string[];
-  renamingMode?: boolean;
-  baseName?: string; // Used for loading skeleton
-}) {
   const [renamingMode, setRenamingMode] = useState(!!props.renamingMode);
 
-  const handle = useFileManagerHandle();
-  //log.error(`FileTreeItem: ${props.path}`);
-  const uPath = {
-    path: props.path,
-    remoteHost: handle.getRemoteHost(),
-  };
-  const stat = api.fs.stat.useQuery(uPath, {
+  const stat = api.fs.stat.useQuery(data.uPath, {
     onError: () => {
-      log.error(`Failed to stat ${props.path}`);
+      log.error(`Failed to stat ${data.uPath.path}`);
     },
   });
-  const parsed = api.fs.parsePath.useQuery(uPath, {
+  api.fs.pollChange.useSubscription(data.uPath, {
     onError: () => {
-      log.error(`Failed to parse ${props.path}`);
-    },
-  });
-  const list = api.fs.list.useQuery(uPath, {
-    onError: () => {
-      log.error(`Failed to list ${props.path}`);
-    },
-  });
-  api.fs.pollChange.useSubscription(uPath, {
-    onError: () => {
-      log.error(`Failed to pollChange ${props.path}`);
+      log.error(`Failed to pollChange ${data.uPath.path}`);
     },
     onData: () => {
-      stat.refetch();
-      list.refetch();
+      if (stat.data?.isDir) {
+        props.onLoad(data.uPath.path, data.indexes);
+      }
     },
   });
+  const rename = api.fileManager.renameBaseName.useMutation();
+
+  const clickTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
+  const handleClick = useCallback(
+    async (e: React.MouseEvent) => {
+      log.debug(
+        `FileTreeItem: handleClick ${data.uPath.path}, isDir: ${stat.data?.isDir}, children: ${node.children}`
+      );
+      // Implement of react-arborist click is not comprehensive
+      // (e.g. Not supporting ctrl+click).
+      e.stopPropagation();
+      if (clickTimeout.current) {
+        return;
+      }
+      clickTimeout.current = setTimeout(() => {
+        clickTimeout.current = undefined;
+        // Handle selection.
+        if (e.ctrlKey || e.metaKey) {
+          node.isSelected ? node.deselect() : node.selectMulti();
+        } else if (e.shiftKey) {
+          node.selectContiguous();
+        } else {
+          node.select();
+          node.activate();
+        }
+        // Handle open/close and children
+        if (stat.data?.isDir && !data.loaded) {
+          props.onLoad(data.uPath.path, data.indexes).then(() => {
+            log.debug(`FileTreeItem: handleClick loaded ${data.uPath.path}`);
+            node.toggle();
+          });
+        } else {
+          node.toggle();
+        }
+      }, 200);
+    },
+    [stat.data]
+  );
 
   // Keybinds
   const keybindRef = useKeybindOfCommandScopeRef();
   useKeybindOfCommand(
     "RenameFile",
     () => {
+      log.debug(`FileTreeItem: rename ${data.uPath.path}`);
       setRenamingMode(true);
     },
     keybindRef
   );
 
-  if (!stat.data || !parsed.data) {
-    return (
-      <StyledTreeItem
-        itemId={props.path}
-        label={<StatLoadingLabel path={props.path} baseName={props.baseName} />}
-      />
-    );
+  const statusStyle: React.CSSProperties = {
+    backgroundColor: node.isSelected
+      ? theme.system.selectionBackgroundColor
+      : node.isFocused
+      ? theme.system.focusBackgroundColor
+      : theme.system.fileManagerBackgroundColor,
+  };
+
+  if (!stat.data) {
+    return <div>Loading...</div>;
   }
-  // TODO: call API
-  const joinPath = (dir: string, baseName: string) => {
-    return props.path === parsed.data.sep
-      ? dir + baseName
-      : dir + parsed.data.sep + baseName;
-  };
-
-  const submitRenaming = (baseName: string) => {
-    const newPath = joinPath(parsed.data.dir, baseName);
-    log.debug(`Renaming ${props.path} to ${newPath}`);
-    setRenamingMode(false);
-    handle.move(uPath, { path: newPath, remoteHost: handle.getRemoteHost() });
-  };
-
-  if (stat.data.isDir) {
-    // Directory
-    const children = list.data?.map((child) => (
-      <FileTreeItem
-        path={joinPath(props.path, child)}
-        key={child}
-        showTop={true}
-        expandedItems={props.expandedItems}
-        baseName={child}
-      />
-    ));
-    if (props.showTop) {
-      return (
-        <KeybindScope keybindRef={keybindRef}>
-          <StyledTreeItem
-            itemId={props.path}
-            label={
-              <DirectoryLabelOrRenamingInput
-                stat={stat.data}
-                isExpanded={props.expandedItems.includes(props.path)}
-                baseName={parsed.data.base}
-                renamingMode={renamingMode}
-                setRenamingMode={setRenamingMode}
-                submitRenaming={submitRenaming}
-              />
-            }
-            onDoubleClick={(e) => {
-              handle.moveActivePathTo(props.path);
-              e.stopPropagation();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handle.moveActivePathTo(props.path);
-                e.stopPropagation();
-              }
-            }}
-          >
-            {children}
-          </StyledTreeItem>
-        </KeybindScope>
-      );
-    } else {
-      return <>{children}</>;
-    }
-  } else {
-    // File
-    return (
-      <KeybindScope keybindRef={keybindRef}>
-        <StyledTreeItem
-          itemId={props.path}
-          label={
-            <FileLabelOrRenamingInput
-              stat={stat.data}
-              baseName={parsed.data.base}
-              renamingMode={renamingMode}
-              setRenamingMode={setRenamingMode}
-              submitRenaming={submitRenaming}
-            />
-          }
+  // KeybindScope must be the outermost element to capture key events.
+  return (
+    <ErrorBoundary fallbackRender={FileTreeItemError}>
+      <KeybindScope keybindRef={keybindRef} id={data.uPath.path}>
+        <div
+          style={{ ...statusStyle, ...props.style }}
+          onClick={handleClick}
           onDoubleClick={(e) => {
-            handle.openFile(props.path);
+            if (clickTimeout.current) {
+              clearTimeout(clickTimeout.current);
+              clickTimeout.current = undefined;
+            }
+            handle.moveActivePathTo(data.uPath.path);
             e.stopPropagation();
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              handle.openFile(props.path);
+              log.debug(`FileTreeItem: key ${e.key} ${data.uPath.path}`);
+              handle.moveActivePathTo(data.uPath.path);
               e.stopPropagation();
             }
           }}
-        />
+        >
+          {stat.data.isDir ? (
+            <DirectoryLabelOrRenamingInput
+              stat={stat.data}
+              baseName={data.baseName}
+              isExpanded={node.isOpen}
+              renamingMode={renamingMode}
+              setRenamingMode={setRenamingMode}
+              submitRenaming={(baseName: string) => {
+                rename.mutate({
+                  uPath: data.uPath,
+                  newBaseName: baseName,
+                });
+              }}
+            />
+          ) : (
+            <FileLabelOrRenamingInput
+              stat={stat.data}
+              baseName={data.baseName}
+              renamingMode={renamingMode}
+              setRenamingMode={setRenamingMode}
+              submitRenaming={(baseName: string) => {
+                rename.mutate({
+                  uPath: data.uPath,
+                  newBaseName: baseName,
+                });
+              }}
+            />
+          )}
+        </div>
       </KeybindScope>
-    );
-  }
+    </ErrorBoundary>
+  );
+}
+
+function FileTreeItemError() {
+  return <div>Failed to load file tree item</div>;
 }

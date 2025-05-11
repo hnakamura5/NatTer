@@ -7,8 +7,8 @@ import { univFs } from "./FileSystem/univFs";
 import {
   FlattenPathListScheme,
   FlattenPathNode,
-  NestedFileTreeNode,
-  NestedFileTreeNodeScheme,
+  FileTreeNode,
+  FileTreeNodeScheme,
 } from "@/datatypes/PathListForTree";
 import { changeDirectoryEvent, changeFileEvent } from "./FileSystemServer";
 
@@ -56,15 +56,15 @@ async function nestedList(
   path: UniversalPath,
   baseIndexes: number[],
   expanded: Set<string>
-): Promise<NestedFileTreeNode[]> {
-  const result: NestedFileTreeNode[] = [];
+): Promise<FileTreeNode[]> {
+  const result: FileTreeNode[] = [];
   const list = await univFs.list(path);
   for (let i = 0; i < list.length; i++) {
     const f = list[i];
     const fIsExpanded = expanded.has(f);
     const childPath = univPath.join(path, f);
     const childIndexes = [...baseIndexes, i];
-    const fNode: NestedFileTreeNode = {
+    const fNode: FileTreeNode = {
       id: childPath.path,
       uPath: childPath,
       baseName: f,
@@ -108,7 +108,7 @@ export const fileManagerRouter = server.router({
         loaded: z.set(z.string()).optional(),
       })
     )
-    .output(z.array(NestedFileTreeNodeScheme))
+    .output(z.array(FileTreeNodeScheme))
     .mutation(async (opts) => {
       const { uPath, baseIndexes, loaded } = opts.input;
       const expanded = new Set(loaded);

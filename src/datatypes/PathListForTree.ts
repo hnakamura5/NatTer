@@ -21,7 +21,7 @@ export const FlattenPathListScheme = z.object({
 export type FlattenPathList = z.infer<typeof FlattenPathListScheme>;
 
 // https://zod.dev/?id=recursive-types
-const NestedFileTreeNodeBaseScheme = z.object({
+const FileTreeNodeBaseScheme = z.object({
   id: z.string(),
   uPath: UniversalPathScheme,
   baseName: z.string(),
@@ -30,13 +30,11 @@ const NestedFileTreeNodeBaseScheme = z.object({
 });
 
 // Recursive tree definition
-export type NestedFileTreeNode = z.infer<
-  typeof NestedFileTreeNodeBaseScheme
-> & {
-  children?: NestedFileTreeNode[];
+export type FileTreeNode = z.infer<typeof FileTreeNodeBaseScheme> & {
+  children?: FileTreeNode[];
 };
 
-export const NestedFileTreeNodeScheme: z.ZodType<NestedFileTreeNode> =
-  NestedFileTreeNodeBaseScheme.extend({
-    children: z.lazy(() => z.array(NestedFileTreeNodeScheme).optional()),
+export const FileTreeNodeScheme: z.ZodType<FileTreeNode> =
+  FileTreeNodeBaseScheme.extend({
+    children: z.lazy(() => z.array(FileTreeNodeScheme).optional()),
   });
