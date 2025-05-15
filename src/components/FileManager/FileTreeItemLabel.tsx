@@ -19,14 +19,16 @@ import {
   InlineIconAdjustStyle,
 } from "./FileIcon";
 import { useFileManagerHandle } from "./FileManagerHandle";
+import { CSSProperties } from "react";
 
 function Label(props: { children: React.ReactNode }) {
   const theme = useTheme();
-  const labelStyle = {
+  const labelStyle: CSSProperties = {
     color: theme.system.textColor,
     fontFamily: theme.system.font,
     fontSize: theme.system.fontSize,
-    paddingRight: "10px",
+    paddingRight: "1rem",
+    verticalAlign: "-0.25rem",
   };
   return <span style={labelStyle}>{props.children}</span>;
 }

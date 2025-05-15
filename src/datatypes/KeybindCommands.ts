@@ -18,6 +18,7 @@ export const CustomKeybindCommandsSchema = z.enum([
 export type CustomKeybindCommands = z.infer<typeof CustomKeybindCommandsSchema>;
 
 export const FixedKeybindCommands = z.enum([
+  // Keybind for builtin commands
   "Copy",
   "Paste",
   "Cut",
@@ -25,7 +26,16 @@ export const FixedKeybindCommands = z.enum([
   "Redo",
   "SelectAll",
   "Save",
+  // Keybind for single specific keys
   "Delete",
+  "Enter",
+  "Backspace",
+  "UpArrow",
+  "DownArrow",
+  "LeftArrow",
+  "RightArrow",
+  "Escape",
+  "Tab",
 ]);
 export type FixedKeybindCommands = z.infer<typeof FixedKeybindCommands>;
 

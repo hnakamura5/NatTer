@@ -151,7 +151,8 @@ export function FileBreadcrumbs(props: FileBreadcrumbsProps) {
         fullPath={elementFullPath}
         isDir={true}
         moveToPath={handle.moveActivePathTo}
-        useIcon={i > 0}
+        useIcon={false}
+        // useIcon={i > 0}
       />
     );
   }

@@ -14,7 +14,7 @@ import {
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
   KeybindScope,
-  useFixedKeybindsBlocker,
+  useBuiltinKeybindsBlocker,
 } from "@/components/KeybindScope";
 
 import styled from "@emotion/styled";

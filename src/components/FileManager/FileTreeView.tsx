@@ -3,7 +3,14 @@ import { useFileManagerHandle } from "./FileManagerHandle";
 
 import { api } from "@/api";
 import { log } from "@/datatypes/Logger";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { UniversalPath, univPathToString } from "@/datatypes/UniversalPath";
 import styled from "@emotion/styled";
 import { FileTreeNode } from "@/datatypes/PathListForTree";
@@ -15,6 +22,12 @@ import {
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
 } from "../KeybindScope";
+
+import { DefaultContainer } from "react-arborist/dist/module/components/default-container";
+
+const TreeWrapperDiv = styled.div(({ theme }) => ({
+  height: "100%",
+}));
 
 function updateChildrenNodeOfIndexes(
   tree: FileTreeNode[],
@@ -104,6 +117,68 @@ export function FileTreeView(props: FileTreeViewProps) {
     },
   });
 
+  // Keybinds
+  const keybindRef = useKeybindOfCommandScopeRef();
+  useKeybindOfCommand(
+    "RenameFile",
+    () => {
+      const treeAPI = treeRef.current;
+      if (treeAPI) {
+        if (treeAPI.focusedNode) {
+          log.debug(
+            `FileTreeItem: rename ${treeAPI.focusedNode.data.uPath.path}`
+          );
+          treeAPI.edit(treeAPI.focusedNode);
+        }
+      }
+    },
+    keybindRef
+  );
+  useKeybindOfCommand(
+    "Delete",
+    () => {
+      handle.trashSelection();
+    },
+    keybindRef
+  );
+  // Handle UpArrow and DownArrow by hand.
+  const handleUpDown = useCallback((e: KeyboardEvent) => {
+    const treeAPI = treeRef.current;
+    if (!treeAPI) {
+      return;
+    }
+    const up = e.key === "ArrowUp";
+    if (!up && e.key !== "ArrowDown") {
+      return;
+    }
+    e.stopPropagation();
+    const focusedNode = treeAPI.focusedNode;
+    let nextFocusedNode: NodeApi<FileTreeNode> | null = null;
+    if (!focusedNode) {
+      // If there is no focused node, focus the end node.
+      nextFocusedNode = up ? treeAPI.lastNode : treeAPI.firstNode;
+    }
+    // Focus move ring.
+    if (up && focusedNode === treeAPI.firstNode) {
+      nextFocusedNode = treeAPI.lastNode;
+    } else if (!up && focusedNode === treeAPI.lastNode) {
+      nextFocusedNode = treeAPI.firstNode;
+    }
+    if (!nextFocusedNode) {
+      // Normal move.
+      nextFocusedNode = up
+        ? focusedNode?.prev || null
+        : focusedNode?.next || null;
+    }
+    if (!nextFocusedNode) {
+      return;
+    }
+    if (e.shiftKey) {
+      treeAPI.select(focusedNode);
+    }
+    treeAPI.focus(nextFocusedNode);
+  }, []);
+
   const TreeNode = useMemo(
     () => (props: NodeRendererProps<FileTreeNode>) => {
       return (
@@ -117,6 +192,7 @@ export function FileTreeView(props: FileTreeViewProps) {
             }
             return reloadTree(loadPath, indexes);
           }}
+          treeRef={treeRef}
         />
       );
     },
@@ -126,19 +202,29 @@ export function FileTreeView(props: FileTreeViewProps) {
   log.debug(`FileTreeView render: ${path}`);
 
   return (
-    <div style={{ height: "100%" }} ref={containerRef}>
-      <Tree
-        data={tree}
-        ref={treeRef}
-        width={"100%"}
-        height={treeHeight}
-        openByDefault={false}
-        onSelect={(nodes) => {
-          handle.selectItems(nodes.map((node) => node.data.uPath.path));
-        }}
+    <KeybindScope keybindRef={keybindRef} id={"FileTreeView"}>
+      <TreeWrapperDiv
+        ref={containerRef}
+        onKeyDown={
+          handleUpDown
+          // TODO: onKeyDown fires after move by Tree itself completed.
+          // only handle additional part (on selection)?
+          // or replace container of Tree?
+        }
       >
-        {TreeNode}
-      </Tree>
-    </div>
+        <Tree
+          data={tree}
+          ref={treeRef}
+          width={"100%"}
+          height={treeHeight}
+          openByDefault={false}
+          onSelect={(nodes) => {
+            handle.selectItems(nodes.map((node) => node.data.uPath.path));
+          }}
+        >
+          {TreeNode}
+        </Tree>
+      </TreeWrapperDiv>
+    </KeybindScope>
   );
 }

@@ -63,7 +63,9 @@ export function useKeybindOfCommandBlocker(
   });
 }
 
-export function useFixedKeybindsBlocker(keybindRef?: KeybindOfCommandScopeRef) {
+export function useBuiltinKeybindsBlocker(
+  keybindRef?: KeybindOfCommandScopeRef
+) {
   useKeybindOfCommandBlocker("Copy", keybindRef);
   useKeybindOfCommandBlocker("Paste", keybindRef);
   useKeybindOfCommandBlocker("Cut", keybindRef);
@@ -94,7 +96,9 @@ export function KeybindScope(props: {
           log.debug(`KeybindScope: key: ${e.key} #${props.id}`);
         }}
         onFocus={(e) => {
-          log.debug(`KeybindScope: focus #${props.id} target id=${e.target.id}`);
+          log.debug(
+            `KeybindScope: focus #${props.id} target id=${e.target.id}`
+          );
         }}
       >
         {props.children}

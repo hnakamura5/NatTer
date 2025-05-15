@@ -99,6 +99,38 @@ export function addFixedKeybinds(keybinds: CustomKeybindList): KeybindList {
       key: "delete",
       command: "Delete",
     },
+    {
+      key: "enter",
+      command: "Enter",
+    },
+    {
+      key: "escape",
+      command: "Escape",
+    },
+    {
+      key: "backspace",
+      command: "Backspace",
+    },
+    {
+      key: "upArrow",
+      command: "UpArrow",
+    },
+    {
+      key: "downArrow",
+      command: "DownArrow",
+    },
+    {
+      key: "leftArrow",
+      command: "LeftArrow",
+    },
+    {
+      key: "rightArrow",
+      command: "RightArrow",
+    },
+    {
+      key: "tab",
+      command: "Tab",
+    },
   ];
   return fixedKeybinds.concat(keybinds);
 }
