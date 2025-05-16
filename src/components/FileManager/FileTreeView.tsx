@@ -141,42 +141,37 @@ export function FileTreeView(props: FileTreeViewProps) {
     },
     keybindRef
   );
-  // Handle UpArrow and DownArrow by hand.
-  const handleUpDown = useCallback((e: KeyboardEvent) => {
+  // Handle Keybindings
+  // Note this modifies AFTER the default behavior of the tree is completed.
+  // react-arborist does not support configuring the default behavior.
+  const handleKeybindings = useCallback((e: KeyboardEvent) => {
     const treeAPI = treeRef.current;
     if (!treeAPI) {
+      return;
+    }
+    if (e.ctrlKey && e.key == "a") {
+      treeAPI.selectAll();
+      e.stopPropagation();
+      e.preventDefault();
       return;
     }
     const up = e.key === "ArrowUp";
     if (!up && e.key !== "ArrowDown") {
       return;
     }
-    e.stopPropagation();
+    // This is node after moved.
     const focusedNode = treeAPI.focusedNode;
-    let nextFocusedNode: NodeApi<FileTreeNode> | null = null;
     if (!focusedNode) {
-      // If there is no focused node, focus the end node.
-      nextFocusedNode = up ? treeAPI.lastNode : treeAPI.firstNode;
-    }
-    // Focus move ring.
-    if (up && focusedNode === treeAPI.firstNode) {
-      nextFocusedNode = treeAPI.lastNode;
-    } else if (!up && focusedNode === treeAPI.lastNode) {
-      nextFocusedNode = treeAPI.firstNode;
-    }
-    if (!nextFocusedNode) {
-      // Normal move.
-      nextFocusedNode = up
-        ? focusedNode?.prev || null
-        : focusedNode?.next || null;
-    }
-    if (!nextFocusedNode) {
       return;
     }
-    if (e.shiftKey) {
-      treeAPI.select(focusedNode);
+    const beforeFocusedNode = up ? focusedNode.next : focusedNode.prev;
+    if (e.shiftKey && beforeFocusedNode) {
+      treeAPI.selectMulti(beforeFocusedNode);
+      treeAPI.deselect(focusedNode);
+      treeAPI.focus(focusedNode);
+      e.stopPropagation();
+      return;
     }
-    treeAPI.focus(nextFocusedNode);
   }, []);
 
   const TreeNode = useMemo(
@@ -203,15 +198,7 @@ export function FileTreeView(props: FileTreeViewProps) {
 
   return (
     <KeybindScope keybindRef={keybindRef} id={"FileTreeView"}>
-      <TreeWrapperDiv
-        ref={containerRef}
-        onKeyDown={
-          handleUpDown
-          // TODO: onKeyDown fires after move by Tree itself completed.
-          // only handle additional part (on selection)?
-          // or replace container of Tree?
-        }
-      >
+      <TreeWrapperDiv ref={containerRef} onKeyDown={handleKeybindings}>
         <Tree
           data={tree}
           ref={treeRef}
