@@ -53,7 +53,7 @@ export namespace univPath {
   export function basename(uPath: UniversalPath) {
     return univLift(uPath, (pathLib, path) => pathLib.basename(path));
   }
-  export function equals(uPath1: UniversalPath, uPath2: UniversalPath) {
+  export function equal(uPath1: UniversalPath, uPath2: UniversalPath) {
     return (
       uPath1.path === uPath2.path &&
       uPath1.remoteHost?.host === uPath2.remoteHost?.host

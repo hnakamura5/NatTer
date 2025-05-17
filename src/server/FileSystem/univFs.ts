@@ -87,6 +87,9 @@ async function moveOrCopy(
   copy: boolean
 ): Promise<void> {
   const srcStats = await univFs.stat(src);
+  if (univPath.equal(src, dest)) {
+    return;
+  }
   if (isRemote(src)) {
     const clientSrc = await getRemoteClient(src.remoteHost!);
     if (isRemote(dest)) {

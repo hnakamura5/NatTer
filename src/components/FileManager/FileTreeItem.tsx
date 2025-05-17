@@ -21,7 +21,7 @@ import {
   useKeybindOfCommandScopeRef,
 } from "@/components/KeybindScope";
 import { BasicInput } from "../BasicInput";
-import { NodeRendererProps, TreeApi } from "react-arborist";
+import { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { FileTreeNode } from "@/datatypes/PathListForTree";
 import { ErrorBoundary } from "react-error-boundary";
 import { useKey } from "@dnd-kit/core/dist/components/DragOverlay/hooks";
@@ -70,6 +70,7 @@ export function DirectoryLabelOrRenamingInput(props: {
   renamingMode: boolean;
   setRenamingMode: (mode: boolean) => void;
   submitRenaming: (baseName: string) => void;
+  onRightClick?: () => void;
 }) {
   if (props.renamingMode) {
     return (
@@ -96,6 +97,7 @@ export function DirectoryLabelOrRenamingInput(props: {
           stat={props.stat}
           isExpanded={props.isExpanded}
           baseName={props.baseName}
+          onRightClick={props.onRightClick}
         />
       </ContextMenuContext>
     );
@@ -108,6 +110,7 @@ export function FileLabelOrRenamingInput(props: {
   renamingMode: boolean;
   setRenamingMode: (mode: boolean) => void;
   submitRenaming: (baseName: string) => void;
+  onRightClick?: () => void;
 }) {
   if (props.renamingMode) {
     return (
@@ -130,7 +133,11 @@ export function FileLabelOrRenamingInput(props: {
           />
         }
       >
-        <FileLabel stat={props.stat} baseName={props.baseName} />
+        <FileLabel
+          stat={props.stat}
+          baseName={props.baseName}
+          onRightClick={props.onRightClick}
+        />
       </ContextMenuContext>
     );
   }
@@ -139,6 +146,7 @@ export function FileLabelOrRenamingInput(props: {
 export function FileTreeItem(
   props: NodeRendererProps<FileTreeNode> & {
     onLoad: (fullPath: string, indexes: number[]) => Promise<void>;
+    onRightClick?: (node: NodeApi<FileTreeNode>) => void;
     treeRef: RefObject<TreeApi<FileTreeNode>>;
   }
 ) {
@@ -175,6 +183,7 @@ export function FileTreeItem(
       // Implement of react-arborist click is not comprehensive
       // (e.g. Not supporting ctrl+click).
       e.stopPropagation();
+      e.preventDefault();
       if (clickTimeout.current) {
         return;
       }
@@ -189,9 +198,12 @@ export function FileTreeItem(
           // Multiple selection
           treeAPI.focusedNode?.selectMulti();
           node.isSelected ? node.deselect() : node.selectMulti();
+          return;
         } else if (e.shiftKey) {
           // Contiguous selection
+          treeAPI.focusedNode?.selectMulti();
           node.selectContiguous();
+          return;
         } else {
           // Simple single click
           treeAPI.deselectAll();
@@ -237,13 +249,26 @@ export function FileTreeItem(
             clearTimeout(clickTimeout.current);
             clickTimeout.current = undefined;
           }
-          handle.moveActivePathTo(data.uPath.path);
+          if (!stat.data) {
+            return;
+          }
+          if (stat.data.isDir) {
+            handle.moveActivePathTo(data.uPath.path);
+          } else {
+            handle.openFile(data.uPath.path);
+          }
           e.stopPropagation();
         }}
         onKeyDown={(e) => {
-          log.debug(`FileTreeItem: key ${e.key} ${data.uPath.path}`);
           if (e.key === "Enter") {
-            handle.moveActivePathTo(data.uPath.path);
+            if (!stat.data) {
+              return;
+            }
+            if (stat.data.isDir) {
+              handle.moveActivePathTo(data.uPath.path);
+            } else {
+              handle.openFile(data.uPath.path);
+            }
             e.stopPropagation();
           }
         }}
@@ -261,6 +286,7 @@ export function FileTreeItem(
                 newBaseName: baseName,
               });
             }}
+            onRightClick={() => props.onRightClick?.(node)}
           />
         ) : (
           <FileLabelOrRenamingInput
@@ -274,6 +300,7 @@ export function FileTreeItem(
                 newBaseName: baseName,
               });
             }}
+            onRightClick={() => props.onRightClick?.(node)}
           />
         )}
       </div>

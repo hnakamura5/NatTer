@@ -11,8 +11,12 @@ import {
   FaFolder as FolderIcon,
   FaFile as FileIcon,
   FaFolderOpen as FolderOpenIcon,
+  FaAngleDown as AngleDownIcon,
+  FaAngleRight as AngleRightIcon,
 } from "react-icons/fa";
 import {
+  EmptySpaceIcon,
+  EmptyStyle,
   IconForFile,
   IconForFolder,
   IconOpenFolder,
@@ -20,6 +24,9 @@ import {
 } from "./FileIcon";
 import { useFileManagerHandle } from "./FileManagerHandle";
 import { CSSProperties } from "react";
+
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 
 function Label(props: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -52,7 +59,11 @@ const DragStyle = (transform: Transform | null) => {
   return { transform: DndCSS.Translate.toString(transform) };
 };
 
-export function FileLabel(props: { stat: FileStat; baseName?: string }) {
+export function FileLabel(props: {
+  stat: FileStat;
+  baseName?: string;
+  onRightClick?: () => void;
+}) {
   const {
     attributes,
     listeners,
@@ -80,7 +91,9 @@ export function FileLabel(props: { stat: FileStat; baseName?: string }) {
       style={DragStyle(transform)}
       {...attributes}
       {...listeners}
+      onContextMenu={props.onRightClick}
     >
+      <AngleRightIcon style={EmptyStyle} />
       <IconForFile name={fileName} style={InlineIconAdjustStyle} />
       <Label>{fileName}</Label>
     </div>
@@ -91,6 +104,7 @@ export function DirectoryLabel(props: {
   stat: FileStat;
   isExpanded: boolean;
   baseName?: string;
+  onRightClick?: () => void;
 }) {
   const { setNodeRef: dropNodeRef, isOver } = useDroppable({
     id: props.stat.fullPath,
@@ -128,7 +142,9 @@ export function DirectoryLabel(props: {
           style={DragStyle(transform)}
           {...attributes}
           {...listeners}
+          onContextMenu={props.onRightClick}
         >
+          <AngleDownIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
           <IconOpenFolder name={directoryName} style={InlineIconAdjustStyle} />
           <Label>{directoryName}</Label>
         </div>
@@ -142,7 +158,9 @@ export function DirectoryLabel(props: {
         style={DragStyle(transform)}
         {...attributes}
         {...listeners}
+        onContextMenu={props.onRightClick}
       >
+        <AngleRightIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
         <IconForFolder name={directoryName} style={InlineIconAdjustStyle} />
         <Label>{directoryName}</Label>
       </div>
@@ -166,6 +184,7 @@ export function StatLoadingLabel(props: { path: string; baseName?: string }) {
   const fileName = parsed.data.base;
   return (
     <span>
+      <AngleRightIcon style={EmptyStyle} />
       <IconForFile name={fileName} style={InlineIconAdjustStyle} />
       {fileName}
     </span>

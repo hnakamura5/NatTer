@@ -116,7 +116,6 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
       }
     }, [state, props.current]);
 
-
     // Sensor to avoid preventing treeitem expansion and selection
     const pointerSensor = useSensor(PointerSensor, {
       activationConstraint: {
@@ -202,37 +201,11 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
       >
         <FileManagerHandleContext.Provider value={handle}>
           <FileKeybindings>
-            <div
-              ref={ref}
-              tabIndex={-1}
-            >
+            <div ref={ref} tabIndex={-1}>
               <FileManagerFrame>
                 <FileManagerHeader />
                 <FileTreeFrame>
                   <FileTreeView uPath={{ path: currentPath, remoteHost }} />
-                  {/* <FileTreeView
-                    onExpandedItemsChange={(e, items) => {
-                      setExpandedItems(items);
-                    }}
-                    onSelectedItemsChange={(e, items) => {
-                      if (typeof items === "string") {
-                        setSelectedItems([items]);
-                      } else if (items === null) {
-                        setSelectedItems([]);
-                      } else {
-                        setSelectedItems(items);
-                      }
-                    }}
-                    selectedItems={selectedItems}
-                    multiSelect
-                  >
-                    <FileTreeItem
-                      path={currentPath}
-                      key={currentPath}
-                      showTop={false}
-                      expandedItems={expandedItems}
-                    />
-                  </FileTreeView> */}
                 </FileTreeFrame>
               </FileManagerFrame>
             </div>

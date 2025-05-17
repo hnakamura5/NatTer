@@ -71,6 +71,11 @@ export const InlineIconAdjustStyle = {
   paddingRight: "0.25rem",
 };
 
+export const EmptyStyle = {
+  ...InlineIconAdjustStyle,
+  opacity: 0,
+}
+
 export const EmptySpaceIcon = styled(SpaceBarIcon)({
   opacity: 0,
 });

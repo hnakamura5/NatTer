@@ -117,6 +117,8 @@ export function FileTreeView(props: FileTreeViewProps) {
     },
   });
 
+  const statAsync = api.fs.statAsync.useMutation();
+
   // Keybinds
   const keybindRef = useKeybindOfCommandScopeRef();
   useKeybindOfCommand(
@@ -135,13 +137,32 @@ export function FileTreeView(props: FileTreeViewProps) {
     keybindRef
   );
   useKeybindOfCommand(
-    "Delete",
+    "SelectAll",
+    () => treeRef.current?.selectAll(),
+    keybindRef
+  );
+  useKeybindOfCommand(
+    "Enter",
     () => {
-      handle.trashSelection();
+      const treeAPI = treeRef.current;
+      if (treeAPI) {
+        if (treeAPI.focusedNode) {
+          const uPath = treeAPI.focusedNode.data.uPath;
+          statAsync.mutateAsync(uPath).then((stat) => {
+            if (stat.isDir) {
+              handle.moveActivePathTo(uPath.path);
+            } else {
+              handle.openFile(uPath.path);
+            }
+          });
+        }
+      }
     },
     keybindRef
   );
-  // Handle Keybindings
+  useKeybindOfCommand("Backspace", () => handle.navigateBack(), keybindRef);
+
+  // Modify forcefully the default behavior of the tree.
   // Note this modifies AFTER the default behavior of the tree is completed.
   // react-arborist does not support configuring the default behavior.
   const handleKeybindings = useCallback((e: KeyboardEvent) => {
@@ -149,6 +170,7 @@ export function FileTreeView(props: FileTreeViewProps) {
     if (!treeAPI) {
       return;
     }
+    // This is defined as default behavior for meta+a.
     if (e.ctrlKey && e.key == "a") {
       treeAPI.selectAll();
       e.stopPropagation();
@@ -159,7 +181,7 @@ export function FileTreeView(props: FileTreeViewProps) {
     if (!up && e.key !== "ArrowDown") {
       return;
     }
-    // This is node after moved.
+    // This is node after focus move is completed.
     const focusedNode = treeAPI.focusedNode;
     if (!focusedNode) {
       return;
@@ -167,13 +189,14 @@ export function FileTreeView(props: FileTreeViewProps) {
     const beforeFocusedNode = up ? focusedNode.next : focusedNode.prev;
     if (e.shiftKey && beforeFocusedNode) {
       treeAPI.selectMulti(beforeFocusedNode);
-      treeAPI.deselect(focusedNode);
+      treeAPI.deselect(focusedNode); // TODO: Is this desired behavior?
       treeAPI.focus(focusedNode);
       e.stopPropagation();
       return;
     }
   }, []);
 
+  // Each file item.
   const TreeNode = useMemo(
     () => (props: NodeRendererProps<FileTreeNode>) => {
       return (
@@ -186,6 +209,13 @@ export function FileTreeView(props: FileTreeViewProps) {
               loaded.add(loadPath);
             }
             return reloadTree(loadPath, indexes);
+          }}
+          onRightClick={(node) => {
+            log.debug(`TreeNode onRightClick: ${node.data.uPath.path}`);
+            // TODO: Cannot focus the node when context menu is focused.
+            if (!node.isSelected) {
+              node.select();
+            }
           }}
           treeRef={treeRef}
         />

@@ -133,6 +133,13 @@ export const fileSystemRouter = server.router({
       return await univFs.stat(opts.input);
     }),
 
+  statAsync: proc
+    .input(UniversalPathScheme)
+    .output(FileStatScheme)
+    .mutation(async (opts) => {
+      return await univFs.stat(opts.input);
+    }),
+
   move: proc
     .input(
       z.object({
@@ -142,11 +149,9 @@ export const fileSystemRouter = server.router({
     )
     .mutation(async (opts) => {
       const { src, dest } = opts.input;
-      if (src !== dest) {
-        await univFs.move(src, dest);
-        changeFileEvent(src);
-        changeFileEvent(dest);
-      }
+      await univFs.move(src, dest);
+      changeFileEvent(src);
+      changeFileEvent(dest);
     }),
 
   moveTo: proc
@@ -159,11 +164,9 @@ export const fileSystemRouter = server.router({
     .mutation(async (opts) => {
       const { src, destDir } = opts.input;
       await univFs.move(src, destDir);
-      if (src !== destDir) {
-        await univFs.move(src, univPath.join(destDir, univPath.basename(src)));
-        changeFileEvent(src);
-        changeDirectoryEvent(destDir);
-      }
+      await univFs.move(src, univPath.join(destDir, univPath.basename(src)));
+      changeFileEvent(src);
+      changeDirectoryEvent(destDir);
     }),
 
   moveStructural: proc
@@ -212,11 +215,9 @@ export const fileSystemRouter = server.router({
     )
     .mutation(async (opts) => {
       const { src, dest } = opts.input;
-      if (src !== dest) {
-        await univFs.copy(src, dest);
-        changeFileEvent(src);
-        changeFileEvent(dest);
-      }
+      await univFs.copy(src, dest);
+      changeFileEvent(src);
+      changeFileEvent(dest);
     }),
 
   copyTo: proc
@@ -228,11 +229,9 @@ export const fileSystemRouter = server.router({
     )
     .mutation(async (opts) => {
       const { src, destDir } = opts.input;
-      if (src !== destDir) {
-        await univFs.copy(src, univPath.join(destDir, univPath.basename(src)));
-        changeFileEvent(src);
-        changeDirectoryEvent(destDir);
-      }
+      await univFs.copy(src, univPath.join(destDir, univPath.basename(src)));
+      changeFileEvent(src);
+      changeDirectoryEvent(destDir);
     }),
 
   copyStructural: proc
