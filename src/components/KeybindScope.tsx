@@ -106,3 +106,9 @@ export function KeybindScope(props: {
     );
   }
 }
+
+export function handleKeybindings(keybindRef: KeybindOfCommandScopeRef) {
+  return (e: React.KeyboardEvent<HTMLDivElement>) => {
+    keybindRef.current?.(e.target as HTMLElement);
+  };
+}

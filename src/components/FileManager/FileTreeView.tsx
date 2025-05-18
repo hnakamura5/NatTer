@@ -1,4 +1,4 @@
-import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
+import { NodeRendererProps, Tree, TreeApi } from "react-arborist";
 import { useFileManagerHandle } from "./FileManagerHandle";
 
 import { api } from "@/api";
@@ -106,14 +106,13 @@ export function FileTreeView(props: FileTreeViewProps) {
 
   useEffect(() => {
     reloadTree(path);
-  }, [path]);
-
+  }, [univPathToString(uPath)]);
   api.fs.pollChange.useSubscription(uPath, {
-    onError: () => {
-      log.error(`Failed to pollChange ${path}`);
-    },
     onData: () => {
       reloadTree(path);
+    },
+    onError: (e) => {
+      log.error(`Failed to pollChange ${path} `, e);
     },
   });
 

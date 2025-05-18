@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UniversalPathScheme } from "@/datatypes/UniversalPath";
+import { FileStatScheme, UniversalPathScheme } from "@/datatypes/UniversalPath";
 import { RemoteHostSchema } from "@/datatypes/SshConfig";
 
 export const FlattenPathNodeScheme = z
@@ -33,7 +33,6 @@ const FileTreeNodeBaseScheme = z.object({
 export type FileTreeNode = z.infer<typeof FileTreeNodeBaseScheme> & {
   children?: FileTreeNode[];
 };
-
 export const FileTreeNodeScheme: z.ZodType<FileTreeNode> =
   FileTreeNodeBaseScheme.extend({
     children: z.lazy(() => z.array(FileTreeNodeScheme).optional()),

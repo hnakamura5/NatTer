@@ -4,16 +4,6 @@ import styled from "@emotion/styled";
 
 import { forwardRef, useEffect, useState } from "react";
 import { api } from "@/api";
-import { InternalClipboard, useTheme } from "@/AppState";
-import { InternalClipboardType } from "@/datatypes/InternalClipboardData";
-
-import React from "react";
-import { KeybindScope } from "@/components/KeybindScope";
-
-import {
-  FileTreeItem,
-  ListMargin,
-} from "@/components/FileManager/FileTreeItem";
 
 import { log } from "@/datatypes/Logger";
 import { FileManagerHeader } from "./FileManager/FileManagerHeader";
@@ -42,6 +32,7 @@ import {
 } from "@/datatypes/UniversalPath";
 import { useFileManagerHandleForState } from "./FileManager/FileManagerHandleForState";
 import { FileTreeView } from "./FileManager/FileTreeView";
+import { FileGridTable } from "./FileManager/FileGridTable";
 
 const FileManagerFrame = styled(Box)(({ theme }) => ({
   color: theme.system.textColor,
@@ -205,7 +196,8 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
               <FileManagerFrame>
                 <FileManagerHeader />
                 <FileTreeFrame>
-                  <FileTreeView uPath={{ path: currentPath, remoteHost }} />
+                  {/* <FileTreeView uPath={{ path: currentPath, remoteHost }} /> */}
+                  <FileGridTable uPath={{ path: currentPath, remoteHost }} />
                 </FileTreeFrame>
               </FileManagerFrame>
             </div>

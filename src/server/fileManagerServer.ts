@@ -1,6 +1,10 @@
 import { server } from "@/server/tRPCServer";
 import { z } from "zod";
-import { UniversalPathScheme, UniversalPath } from "@/datatypes/UniversalPath";
+import {
+  UniversalPathScheme,
+  UniversalPath,
+  FileStatScheme,
+} from "@/datatypes/UniversalPath";
 import { pathOf, univPath } from "@/server/FileSystem/univPath";
 
 import { univFs } from "./FileSystem/univFs";
@@ -113,6 +117,19 @@ export const fileManagerRouter = server.router({
       const { uPath, baseIndexes, loaded } = opts.input;
       const expanded = new Set(loaded);
       return nestedList(uPath, baseIndexes || [], expanded);
+    }),
+
+  statListAsync: proc
+    .input(UniversalPathScheme)
+    .output(z.array(FileStatScheme))
+    .mutation(async (opts) => {
+      const uPath = opts.input;
+      const list = await univFs.list(uPath);
+      return Promise.all(
+        list.map(async (f) => {
+          return await univFs.stat(univPath.join(uPath, f));
+        })
+      );
     }),
 
   renameBaseName: proc
