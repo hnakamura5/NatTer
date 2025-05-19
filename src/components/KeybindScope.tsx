@@ -1,10 +1,15 @@
-import { RefCallback, MutableRefObject } from "react";
+import { KeyboardEvent, RefCallback, MutableRefObject } from "react";
 import { OptionsOrDependencyArray } from "react-hotkeys-hook/dist/types";
 import { KeybindCommands } from "@/datatypes/KeybindCommands";
-import { HotkeyCallback, useHotkeys } from "react-hotkeys-hook";
+import {
+  HotkeyCallback,
+  useHotkeys,
+  isHotkeyPressed,
+} from "react-hotkeys-hook";
 import { useKeybindList } from "@/AppState";
 
 import { log } from "@/datatypes/Logger";
+import { KeybindListMap } from "@/datatypes/Keybind";
 
 type KeybindOfCommandScopeRef =
   MutableRefObject<RefCallback<HTMLElement> | null>;
@@ -107,8 +112,36 @@ export function KeybindScope(props: {
   }
 }
 
-export function handleKeybindings(keybindRef: KeybindOfCommandScopeRef) {
-  return (e: React.KeyboardEvent<HTMLDivElement>) => {
-    keybindRef.current?.(e.target as HTMLElement);
-  };
+export class KeyBindCommandJudge {
+  constructor(
+    private listMap: KeybindListMap,
+    private options?: OptionsOrDependencyArray & {
+      notStopPropagation?: boolean;
+    }
+  ) {}
+  private isPressed(command: KeybindCommands) {
+    const keys = this.listMap.get(command);
+    const keyList = keys?.map((key) => key.key).join(", ") || [];
+    return isHotkeyPressed(keyList);
+  }
+  on(
+    e: KeyboardEvent,
+    command: KeybindCommands,
+    callback: () => void,
+    options?: OptionsOrDependencyArray & { notStopPropagation?: boolean }
+  ) {
+    const optionsHere = { ...(this.options || {}), ...(options || {}) };
+    if (this.isPressed(command)) {
+      callback();
+      if (!optionsHere?.notStopPropagation) {
+        e.stopPropagation();
+      }
+    }
+  }
+}
+
+// Emergency hatch for the case we can only use onKeyDown.
+export function useKeyBindCommandJudge() {
+  const listMap = useKeybindList();
+  return new KeyBindCommandJudge(listMap);
 }

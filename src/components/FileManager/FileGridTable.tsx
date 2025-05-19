@@ -21,6 +21,8 @@ import styled from "@emotion/styled";
 
 import {
   MaterialReactTable,
+  MRT_Cell,
+  MRT_TableInstance,
   useMaterialReactTable,
   type MRT_ColumnDef,
   type MRT_Row,
@@ -28,6 +30,8 @@ import {
 } from "material-react-table";
 import { IconForFileOrFolder, InlineIconAdjustStyle } from "./FileIcon";
 import {
+  KeybindScope,
+  useKeyBindCommandJudge,
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
 } from "../KeybindScope";
@@ -126,7 +130,42 @@ export function FileGridTable(props: FileTreeViewProps) {
 
   // Keybinds
   const keybindRef = useKeybindOfCommandScopeRef();
-  useKeybindOfCommand("Backspace", () => handle.navigateBack(), keybindRef);
+  const keybinds = useKeyBindCommandJudge();
+  useKeybindOfCommand(
+    "Backspace",
+    () => {
+      handle.navigateBack();
+    },
+    keybindRef
+  );
+  // We have to register cell wise keybind as callback in props.
+  const handleKeydown = (
+    table: MRT_TableInstance<FileGridTableNode>,
+    cell: MRT_Cell<FileGridTableNode>
+  ) => {
+    const node = cell.row.original;
+    return (e: KeyboardEvent) => {
+      keybinds.on(e, "Enter", () => {
+        log.debug(`enter: ${node.name}`);
+        if (node.isDir) {
+          handle.moveActivePathTo(node.fullPath);
+        } else {
+          handle.openFile(node.fullPath);
+        }
+      });
+      keybinds.on(e, "Delete", () => {
+        log.debug(`delete: ${node.name}`);
+        handle.trash({
+          path: node.fullPath,
+          remoteHost: remoteHost,
+        });
+      });
+      keybinds.on(e, "RenameFile", () => {
+        log.debug(`rename: ${node.name}`);
+        table.setEditingCell(cell);
+      });
+    };
+  };
 
   const table = useMaterialReactTable({
     columns,
@@ -146,12 +185,12 @@ export function FileGridTable(props: FileTreeViewProps) {
     },
     // Additional props for cell
     muiTableBodyCellProps: (props) => ({
-      ref: keybindRef.current,
       sx: {
         whiteSpace: "wrap",
       },
       onDoubleClick: (e: MouseEvent) => {
         const node = props.row.original;
+        const columnName = props.column.id;
         log.debug(
           `double click: name:${node.name} column.id:${props.column.id} row.id:${props.row.id}`
         );
@@ -163,22 +202,16 @@ export function FileGridTable(props: FileTreeViewProps) {
       },
       onClick: (e: MouseEvent) => {
         const node = props.row.original;
-        log.debug(`click: ${node.name}`);
+        const columnName = props.column.id;
+        log.debug(`click: ${node.name} at ${columnName}`);
       },
-      onKeyDown: (e: KeyboardEvent) => {
-        if (e.key === "Enter") {
-          const node = props.row.original;
-          log.debug(`enter: ${node.name}`);
-          if (node.isDir) {
-            handle.moveActivePathTo(node.fullPath);
-          } else {
-            handle.openFile(node.fullPath);
-          }
-        }
-        // TODO: How to combine to useKeybindOfCommand? and useHotkey?
-      },
+      onKeyDown: handleKeydown(props.table, props.cell),
     }),
   });
 
-  return <MaterialReactTable table={table} />;
+  return (
+    <KeybindScope keybindRef={keybindRef}>
+      <MaterialReactTable table={table} />
+    </KeybindScope>
+  );
 }
