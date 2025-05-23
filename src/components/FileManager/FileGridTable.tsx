@@ -35,45 +35,102 @@ import {
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
 } from "../KeybindScope";
+import { FileTreeFileItemContextMenu } from "./FileTreeItemContextMenu";
+import { DirectoryLabel } from "./FileTreeItemLabel";
+import { ContextMenuContext } from "../Menu/ContextMenu";
+
+function WithFileNodeContextMenu(props: {
+  stat: FileStat;
+  setRenamingMode: (mode: boolean) => void;
+  children: ReactNode;
+}) {
+  return (
+    <ContextMenuContext
+      menuItems={
+        <FileTreeFileItemContextMenu
+          stat={props.stat}
+          setRenamingMode={props.setRenamingMode}
+        />
+      }
+    >
+      {props.children}
+    </ContextMenuContext>
+  );
+}
+
+function FileNodeComponent(props: {
+  name: string;
+  isDir: boolean;
+  stat: FileStat;
+}) {
+  return (
+    <WithFileNodeContextMenu stat={props.stat} setRenamingMode={() => {}}>
+      <IconForFileOrFolder
+        name={props.name}
+        isDir={props.isDir}
+        style={InlineIconAdjustStyle}
+      />
+      {props.name}
+    </WithFileNodeContextMenu>
+  );
+}
 
 export type FileGridTableNode = {
-  icon: ReactNode;
   name: string;
   fullPath: string;
-  isDir: boolean;
-  time: string;
+  time: Date;
   size: number;
   fileTypeDescription: string;
-  permissions: string;
+  stat: FileStat;
+  nameComponent: ReactNode;
+  sizeComponent: ReactNode;
+  timeComponent: ReactNode;
+  permissionComponent: ReactNode;
 };
 
 function permissionToString(permission: number) {
   return (
-    ((permission & 0o1000) > 0 ? "r" : "-") +
-    ((permission & 0o0100) > 0 ? "w" : "-") +
-    ((permission & 0o0010) > 0 ? "x" : "-") +
-    ((permission & 0o0004) > 0 ? "r" : "-") +
-    ((permission & 0o0002) > 0 ? "w" : "-") +
-    ((permission & 0o0001) > 0 ? "x" : "-")
+    ((permission & 0o1000000) > 0 ? "r" : "-") +
+    ((permission & 0o0100000) > 0 ? "w" : "-") +
+    ((permission & 0o0010000) > 0 ? "x" : "-") +
+    ((permission & 0o0001000) > 0 ? "r" : "-") +
+    ((permission & 0o0000100) > 0 ? "w" : "-") +
+    ((permission & 0o0000010) > 0 ? "x" : "-") +
+    ((permission & 0o0000004) > 0 ? "r" : "-") +
+    ((permission & 0o0000002) > 0 ? "w" : "-") +
+    ((permission & 0o0000001) > 0 ? "x" : "-")
   );
 }
 
 function createNode(stat: FileStat): FileGridTableNode {
+  const time = new Date(stat.modifiedTime);
   return {
-    icon: (
-      <IconForFileOrFolder
-        name={stat.baseName}
-        isDir={stat.isDir}
-        style={InlineIconAdjustStyle}
-      />
-    ),
     name: stat.baseName,
     fullPath: stat.fullPath,
-    isDir: stat.isDir,
-    time: stat.modifiedTime,
+    time: time,
     size: stat.byteSize,
     fileTypeDescription: stat.isDir ? "folder" : "file",
-    permissions: permissionToString(stat.permissionMode),
+    stat: stat,
+    nameComponent: (
+      <FileNodeComponent name={stat.baseName} isDir={stat.isDir} stat={stat} />
+    ),
+    sizeComponent: (
+      <WithFileNodeContextMenu stat={stat} setRenamingMode={() => {}}>
+        <span>{stat.byteSize}</span>
+      </WithFileNodeContextMenu>
+    ),
+    timeComponent: (
+      <WithFileNodeContextMenu stat={stat} setRenamingMode={() => {}}>
+        <span>
+          {time.toLocaleDateString() + " " + time.toLocaleTimeString()}
+        </span>
+      </WithFileNodeContextMenu>
+    ),
+    permissionComponent: (
+      <WithFileNodeContextMenu stat={stat} setRenamingMode={() => {}}>
+        <span>{permissionToString(stat.permissionMode)}</span>
+      </WithFileNodeContextMenu>
+    ),
   };
 }
 
@@ -93,20 +150,20 @@ export function FileGridTable(props: FileTreeViewProps) {
   const columns = useMemo<MRT_ColumnDef<FileGridTableNode>[]>(
     () => [
       {
-        accessorKey: "icon",
-        header: "",
-      },
-      {
-        accessorKey: "name",
+        accessorKey: "nameComponent",
         header: "Name",
       },
       {
-        accessorKey: "size",
-        header: "Size",
+        accessorKey: "timeComponent",
+        header: "Modified",
       },
       {
-        accessorKey: "time",
-        header: "Modified",
+        accessorKey: "permissionComponent",
+        header: "Permissions",
+      },
+      {
+        accessorKey: "sizeComponent",
+        header: "Size",
       },
     ],
     []
@@ -127,6 +184,8 @@ export function FileGridTable(props: FileTreeViewProps) {
       log.error(`Failed to pollChange ${path} `, e);
     },
   });
+
+  const tableBodyRef = useRef<HTMLDivElement>(null);
 
   // Keybinds
   const keybindRef = useKeybindOfCommandScopeRef();
@@ -149,6 +208,7 @@ export function FileGridTable(props: FileTreeViewProps) {
         log.debug(`enter: ${node.name}`);
         if (node.isDir) {
           handle.moveActivePathTo(node.fullPath);
+          tableBodyRef.current?.focus();
         } else {
           handle.openFile(node.fullPath);
         }
@@ -177,36 +237,61 @@ export function FileGridTable(props: FileTreeViewProps) {
     enableDensityToggle: false,
     enableRowVirtualization: true,
     enableFullScreenToggle: false,
-    enableTopToolbar: false,
     enableStickyHeader: true,
+    enableStickyFooter: true,
+    enableTopToolbar: false,
+    enableBottomToolbar: false,
     enableRowSelection: true,
     initialState: {
       density: "compact",
     },
     // Additional props for cell
-    muiTableBodyCellProps: (props) => ({
-      sx: {
-        whiteSpace: "wrap",
-      },
-      onDoubleClick: (e: MouseEvent) => {
-        const node = props.row.original;
-        const columnName = props.column.id;
-        log.debug(
-          `double click: name:${node.name} column.id:${props.column.id} row.id:${props.row.id}`
-        );
-        if (node.isDir) {
-          handle.moveActivePathTo(node.fullPath);
-        } else {
-          handle.openFile(node.fullPath);
-        }
-      },
-      onClick: (e: MouseEvent) => {
-        const node = props.row.original;
-        const columnName = props.column.id;
-        log.debug(`click: ${node.name} at ${columnName}`);
-      },
-      onKeyDown: handleKeydown(props.table, props.cell),
-    }),
+    muiTableBodyCellProps: (props) => {
+      const node = props.row.original;
+      return {
+        sx: {
+          whiteSpace: "wrap",
+        },
+        // TODO: Editable to be focusable
+        contentEditable: true,
+        // To avoid warning "`contentEditable` and contains `children` managed by React"
+        suppressContentEditableWarning: true,
+        onDoubleClick: (e: MouseEvent) => {
+          const columnName = props.column.id;
+          log.debug(
+            `double click: name:${node.name} column.id:${props.column.id} row.id:${props.row.id}`
+          );
+          if (node.isDir) {
+            handle.moveActivePathTo(node.fullPath);
+            tableBodyRef.current?.focus();
+          } else {
+            handle.openFile(node.fullPath);
+          }
+        },
+        onClick: (e: MouseEvent) => {
+          const node = props.row.original;
+          const columnName = props.column.id;
+          log.debug(`click: ${node.name} at ${columnName}`);
+        },
+        onKeyDown: handleKeydown(props.table, props.cell),
+        onContextMenu: (e: MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          return (
+            <FileTreeFileItemContextMenu
+              stat={node.stat}
+              setRenamingMode={(mode: boolean) => {}}
+            />
+          );
+        },
+      };
+    },
+    muiTableContainerProps: {
+      ref: tableBodyRef,
+    },
+    muiTableBodyProps: {
+      //  ref: tableBodyRef,
+    },
   });
 
   return (

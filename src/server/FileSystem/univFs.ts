@@ -246,8 +246,8 @@ export namespace univFs {
       const client = await getRemoteClient(uPath.remoteHost!);
       const stats = await client.stat(uPath.path);
       // log.debug(`Stat file from remote: ${uPath.path}`);
-      const mtime = new Date(stats.modifyTime).toISOString();
-      const atime = new Date(stats.accessTime).toISOString();
+      const mtime = new Date(stats.modifyTime).toJSON();
+      const atime = new Date(stats.accessTime).toJSON();
       return univLift(uPath, (pathLib, path) => ({
         fullPath: pathLib.normalize(path),
         baseName: pathLib.basename(path),
@@ -276,10 +276,10 @@ export namespace univFs {
         isFIFO: stats.isFIFO(),
         isSocket: stats.isSocket(),
         isBlockDevice: stats.isBlockDevice(),
-        modifiedTime: stats.mtime.toISOString(),
-        changedTime: stats.ctime.toISOString(),
-        accessedTime: stats.atime.toISOString(),
-        birthTime: stats.birthtime.toISOString(),
+        modifiedTime: stats.mtime.toJSON(),
+        changedTime: stats.ctime.toJSON(),
+        accessedTime: stats.atime.toJSON(),
+        birthTime: stats.birthtime.toJSON(),
         byteSize: stats.size,
         permissionMode: stats.mode,
       }));
