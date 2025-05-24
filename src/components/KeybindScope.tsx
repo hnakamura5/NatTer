@@ -117,6 +117,7 @@ export class KeyBindCommandJudge {
     private listMap: KeybindListMap,
     private options?: OptionsOrDependencyArray & {
       notStopPropagation?: boolean;
+      notPreventDefault?: boolean;
     }
   ) {}
   private isPressed(command: KeybindCommands) {
@@ -128,7 +129,10 @@ export class KeyBindCommandJudge {
     e: KeyboardEvent,
     command: KeybindCommands,
     callback: () => void,
-    options?: OptionsOrDependencyArray & { notStopPropagation?: boolean }
+    options?: OptionsOrDependencyArray & {
+      notStopPropagation?: boolean;
+      notPreventDefault?: boolean;
+    }
   ) {
     const optionsHere = { ...(this.options || {}), ...(options || {}) };
     if (this.isPressed(command)) {
@@ -136,12 +140,15 @@ export class KeyBindCommandJudge {
       if (!optionsHere?.notStopPropagation) {
         e.stopPropagation();
       }
+      if (!optionsHere?.notPreventDefault) {
+        e.preventDefault();
+      }
     }
   }
 }
 
 // Emergency hatch for the case we can only use onKeyDown.
-export function useKeyBindCommandJudge() {
+export function useKeyBindCommandHandler() {
   const listMap = useKeybindList();
   return new KeyBindCommandJudge(listMap);
 }

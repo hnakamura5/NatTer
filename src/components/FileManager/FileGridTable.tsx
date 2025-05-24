@@ -24,6 +24,7 @@ import {
   MRT_Cell,
   MRT_TableInstance,
   useMaterialReactTable,
+  useMRT_Rows,
   type MRT_ColumnDef,
   type MRT_Row,
   type MRT_TableOptions,
@@ -31,13 +32,14 @@ import {
 import { IconForFileOrFolder, InlineIconAdjustStyle } from "./FileIcon";
 import {
   KeybindScope,
-  useKeyBindCommandJudge,
+  useKeyBindCommandHandler,
   useKeybindOfCommand,
   useKeybindOfCommandScopeRef,
 } from "../KeybindScope";
 import { FileTreeFileItemContextMenu } from "./FileTreeItemContextMenu";
 import { DirectoryLabel } from "./FileTreeItemLabel";
 import { ContextMenuContext } from "../Menu/ContextMenu";
+import { useTheme } from "@/AppState";
 
 function WithFileNodeContextMenu(props: {
   stat: FileStat;
@@ -143,6 +145,7 @@ export function FileGridTable(props: FileTreeViewProps) {
   const path = uPath.path;
   const remoteHost = uPath.remoteHost;
 
+  const theme = useTheme();
   const handle = useFileManagerHandle();
   const statListAsync = api.fileManager.statListAsync.useMutation();
   const [data, setData] = useState<FileGridTableNode[]>([]);
@@ -168,28 +171,27 @@ export function FileGridTable(props: FileTreeViewProps) {
     ],
     []
   );
-
-  useEffect(() => {
-    statListAsync.mutateAsync(uPath).then((result) => {
+  // Handling path changes.
+  const reloadStatList = () => {
+    return statListAsync.mutateAsync(uPath).then((result) => {
       setData(result.map(createNode));
     });
+  };
+  useEffect(() => {
+    reloadStatList();
   }, [univPathToString(uPath)]);
   api.fs.pollChange.useSubscription(uPath, {
     onData: () => {
-      statListAsync.mutateAsync(uPath).then((result) => {
-        setData(result.map(createNode));
-      });
+      reloadStatList();
     },
     onError: (e) => {
       log.error(`Failed to pollChange ${path} `, e);
     },
   });
 
-  const tableBodyRef = useRef<HTMLDivElement>(null);
-
   // Keybinds
   const keybindRef = useKeybindOfCommandScopeRef();
-  const keybinds = useKeyBindCommandJudge();
+  const keybinds = useKeyBindCommandHandler();
   useKeybindOfCommand(
     "Backspace",
     () => {
@@ -206,12 +208,12 @@ export function FileGridTable(props: FileTreeViewProps) {
     return (e: KeyboardEvent) => {
       keybinds.on(e, "Enter", () => {
         log.debug(`enter: ${node.name}`);
-        if (node.isDir) {
+        if (node.stat.isDir) {
           handle.moveActivePathTo(node.fullPath);
-          tableBodyRef.current?.focus();
         } else {
           handle.openFile(node.fullPath);
         }
+        e.preventDefault();
       });
       keybinds.on(e, "Delete", () => {
         log.debug(`delete: ${node.name}`);
@@ -219,10 +221,6 @@ export function FileGridTable(props: FileTreeViewProps) {
           path: node.fullPath,
           remoteHost: remoteHost,
         });
-      });
-      keybinds.on(e, "RenameFile", () => {
-        log.debug(`rename: ${node.name}`);
-        table.setEditingCell(cell);
       });
     };
   };
@@ -248,9 +246,16 @@ export function FileGridTable(props: FileTreeViewProps) {
     // Additional props for cell
     muiTableBodyCellProps: (props) => {
       const node = props.row.original;
+      const cell = props.cell;
       return {
+        id: node.fullPath,
         sx: {
           whiteSpace: "wrap",
+          fontFamily: theme.system.font,
+          "&:focus-visible": {
+            outline: `2px solid ${theme.system.focusedFrameColor}`,
+            outlineOffset: "-2px",
+          },
         },
         // TODO: Editable to be focusable
         contentEditable: true,
@@ -259,11 +264,10 @@ export function FileGridTable(props: FileTreeViewProps) {
         onDoubleClick: (e: MouseEvent) => {
           const columnName = props.column.id;
           log.debug(
-            `double click: name:${node.name} column.id:${props.column.id} row.id:${props.row.id}`
+            `table double click: name:${node.name} column.id:${props.column.id} row.id:${props.row.id}`
           );
-          if (node.isDir) {
+          if (node.stat.isDir) {
             handle.moveActivePathTo(node.fullPath);
-            tableBodyRef.current?.focus();
           } else {
             handle.openFile(node.fullPath);
           }
@@ -273,24 +277,28 @@ export function FileGridTable(props: FileTreeViewProps) {
           const columnName = props.column.id;
           log.debug(`click: ${node.name} at ${columnName}`);
         },
-        onKeyDown: handleKeydown(props.table, props.cell),
-        onContextMenu: (e: MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          return (
-            <FileTreeFileItemContextMenu
-              stat={node.stat}
-              setRenamingMode={(mode: boolean) => {}}
-            />
-          );
+        onLoad: (e) => {
+          if (cell.row.index === 0 && cell.column.id === "nameComponent") {
+            log.debug(
+              `table onLoad focus: ${cell.row.original.fullPath} id:${
+                (e.currentTarget as HTMLDivElement).id
+              }`
+            );
+            // TODO: This does not work.
+            (e.currentTarget as HTMLDivElement).focus();
+          }
         },
+        onKeyDown: handleKeydown(props.table, props.cell),
       };
     },
-    muiTableContainerProps: {
-      ref: tableBodyRef,
-    },
     muiTableBodyProps: {
-      //  ref: tableBodyRef,
+      sx: {
+        // Modify the redundant space around checkbox.
+        "& .MuiTableCell-root:has(.MuiCheckbox-root)": {
+          minWidth: "0",
+          width: "auto",
+        },
+      },
     },
   });
 
