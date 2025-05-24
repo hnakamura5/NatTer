@@ -200,14 +200,14 @@ export function FileGridTable(props: FileTreeViewProps) {
     keybindRef
   );
   // We have to register cell wise keybind as callback in props.
-  const handleKeydown = (
+  const handleKeybindsOfCell = (
     table: MRT_TableInstance<FileGridTableNode>,
     cell: MRT_Cell<FileGridTableNode>
   ) => {
     const node = cell.row.original;
     return (e: KeyboardEvent) => {
       keybinds.on(e, "Enter", () => {
-        log.debug(`enter: ${node.name}`);
+        log.debug(`File Grid Table enter: ${node.name}`);
         if (node.stat.isDir) {
           handle.moveActivePathTo(node.fullPath);
         } else {
@@ -216,11 +216,27 @@ export function FileGridTable(props: FileTreeViewProps) {
         e.preventDefault();
       });
       keybinds.on(e, "Delete", () => {
-        log.debug(`delete: ${node.name}`);
+        log.debug(`File Grid Table delete: ${node.name}`);
         handle.trash({
           path: node.fullPath,
           remoteHost: remoteHost,
         });
+      });
+      keybinds.on(e, "SelectAll", () => {
+        log.debug(`File Grid Table selectAll: ${node.name}`);
+        table.toggleAllRowsSelected();
+      });
+      keybinds.on(e, "Copy", () => {
+        log.debug(`File Grid Table copy: ${node.name}`);
+        handle.copySelectionToInternalClipboard();
+      });
+      keybinds.on(e, "Cut", () => {
+        log.debug(`File Grid Table cut: ${node.name}`);
+        handle.cutSelectedToInternalClipboard();
+      });
+      keybinds.on(e, "Paste", () => {
+        log.debug(`File Grid Table paste: ${node.name}`);
+        handle.pasteFromInternalClipboard();
       });
     };
   };
@@ -249,18 +265,15 @@ export function FileGridTable(props: FileTreeViewProps) {
       const cell = props.cell;
       return {
         id: node.fullPath,
+        tabIndex: 0,
         sx: {
           whiteSpace: "wrap",
           fontFamily: theme.system.font,
-          "&:focus-visible": {
+          "&:focus-within": {
             outline: `2px solid ${theme.system.focusedFrameColor}`,
             outlineOffset: "-2px",
           },
         },
-        // TODO: Editable to be focusable
-        contentEditable: true,
-        // To avoid warning "`contentEditable` and contains `children` managed by React"
-        suppressContentEditableWarning: true,
         onDoubleClick: (e: MouseEvent) => {
           const columnName = props.column.id;
           log.debug(
@@ -275,7 +288,8 @@ export function FileGridTable(props: FileTreeViewProps) {
         onClick: (e: MouseEvent) => {
           const node = props.row.original;
           const columnName = props.column.id;
-          log.debug(`click: ${node.name} at ${columnName}`);
+          log.debug(`table onClick: ${node.name} at ${columnName}`);
+          (e.currentTarget as HTMLDivElement).focus();
         },
         onLoad: (e) => {
           if (cell.row.index === 0 && cell.column.id === "nameComponent") {
@@ -284,11 +298,10 @@ export function FileGridTable(props: FileTreeViewProps) {
                 (e.currentTarget as HTMLDivElement).id
               }`
             );
-            // TODO: This does not work.
             (e.currentTarget as HTMLDivElement).focus();
           }
         },
-        onKeyDown: handleKeydown(props.table, props.cell),
+        onKeyDown: handleKeybindsOfCell(props.table, props.cell),
       };
     },
     muiTableBodyProps: {
