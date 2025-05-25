@@ -26,7 +26,7 @@ import { FileTreeNode } from "@/datatypes/PathListForTree";
 import { ErrorBoundary } from "react-error-boundary";
 import { useKey } from "@dnd-kit/core/dist/components/DragOverlay/hooks";
 
-function RenamingInput(props: {
+export function RenamingInput(props: {
   currentName: string;
   isDir: boolean;
   submitName: (baseName: string) => void;

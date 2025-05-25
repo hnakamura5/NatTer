@@ -274,11 +274,10 @@ export function useFileManagerHandleForState(
         }
       },
       startRenaming: (src) => {
-        log.debug(`Rename: ${src}`);
+        log.debug(`Start Rename: ${src}`);
         setRenamingPath(src);
       },
       getRenamingPath: () => {
-        log.debug(`Get Rename Path: ${renamingPath}`);
         return renamingPath;
       },
       submitRenaming: (newBaseName) => {
@@ -344,7 +343,7 @@ export function useFileManagerHandleForState(
         setState({ ...state, remoteHost: host });
       },
     }),
-    [activePath, trackingCurrent, remoteHost]
+    [activePath, trackingCurrent, remoteHost, renamingPath]
   );
   return handle;
 }
