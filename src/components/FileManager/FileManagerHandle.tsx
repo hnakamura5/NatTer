@@ -44,6 +44,7 @@ export interface FileManagerPaneHandle {
   submitRenaming(newBaseName: string): void;
   cancelRenaming: () => void;
   selectItems: (items: string[]) => void;
+  selectedItems: () => string[];
   getRelativePathFromActive: (path: string) => string;
   getSubPathList: (path: string) => Promise<string[]>;
   openFile: (path: string) => void;

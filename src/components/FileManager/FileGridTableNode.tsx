@@ -9,6 +9,7 @@ import { IconForFileOrFolder, InlineIconAdjustStyle } from "./FileIcon";
 import { FileTreeFileItemContextMenu } from "./FileTreeItemContextMenu";
 import { ContextMenuContext } from "../Menu/ContextMenu";
 import { RenamingInput } from "./FileTreeItem";
+import { DirectoryLabel, FileLabel } from "./FileTreeItemLabel";
 
 function WithFileNodeContextMenu(props: {
   stat: FileStat;
@@ -53,12 +54,15 @@ function FileNodeComponent(props: {
       stat={props.stat}
       setRenamingMode={props.setRenamingMode}
     >
-      <IconForFileOrFolder
-        name={props.name}
-        isDir={props.isDir}
-        style={InlineIconAdjustStyle}
-      />
-      {props.name}
+      {props.stat.isDir ? (
+        <DirectoryLabel
+          stat={props.stat}
+          baseName={props.name}
+          isExpanded={false}
+        />
+      ) : (
+        <FileLabel stat={props.stat} baseName={props.name} />
+      )}
     </WithFileNodeContextMenu>
   );
 }

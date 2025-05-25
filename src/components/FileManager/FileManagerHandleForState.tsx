@@ -303,6 +303,9 @@ export function useFileManagerHandleForState(
         log.debug("Select Items", items);
         setSelectedItems(items);
       },
+      selectedItems: () => {
+        return selectedItems;
+      },
       copyToOSClipboard: (text) => {
         writeClipboard.mutate(text);
       },

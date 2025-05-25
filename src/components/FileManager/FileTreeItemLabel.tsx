@@ -8,14 +8,10 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { CSS as DndCSS, Transform } from "@dnd-kit/utilities";
 
 import {
-  FaFolder as FolderIcon,
   FaFile as FileIcon,
-  FaFolderOpen as FolderOpenIcon,
-  FaAngleDown as AngleDownIcon,
   FaAngleRight as AngleRightIcon,
 } from "react-icons/fa";
 import {
-  EmptySpaceIcon,
   EmptyStyle,
   IconForFile,
   IconForFolder,
@@ -64,6 +60,7 @@ export function FileLabel(props: {
   baseName?: string;
   onRightClick?: () => void;
 }) {
+  // Drag and drop.
   const {
     attributes,
     listeners,
@@ -93,7 +90,6 @@ export function FileLabel(props: {
       {...listeners}
       onContextMenu={props.onRightClick}
     >
-      <AngleRightIcon style={EmptyStyle} />
       <IconForFile name={fileName} style={InlineIconAdjustStyle} />
       <Label>{fileName}</Label>
     </div>
@@ -110,6 +106,7 @@ export function DirectoryLabel(props: {
     id: props.stat.fullPath,
   });
   const handle = useFileManagerHandle();
+  // Drag and drop.
   const {
     attributes,
     listeners,
@@ -144,7 +141,6 @@ export function DirectoryLabel(props: {
           {...listeners}
           onContextMenu={props.onRightClick}
         >
-          <AngleDownIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
           <IconOpenFolder name={directoryName} style={InlineIconAdjustStyle} />
           <Label>{directoryName}</Label>
         </div>
@@ -160,7 +156,6 @@ export function DirectoryLabel(props: {
         {...listeners}
         onContextMenu={props.onRightClick}
       >
-        <AngleRightIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
         <IconForFolder name={directoryName} style={InlineIconAdjustStyle} />
         <Label>{directoryName}</Label>
       </div>
@@ -184,7 +179,6 @@ export function StatLoadingLabel(props: { path: string; baseName?: string }) {
   const fileName = parsed.data.base;
   return (
     <span>
-      <AngleRightIcon style={EmptyStyle} />
       <IconForFile name={fileName} style={InlineIconAdjustStyle} />
       {fileName}
     </span>

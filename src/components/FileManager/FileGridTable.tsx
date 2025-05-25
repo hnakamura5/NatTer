@@ -182,7 +182,6 @@ export function FileGridTable(props: FileTreeViewProps) {
           },
         },
         onDoubleClick: (e: MouseEvent) => {
-          const columnName = props.column.id;
           log.debug(
             `table double click: name:${node.name} column.id:${props.column.id} row.id:${props.row.id}`
           );
@@ -221,6 +220,21 @@ export function FileGridTable(props: FileTreeViewProps) {
       },
     },
   });
+
+  // Handle Selected rows.
+  const rowSelection = table.getState().rowSelection;
+  useEffect(() => {
+    //fetch data based on row selection state or something
+    const selectedItems: string[] = [];
+    Object.keys(rowSelection).forEach((key) => {
+      const row = table.getRow(key);
+      const selected = rowSelection[key];
+      if (selected) {
+        selectedItems.push(row.original.fullPath);
+      }
+    });
+    handle.selectItems(selectedItems);
+  }, [table, rowSelection, handle]);
 
   return (
     <KeybindScope keybindRef={keybindRef}>

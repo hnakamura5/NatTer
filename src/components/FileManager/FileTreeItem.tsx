@@ -26,6 +26,12 @@ import { FileTreeNode } from "@/datatypes/PathListForTree";
 import { ErrorBoundary } from "react-error-boundary";
 import { useKey } from "@dnd-kit/core/dist/components/DragOverlay/hooks";
 
+import { EmptyStyle } from "./FileIcon";
+import {
+  FaAngleDown as AngleDownIcon,
+  FaAngleRight as AngleRightIcon,
+} from "react-icons/fa";
+
 export function RenamingInput(props: {
   currentName: string;
   isDir: boolean;
@@ -93,6 +99,11 @@ export function DirectoryLabelOrRenamingInput(props: {
           />
         }
       >
+        {props.isExpanded ? (
+          <AngleDownIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
+        ) : (
+          <AngleRightIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
+        )}
         <DirectoryLabel
           stat={props.stat}
           isExpanded={props.isExpanded}
@@ -133,6 +144,7 @@ export function FileLabelOrRenamingInput(props: {
           />
         }
       >
+        <AngleRightIcon style={EmptyStyle} />
         <FileLabel
           stat={props.stat}
           baseName={props.baseName}

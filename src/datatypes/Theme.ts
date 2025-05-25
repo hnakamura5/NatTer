@@ -99,7 +99,7 @@ export const DefaultDarkTheme: Theme = {
     tooltipColor: "#F5F5F5",
     tooltipBackgroundColor: "#1E1E1E",
     fileManagerBackgroundColor: "#1E1E1E",
-    selectionBackgroundColor: "#142432",
+    selectionBackgroundColor: "#212e39",
     focusBackgroundColor: "#333333",
     contextMenuWidth: "250px",
     contextNestedMenuWidth: "200px",
