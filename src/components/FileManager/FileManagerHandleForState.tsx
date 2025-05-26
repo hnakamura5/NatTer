@@ -19,7 +19,8 @@ export function useFileManagerHandleForState(
   selectedItems: string[],
   setSelectedItems: (items: string[]) => void,
   state: FileManagerState,
-  setState: (state: FileManagerState) => void
+  setState: (state: FileManagerState) => void,
+  dndType: string
 ): FileManagerHandle & FileManagerPaneHandle {
   const {
     activePath,
@@ -345,8 +346,17 @@ export function useFileManagerHandleForState(
       setRemoteHost: (host) => {
         setState({ ...state, remoteHost: host });
       },
+      getDndType() {
+        return dndType;
+      },
+      getUniversalPath: (path) => {
+        return {
+          path,
+          remoteHost,
+        };
+      },
     }),
-    [activePath, trackingCurrent, remoteHost, renamingPath]
+    [activePath, trackingCurrent, remoteHost, renamingPath, dndType]
   );
   return handle;
 }

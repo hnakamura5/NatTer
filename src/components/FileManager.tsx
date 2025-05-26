@@ -24,7 +24,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { FileKeybindings } from "./FileManager/FileManagerKeybindings";
 import { useAtom } from "jotai";
 import { parse } from "path";
-import { RemoteHost } from "@/datatypes/SshConfig";
+import { RemoteHost, remoteHostEquals } from "@/datatypes/SshConfig";
 import { UniversalPath } from "@/datatypes/UniversalPath";
 import {
   univPathArrayToString,
@@ -77,6 +77,7 @@ export type FileManagerProps = {
   state?: FileManagerState;
   setState: (state: FileManagerState) => void;
   remoteHost?: RemoteHost;
+  dndType?: string;
 };
 
 export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
@@ -140,12 +141,14 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
       `FileManager: props.current:${props.current} currentPath: ${currentPath} trackingCurrent: ${trackingCurrent} remoteHost: ${remoteHost}`
     );
 
+    const dndType = props.dndType || "FileManager";
     const handle = useFileManagerHandleForState(
       currentPath,
       selectedItems,
       setSelectedItems,
       state,
-      props.setState
+      props.setState,
+      dndType
     );
 
     return (
@@ -153,39 +156,43 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
         sensors={dndSensors}
         onDragEnd={(e: DragEndEvent) => {
           const fromId = e.active.id;
-          const fromIdIsSelected = selectedItems.includes(fromId as string);
           const toId = e.over?.id;
-          // TODO: To get all selected items?
+          // TODO: Accept from/to outside.
+          const fromData = e.active.data.current;
+          const toData = e.over?.data.current;
           log.debug(
-            `FileManager DragEnd: ${fromId} -> ${toId} selected: ${fromIdIsSelected} ctrl: ${ctrlIsPressed}`
+            `FileManager DragEnd: ${fromId} -> ${toId}, FromData:`,
+            fromData,
+            " ToData:",
+            toData
           );
-          if (toId) {
-            if (ctrlIsPressed) {
-              if (fromIdIsSelected) {
-                // Copy all selected items
-                handle.copyStructural(
-                  { paths: selectedItems, remoteHost },
-                  { path: toId as string, remoteHost }
-                );
-              } else {
-                handle.copyTo(
-                  { path: fromId as string, remoteHost },
-                  { path: toId as string, remoteHost }
-                );
-              }
+          if (!toId || !fromData || !toData || fromData.type !== dndType) {
+            return;
+          }
+          const fromUPath: UniversalPath = fromData.uPath;
+          const toUPath: UniversalPath = toData.uPath;
+          const fromIdIsSelected =
+            remoteHostEquals(fromUPath.remoteHost, remoteHost) &&
+            selectedItems.includes(fromUPath.path);
+          if (ctrlIsPressed) {
+            if (fromIdIsSelected) {
+              // Copy all selected items
+              handle.copyStructural(
+                { paths: selectedItems, remoteHost },
+                toUPath
+              );
             } else {
-              if (fromIdIsSelected) {
-                // Move all selected items
-                handle.moveStructural(
-                  { paths: selectedItems, remoteHost },
-                  { path: toId as string, remoteHost }
-                );
-              } else {
-                handle.moveTo(
-                  { path: fromId as string, remoteHost },
-                  { path: toId as string, remoteHost }
-                );
-              }
+              handle.copyTo(fromUPath, toUPath);
+            }
+          } else {
+            if (fromIdIsSelected) {
+              // Move all selected items
+              handle.moveStructural(
+                { paths: selectedItems, remoteHost },
+                toUPath
+              );
+            } else {
+              handle.moveTo(fromUPath, toUPath);
             }
           }
         }}
@@ -196,8 +203,8 @@ export const FileManager = forwardRef<HTMLDivElement, FileManagerProps>(
               <FileManagerFrame>
                 <FileManagerHeader />
                 <FileTreeFrame>
-                  {/* <FileTreeView uPath={{ path: currentPath, remoteHost }} /> */}
-                  <FileGridTable uPath={{ path: currentPath, remoteHost }} />
+                  <FileTreeView uPath={{ path: currentPath, remoteHost }} />
+                  {/* <FileGridTable uPath={{ path: currentPath, remoteHost }} /> */}
                 </FileTreeFrame>
               </FileManagerFrame>
             </div>

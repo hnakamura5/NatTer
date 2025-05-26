@@ -163,7 +163,6 @@ export const fileSystemRouter = server.router({
     )
     .mutation(async (opts) => {
       const { src, destDir } = opts.input;
-      await univFs.move(src, destDir);
       await univFs.move(src, univPath.join(destDir, univPath.basename(src)));
       changeFileEvent(src);
       changeDirectoryEvent(destDir);

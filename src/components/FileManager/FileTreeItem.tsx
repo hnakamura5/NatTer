@@ -99,16 +99,12 @@ export function DirectoryLabelOrRenamingInput(props: {
           />
         }
       >
-        {props.isExpanded ? (
-          <AngleDownIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
-        ) : (
-          <AngleRightIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
-        )}
         <DirectoryLabel
           stat={props.stat}
           isExpanded={props.isExpanded}
           baseName={props.baseName}
           onRightClick={props.onRightClick}
+          useOpenIcon={true}
         />
       </ContextMenuContext>
     );
@@ -144,11 +140,11 @@ export function FileLabelOrRenamingInput(props: {
           />
         }
       >
-        <AngleRightIcon style={EmptyStyle} />
         <FileLabel
           stat={props.stat}
           baseName={props.baseName}
           onRightClick={props.onRightClick}
+          useOpenIcon={true}
         />
       </ContextMenuContext>
     );

@@ -10,6 +10,7 @@ import { CSS as DndCSS, Transform } from "@dnd-kit/utilities";
 import {
   FaFile as FileIcon,
   FaAngleRight as AngleRightIcon,
+  FaAngleDown as AngleDownIcon,
 } from "react-icons/fa";
 import {
   EmptyStyle,
@@ -59,7 +60,9 @@ export function FileLabel(props: {
   stat: FileStat;
   baseName?: string;
   onRightClick?: () => void;
+  useOpenIcon?: boolean;
 }) {
+  const handle = useFileManagerHandle();
   // Drag and drop.
   const {
     attributes,
@@ -68,8 +71,11 @@ export function FileLabel(props: {
     transform,
   } = useDraggable({
     id: props.stat.fullPath,
+    data: {
+      type: handle.getDndType(),
+      uPath: handle.getUniversalPath(props.stat.fullPath),
+    },
   });
-  const handle = useFileManagerHandle();
   const parsed = api.fs.parsePath.useQuery(
     { path: props.stat.fullPath, remoteHost: handle.getRemoteHost() },
     {
@@ -90,6 +96,7 @@ export function FileLabel(props: {
       {...listeners}
       onContextMenu={props.onRightClick}
     >
+      {props.useOpenIcon && <AngleRightIcon style={EmptyStyle} />}
       <IconForFile name={fileName} style={InlineIconAdjustStyle} />
       <Label>{fileName}</Label>
     </div>
@@ -101,11 +108,16 @@ export function DirectoryLabel(props: {
   isExpanded: boolean;
   baseName?: string;
   onRightClick?: () => void;
+  useOpenIcon?: boolean;
 }) {
+  const handle = useFileManagerHandle();
   const { setNodeRef: dropNodeRef, isOver } = useDroppable({
     id: props.stat.fullPath,
+    data: {
+      supports: [handle.getDndType()],
+      uPath: handle.getUniversalPath(props.stat.fullPath),
+    },
   });
-  const handle = useFileManagerHandle();
   // Drag and drop.
   const {
     attributes,
@@ -114,6 +126,10 @@ export function DirectoryLabel(props: {
     transform,
   } = useDraggable({
     id: props.stat.fullPath,
+    data: {
+      type: handle.getDndType(),
+      uPath: handle.getUniversalPath(props.stat.fullPath),
+    },
   });
   const parsed = api.fs.parsePath.useQuery(
     { path: props.stat.fullPath, remoteHost: handle.getRemoteHost() },
@@ -141,6 +157,11 @@ export function DirectoryLabel(props: {
           {...listeners}
           onContextMenu={props.onRightClick}
         >
+          {props.useOpenIcon && (
+            <AngleDownIcon
+              style={{ ...InlineIconAdjustStyle, scale: "0.75" }}
+            />
+          )}
           <IconOpenFolder name={directoryName} style={InlineIconAdjustStyle} />
           <Label>{directoryName}</Label>
         </div>
@@ -156,6 +177,9 @@ export function DirectoryLabel(props: {
         {...listeners}
         onContextMenu={props.onRightClick}
       >
+        {props.useOpenIcon && (
+          <AngleRightIcon style={{ ...InlineIconAdjustStyle, scale: "0.75" }} />
+        )}
         <IconForFolder name={directoryName} style={InlineIconAdjustStyle} />
         <Label>{directoryName}</Label>
       </div>

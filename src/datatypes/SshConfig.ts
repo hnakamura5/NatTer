@@ -15,7 +15,17 @@ export const RemoteHostSchema = z.object({
 });
 export type RemoteHost = z.infer<typeof RemoteHostSchema>;
 
-
+export function remoteHostEquals(a?: RemoteHost, b?: RemoteHost): boolean {
+  if (a == undefined) {
+    return b == undefined;
+  }
+  if (b == undefined) {
+    return false;
+  }
+  return (
+    a.host === b.host && a.username === b.username && a.pathKind === b.pathKind
+  );
+}
 
 export function remoteHostFromConfig(
   config: ShellConfig

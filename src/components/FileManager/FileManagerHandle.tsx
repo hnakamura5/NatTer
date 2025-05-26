@@ -6,6 +6,7 @@ import { api } from "@/api";
 import { log } from "@/datatypes/Logger";
 
 // Global handle in FileManager.
+// Access to file system and OS. Given from outside?
 export interface FileManagerHandle {
   move: (src: UniversalPath, dest: UniversalPath) => void;
   moveTo: (src: UniversalPath, destDir: UniversalPath) => void;
@@ -24,8 +25,10 @@ export interface FileManagerHandle {
   pasteFromInternalClipboard: (destDir?: UniversalPath) => void;
   copyToOSClipboard: (text: string) => void;
   getFromOSClipboard: () => Promise<string>;
+  openFile: (path: string) => void;
 }
 
+// Provided inside for functionalities of manager.
 export interface FileManagerPaneHandle {
   getActivePath: () => string;
   moveActivePathTo: (path: string) => Promise<boolean>;
@@ -47,7 +50,8 @@ export interface FileManagerPaneHandle {
   selectedItems: () => string[];
   getRelativePathFromActive: (path: string) => string;
   getSubPathList: (path: string) => Promise<string[]>;
-  openFile: (path: string) => void;
+  getDndType: () => string;
+  getUniversalPath: (fullPath: string) => UniversalPath;
 }
 
 export const FileManagerHandleContext = createContext<
@@ -63,4 +67,3 @@ export function useFileManagerHandle() {
   }
   return handle;
 }
-
